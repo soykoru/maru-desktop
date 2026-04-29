@@ -12,6 +12,7 @@ import { ipcMain, shell, type BrowserWindow } from 'electron';
 import type { RpcClient } from './rpc-client.js';
 import type { AutoUpdater } from './auto-updater.js';
 import { maybeNotifyPushEvent } from './notifications.js';
+import { clearImageCache } from './image-protocol.js';
 
 let activeClient: RpcClient | null = null;
 
@@ -40,6 +41,13 @@ export function attachRpcClient(client: RpcClient, win: BrowserWindow | null): v
   client.on('disconnected', () => win?.webContents.send('rpc:disconnected'));
   for (const evt of FORWARDED_PUSH_EVENTS) {
     client.on(evt as never, (payload: unknown) => {
+      // Cuando se descarga un gift/emote nuevo, invalidar el LRU cache
+      // del image-protocol. Sin esto, si el LRU tenía cacheado el path
+      // como null/404 (por intento previo cuando el archivo no existía),
+      // el frontend seguía recibiendo el cache stale.
+      if (evt === 'gifts:updated' || evt === 'emotes:updated') {
+        clearImageCache();
+      }
       win?.webContents.send(evt, payload);
       // OS notifications cuando ventana está minimizada/sin foco.
       maybeNotifyPushEvent(evt, payload, win);

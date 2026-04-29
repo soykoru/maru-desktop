@@ -65,20 +65,18 @@ export function maybeNotifyPushEvent(
   if (channel === 'tiktok:event') {
     const e = payload as TikTokEventPayload;
     const who = e.nickname || e.user || '?';
+    // Solo notificar gifts (acción importante con valor económico).
+    // Follows / shares NO notifican para evitar spam — ya se ven en
+    // el panel de la app cuando el user vuelve. Esto es paridad con
+    // el comportamiento del MARU original que solo notificaba en gift.
     if (e.type === 'gift') {
       const data = e.data || {};
       const giftName = safe(data['giftName'] || data['name']) || 'un regalo';
       const count = Number(data['repeatCount'] || data['count'] || 1);
       title = `🎁 ${who}`;
       body = `Envió ${giftName}${count > 1 ? ` x${count}` : ''}`;
-    } else if (e.type === 'follow') {
-      title = `➕ ${who}`;
-      body = 'Nuevo seguidor';
-    } else if (e.type === 'share') {
-      title = `📤 ${who}`;
-      body = 'Compartió el live';
     } else {
-      return; // resto no se notifica para no spam
+      return;
     }
   } else if (channel === 'tiktok:status') {
     const s = payload as { connected: boolean; willReconnect?: boolean };

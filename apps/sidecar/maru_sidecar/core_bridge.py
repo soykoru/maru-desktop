@@ -99,14 +99,20 @@ def install() -> None:
         _patch_tiktok_worker_extras()
         _patch_sign_api_fatal()
         _apply_sign_api_key_from_env()
-        # Restaurar los handlers del sidecar — algún módulo del core
-        # llamó a `core.logger.configure_logging()` que los borró y
-        # redirigió todo a `livechaos.log`. Reinstalamos los del sidecar
-        # SIN remover los del core (sumamos en vez de reemplazar) para
-        # que ambos archivos reciban los logs.
-        _current = list(_root_logger.handlers)
+        # Restaurar EXCLUSIVAMENTE los handlers del sidecar. El core
+        # añadió los suyos apuntando a `livechaos.log` que duplican
+        # cada log entry (uno al sidecar.log y otro al livechaos.log,
+        # ambos forwardeados al panel del frontend → DUPLICADO visible).
+        #
+        # Estrategia correcta: REEMPLAZAR los handlers del root con los
+        # del sidecar (los del core se quedan accesibles por nombre via
+        # logging.getLogger("core") si alguien los necesita, pero NO
+        # están en el root → no duplican).
+        for h in list(_root_logger.handlers):
+            if h not in _saved_handlers:
+                _root_logger.removeHandler(h)
         for h in _saved_handlers:
-            if h not in _current:
+            if h not in _root_logger.handlers:
                 _root_logger.addHandler(h)
         if _root_logger.level == 0 or _root_logger.level > _saved_level:
             _root_logger.setLevel(_saved_level)

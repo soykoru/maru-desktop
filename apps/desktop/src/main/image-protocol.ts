@@ -348,14 +348,26 @@ function imageResponse(
   buffer: Buffer,
   mime: string,
   status: number = 200,
+  mutable: boolean = false,
 ): Response {
+  // `mutable=true` para imágenes que pueden cambiar en runtime (gifts
+  // auto-descargados, emotes nuevos, avatars de streamer). Para esas
+  // usamos `no-cache` que obliga a Chrome a revalidar con el protocol
+  // antes de servir desde el disco cache. Sin esto, después de un
+  // `gifts:updated` la galería seguía mostrando la imagen vieja
+  // (placeholder o 404 cacheado) porque Chrome no volvía a pedir.
+  //
+  // `mutable=false` (bundle: triggers, game_images, templates) sí
+  // puede ser `immutable` con TTL largo — esos paths nunca cambian
+  // en una versión dada del .exe.
   const headers: Record<string, string> = {
     'Content-Type': mime,
     'Content-Length': String(buffer.byteLength),
-    'Cache-Control': `public, max-age=${CACHE_MAX_AGE_SECONDS}, immutable`,
+    'Cache-Control': mutable
+      ? 'no-cache'
+      : `public, max-age=${CACHE_MAX_AGE_SECONDS}, immutable`,
     'X-MARU-Source': 'image-protocol',
   };
-  // Convertir Buffer a Uint8Array para evitar mismatch ArrayBuffer vs SharedArrayBuffer
   const body = new Uint8Array(buffer);
   return new Response(body, { status, headers });
 }
@@ -411,17 +423,24 @@ export function registerImageProtocolHandler(): void {
       return new Response('Bad path', { status: 400 });
     }
 
+    // Detectar si el path es mutable (userdata: donaciones descargadas
+    // en runtime, emotes nuevos). Para esos, Cache-Control: no-cache
+    // para que Chrome no sirva el 404 viejo cuando llega un gift nuevo.
+    const userBaseNorm = roots.userBase.replace(/\\/g, '/');
+    const filePathNorm = resolved.filePath.replace(/\\/g, '/');
+    const mutable = filePathNorm.startsWith(userBaseNorm);
+
     // Probar primaria.
     const primary = await readImageOrCached(resolved.filePath);
     if (primary) {
-      return imageResponse(primary.buffer, primary.mime);
+      return imageResponse(primary.buffer, primary.mime, 200, mutable);
     }
 
     // Fallback (ej: `_default_<cat>.png`).
     if (resolved.fallback) {
       const fb = await readImageOrCached(resolved.fallback);
       if (fb) {
-        return imageResponse(fb.buffer, fb.mime);
+        return imageResponse(fb.buffer, fb.mime, 200, mutable);
       }
     }
 
