@@ -56,8 +56,17 @@ export function installIpcHandlers(
   updater: AutoUpdater,
 ): void {
   ipcMain.handle('rpc:call', async (_evt, method: string, params: unknown) => {
-    if (!activeClient || !activeClient.isConnected) {
-      throw new Error('sidecar not connected');
+    // CRÍTICO: NO chequear `isConnected` acá. El `client.call()` ya tiene
+    // `waitConnected(15s)` internamente que bufferiza RPCs hechos antes
+    // de que el sidecar termine su boot (PyInstaller tarda 3-7s).
+    //
+    // Antes acá había `if (!isConnected) throw 'sidecar not connected'`
+    // que rechazaba TODOS los RPCs tempranos del renderer (los hooks
+    // useGames, useRules, useTts, useProfiles, etc) → state vacío
+    // permanente. El waitConnected del client.call NUNCA se ejecutaba.
+    if (!activeClient) {
+      // Solo este caso es legítimo: bootSidecar ni siquiera empezó.
+      throw new Error('rpc client no inicializado todavía');
     }
     return activeClient.call(method as never, params as never);
   });

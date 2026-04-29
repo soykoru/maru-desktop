@@ -193,12 +193,28 @@ function createMainWindow(): BrowserWindow {
 }
 
 async function bootSidecar(): Promise<void> {
+  // CRÍTICO: registrar el RpcClient en el handler IPC ANTES de
+  // arrancar el sidecar. Sin esto, los rpcCalls tempranos del renderer
+  // (los hooks useGames, useRules, useTts, useDonations, etc, que se
+  // disparan al mount) llegan al main mientras `activeClient = null`
+  // y devuelven 'rpc client no inicializado' → state vacío para
+  // siempre. Asignamos el cliente vacío AHORA y `client.call()`
+  // internamente espera con waitConnected(15s) hasta que el sidecar
+  // conecte de verdad.
+  attachRpcClient(rpc, mainWindow);
   try {
     const info = await sidecar.start();
     console.log(`[main] sidecar ready on port ${info.rpcPort} (pid ${info.pid})`);
     await rpc.connect(info.rpcPort);
+    // Re-attach por si la window cambió durante el boot del sidecar.
     attachRpcClient(rpc, mainWindow);
     mainWindow?.webContents.send('sidecar:ready', info);
+    // El evento 'connected' del cliente ya se disparó dentro de
+    // rpc.connect(), pero el listener registrado por el primer
+    // attachRpcClient ya lo capturó y forwardeó al renderer (si la
+    // ventana ya existía). Para evitar que se pierda en arranques
+    // raros, lo retransmitimos explícito acá.
+    mainWindow?.webContents.send('rpc:connected');
   } catch (err) {
     console.error('[main] sidecar boot failed', err);
     captureException(err);
