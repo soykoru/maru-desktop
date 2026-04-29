@@ -37,6 +37,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 async def _run(args: argparse.Namespace) -> int:
     log = get_logger("maru_sidecar.main")
+    # Marcador único por arranque — el hydrate_from_file lo usa para
+    # cargar SOLO las entries del último boot, evitando que el panel
+    # del frontend muestre logs de boots previos como duplicados.
+    log.info("=== MARU BOOT === (pid=%d)", __import__("os").getpid())
     log.info("starting MARU sidecar (port=%d, log=%s)", args.rpc_port, args.log_level)
 
     ensure_runtime_dirs()

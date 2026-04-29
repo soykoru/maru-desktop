@@ -155,6 +155,11 @@ class LogsService:
         )
         self._stats: dict[str, int] = {c: 0 for c in VALID_CATEGORIES}
         self._stats_total = 0
+        # Dedupe ventana corta — si publish() recibe 2 entries con MISMO
+        # message+source dentro de 500ms, la 2da se ignora. Esto absorbe
+        # races (ej. logs duplicados por re-install de LogsBridgeHandler
+        # tras core_bridge.install).
+        self._recent_keys: dict[str, float] = {}
 
     # ── RPC handlers ────────────────────────────────────────────────────
 
@@ -247,16 +252,37 @@ class LogsService:
 
         Útil al boot del renderer para tener contexto inmediato sin esperar
         push events.
+
+        IMPORTANTE: solo cargamos las líneas DEL ARRANQUE ACTUAL (desde el
+        último marcador `=== MARU BOOT ===`). Si el sidecar arranca 3 veces
+        (caso real visto: NSIS reinstala + reinicio manual + auto-update),
+        cada arranque agrega entries al archivo. Sin filtrar, el panel
+        mostraba 3x cada entry duplicada al hidratar.
         """
         n = max(10, min(int(params.get("lines") or 200), MAX_BUFFER))
         if not LOG_FILE.exists():
             return {"loaded": 0}
         try:
             with LOG_FILE.open("r", encoding="utf-8", errors="replace") as fh:
-                lines = fh.read().splitlines()[-n:]
+                all_lines = fh.read().splitlines()
         except Exception:
             return {"loaded": 0}
+
+        # Buscar el último marcador "=== MARU BOOT ===" y filtrar desde ahí.
+        # Si no hay marcador (versión vieja), caer a las últimas N líneas.
+        boot_marker = "=== MARU BOOT ==="
+        last_boot_idx = -1
+        for i in range(len(all_lines) - 1, -1, -1):
+            if boot_marker in all_lines[i]:
+                last_boot_idx = i
+                break
+        if last_boot_idx >= 0:
+            lines = all_lines[last_boot_idx + 1:][-n:]
+        else:
+            lines = all_lines[-n:]
+
         loaded = 0
+        seen_keys: set[str] = set()
         with self._lock:
             self._buffer.clear()
             for k in list(self._stats.keys()):
@@ -266,6 +292,18 @@ class LogsService:
                 if not line.strip():
                     continue
                 entry = parse_log_line(line)
+                # Dedupe defensivo: si la misma combinación
+                # (timestamp, source, message) ya se cargó, saltar.
+                # Cubre el caso de líneas idénticas que el logger pudo
+                # haber escrito 2x por re-install de handlers.
+                dedupe_key = (
+                    f"{entry.get('ts', '')}-"
+                    f"{entry.get('source', '')}-"
+                    f"{entry.get('message', '')[:80]}"
+                )
+                if dedupe_key in seen_keys:
+                    continue
+                seen_keys.add(dedupe_key)
                 self._buffer.append(entry)
                 self._stats[entry["category"]] = (
                     self._stats.get(entry["category"], 0) + 1
@@ -285,13 +323,34 @@ class LogsService:
         category: str | None = None,
         meta: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Agrega una entry al buffer y emite push event al renderer."""
+        """Agrega una entry al buffer y emite push event al renderer.
+
+        Dedupe ventana 500ms: si llega un publish IDÉNTICO (mismo
+        message+source+level) dentro de los últimos 500ms, lo ignoramos.
+        Sin esto, races por re-install de LogsBridgeHandler tras un
+        rebuild del core_bridge causaban entries duplicadas en el panel.
+        """
         cat = category if category in VALID_CATEGORIES else detect_category(
             message, level
         )
+        now_ms = int(time.time() * 1000)
+        # Clave de dedupe: ignorar entries idénticas dentro de 500ms.
+        dedupe_key = f"{level.upper()}::{source}::{message[:200]}"
+        with self._lock:
+            last_ts = self._recent_keys.get(dedupe_key)
+            if last_ts is not None and now_ms - last_ts < 500:
+                # Skip — duplicate dentro de la ventana.
+                return {"id": "", "ts": now_ms, "deduped": True}
+            self._recent_keys[dedupe_key] = now_ms
+            # Garbage collect del dict si crece (>500 keys).
+            if len(self._recent_keys) > 500:
+                cutoff = now_ms - 5000
+                self._recent_keys = {
+                    k: v for k, v in self._recent_keys.items() if v >= cutoff
+                }
         entry: dict[str, Any] = {
             "id": f"l-{uuid.uuid4().hex[:10]}",
-            "ts": int(time.time() * 1000),
+            "ts": now_ms,
             "level": level.upper(),
             "source": source,
             "category": cat,

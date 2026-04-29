@@ -116,7 +116,19 @@ export class SidecarManager extends EventEmitter {
         this.proc = null;
         this.readyPort = null;
         this.emit('exit', { code, signal });
-        if (!this.shuttingDown) this.maybeRestart();
+        // Solo reiniciar si fue un crash REAL (exit code != 0 y != null,
+        // y sin signal de terminación intencional). Antes reiniciábamos
+        // ante cualquier exit no-shuttingDown, lo que causaba boot loops
+        // de 3 sidecars cuando el user reinstalaba el .exe (NSIS mata el
+        // proceso viejo con SIGTERM → exit code=null → maybeRestart →
+        // pelea por puerto 8770 con el nuevo install → loop).
+        if (this.shuttingDown) return;
+        const isCrash = code !== 0 && code !== null && !signal;
+        if (isCrash) {
+          this.maybeRestart();
+        } else {
+          console.log('[sidecar] exit limpio — no reiniciar');
+        }
       });
       proc.on('error', (err) => {
         clearTimeout(timeout);
