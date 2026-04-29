@@ -24,6 +24,40 @@ block_cipher = None
 
 HERE = Path(os.path.dirname(os.path.abspath(SPEC)))  # noqa: F821 — SPEC inyectado por PyInstaller
 
+# Localizar el `core/` de LiveChaosEngine_Refactored para incluirlo en
+# el bundle. Sin esto, en producción el sidecar arrancaba pero el
+# `core_bridge.install()` fallaba al hacer `from core.tiktok_client
+# import TikTokWorker` → todos los backends quedaban en stub-mode y la
+# app se quedaba colgada en el splash.
+#
+# Estrategia: copiar `core/` (~1MB, 48 archivos) al root del bundle de
+# PyInstaller. En runtime, `core_bridge._resolve_core_root` reconoce el
+# `sys._MEIPASS` y agrega `core/` al sys.path.
+#
+# El ENV var `MARU_CORE_SRC` permite override en CI/máquinas distintas.
+_core_src_env = os.environ.get("MARU_CORE_SRC", "").strip()
+if _core_src_env:
+    CORE_SRC = Path(_core_src_env)
+else:
+    # Default: ../../LiveChaosEngine/LiveChaosEngine_Refactored/core
+    # Layout esperado: <root>/maru-desktop/apps/sidecar/   y
+    #                  <root>/LiveChaosEngine/LiveChaosEngine_Refactored/core/
+    CORE_SRC = HERE.parents[2] / "LiveChaosEngine" / "LiveChaosEngine_Refactored" / "core"
+
+if not CORE_SRC.is_dir():
+    raise SystemExit(
+        f"sidecar.spec: core/ no encontrado en {CORE_SRC}. "
+        "Definí MARU_CORE_SRC=<ruta absoluta del core/> o ajustá la heurística."
+    )
+
+# `datas` de PyInstaller: copia recursiva ignorando __pycache__.
+core_datas = []
+for p in CORE_SRC.rglob("*"):
+    if p.is_file() and "__pycache__" not in p.parts and not p.name.endswith(".pyc"):
+        rel_dir = p.parent.relative_to(CORE_SRC)
+        dest = ("core" / rel_dir).as_posix() if str(rel_dir) != "." else "core"
+        core_datas.append((str(p), dest))
+
 
 # Hidden imports — websockets y submódulos del package que PyInstaller a veces
 # no detecta por la lazy loading interna.
@@ -57,14 +91,47 @@ hidden = [
     "maru_sidecar.backend.backups",
     "maru_sidecar.backend.logs",
     "maru_sidecar.backend.metrics",
+    # core/ del LiveChaosEngine_Refactored — empaquetado vía datas.
+    # Lo declaramos como hidden imports también para que PyInstaller
+    # incluya sus deps transitivas (PyQt6, pygame, requests, etc).
+    "core",
+    "core.tiktok_client",
+    "core.rule_engine",
+    "core.games",
+    "core.social_system",
+    "core.spotify_client",
+    "core.ia_engine",
+    "core.tts_engine",
+    "core.config_store",
+    "core.paths",
+    "core.logger",
+    "core.minigames",
+    "core.minigame_stats",
+    "core.overlays",
+    # Deps del core (PyQt6 lo usa TikTokWorker, pygame el TTS)
+    "PyQt6",
+    "PyQt6.QtCore",
+    "PyQt6.QtGui",
+    "PyQt6.QtWidgets",
+    "pygame",
+    "pygame.mixer",
+    "TikTokLive",
+    "TikTokLive.client",
+    "TikTokLive.events",
+    "spotipy",
+    "requests",
+    "httpx",
+    "betterproto",
+    "protobuf",
 ]
 
-# Excluimos toolchains pesados que no usamos en el sidecar
+# Excluimos toolchains pesados que no usamos en el sidecar.
+# OJO: PIL ya NO está excluido — TikTokLive 6.6.5 lo necesita
+# transitivamente para algunos parsers de imagen.
 excludes = [
     "tkinter",
     "matplotlib",
     "numpy.tests",
-    "PIL",
     "test",
     "unittest",
     "pydoc",
@@ -77,7 +144,7 @@ a = Analysis(
     ["entry.py"],
     pathex=[str(HERE)],
     binaries=[],
-    datas=[],
+    datas=core_datas,
     hiddenimports=hidden,
     hookspath=[],
     hooksconfig={},

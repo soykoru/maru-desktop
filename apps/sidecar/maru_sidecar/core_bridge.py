@@ -46,11 +46,23 @@ def _resolve_core_root() -> Path:
         if not p.exists():
             raise FileNotFoundError(f"MARU_CORE_ROOT not found: {p}")
         return p
-    # Default: ../../LiveChaosEngine/LiveChaosEngine_Refactored relativo al repo del sidecar
-    candidates = [
+
+    candidates: list[Path] = []
+
+    # Empaquetado con PyInstaller: el spec copia `core/` al root del
+    # bundle (sys._MEIPASS). Buscamos ahí PRIMERO porque en producción
+    # esa es la única ruta válida; en dev no existe `_MEIPASS` y caemos
+    # a las heurísticas de repo abajo.
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        candidates.append(Path(meipass))
+
+    # Dev: ../../LiveChaosEngine/LiveChaosEngine_Refactored relativo al sidecar
+    candidates.extend([
         Path(__file__).resolve().parents[3] / "LiveChaosEngine" / "LiveChaosEngine_Refactored",
         Path(__file__).resolve().parents[3].parent / "LiveChaosEngine" / "LiveChaosEngine_Refactored",
-    ]
+    ])
+
     for c in candidates:
         if (c / "core" / "__init__.py").exists():
             return c
