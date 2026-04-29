@@ -26,6 +26,14 @@ interface PendingCall {
 
 const CALL_TIMEOUT_MS = 10_000;
 
+/** Cuánto tiempo el `call()` espera la primera conexión del sidecar
+ * antes de rechazar. En producción el sidecar.exe (PyInstaller) tarda
+ * 3-7s en bootear; el renderer hace docenas de RPCs en su mount. Sin
+ * este buffer, todos los RPCs iniciales fallaban con 'sidecar not
+ * connected' y los hooks (useGames, useRules, useSocial, etc) quedaban
+ * con state vacío hasta que el user reabriera la app. */
+const CONNECT_WAIT_MS = 15_000;
+
 export class RpcClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private nextId = 1;
@@ -75,8 +83,39 @@ export class RpcClient extends EventEmitter {
     });
   }
 
-  call<M extends RpcMethodName>(method: M, params: RpcParams<M>): Promise<RpcResult<M>> {
-    if (!this.ws || !this.connected) {
+  /** Espera hasta que el RPC esté conectado (o falle por timeout).
+   * Usado internamente por `call()` para bufferizar RPCs hechos antes
+   * de que el sidecar termine su boot. */
+  private waitConnected(timeoutMs: number): Promise<void> {
+    if (this.connected) return Promise.resolve();
+    return new Promise<void>((resolve, reject) => {
+      const onConnected = (): void => {
+        clearTimeout(timer);
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        this.off('connected', onConnected);
+        reject(new Error(`rpc connect wait timeout (${timeoutMs}ms)`));
+      }, timeoutMs);
+      this.once('connected', onConnected);
+    });
+  }
+
+  async call<M extends RpcMethodName>(
+    method: M, params: RpcParams<M>,
+  ): Promise<RpcResult<M>> {
+    // Si todavía no hay conexión, esperar hasta CONNECT_WAIT_MS.
+    // Esto cubre el caso del primer arranque donde el sidecar Python
+    // (PyInstaller) tarda 3-7s en bootear y el renderer ya hizo
+    // docenas de RPCs. Antes esos rechazaban inmediato → state vacío.
+    if (!this.connected || !this.ws) {
+      try {
+        await this.waitConnected(CONNECT_WAIT_MS);
+      } catch (err) {
+        return Promise.reject(err as Error);
+      }
+    }
+    if (!this.ws) {
       return Promise.reject(new Error('rpc not connected'));
     }
     const id = this.nextId++;
