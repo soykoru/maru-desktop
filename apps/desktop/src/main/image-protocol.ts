@@ -88,14 +88,31 @@ function resolveRoots(): Roots {
     ? baseInDev
     : baseInProd;
 
-  // Userdata: DEBE ser la misma carpeta que el sidecar Python usa
-  // (`runtime_data/data/`). Antes apuntaba a `app.getPath('userData')/data`
-  // que es una carpeta DIFERENTE de Electron — por eso los PNGs que el
-  // bootstrap copiaba al sidecar daban 404 al cargarse en el renderer.
+  // Userdata: DEBE ser la misma carpeta que el sidecar Python usa.
+  //
+  // El sidecar (`runtime.py:_default_runtime_dir`) usa hardcoded:
+  //     %APPDATA%/MARU Live/  (Windows)
+  // PERO `app.getPath('userData')` puede devolver un path distinto si el
+  // appName del package.json (`@maru/desktop`) se sanitiza diferente.
+  // Resultado: el sidecar guarda en `%APPDATA%/MARU Live/data/donaciones/`
+  // y el image-protocol busca en `%APPDATA%/maru-desktop/data/...` o algo
+  // similar → 404 aunque el archivo SÍ exista.
+  //
+  // Fix: replicar EXACTAMENTE la lógica del sidecar Python para garantizar
+  // que ambos lados apunten al mismo path. En Windows usamos APPDATA env
+  // var directamente con 'MARU Live' como subcarpeta.
   const sidecarRuntime = RUNTIME_CONFIG.sidecarRuntimeDataRoot;
-  const userBase = sidecarRuntime
-    ? join(sidecarRuntime, 'data')
-    : join(app.getPath('userData'), 'data');
+  let userBase: string;
+  if (sidecarRuntime) {
+    userBase = join(sidecarRuntime, 'data');
+  } else if (process.platform === 'win32') {
+    const appdata = process.env['APPDATA'] || join(process.env['USERPROFILE'] ?? '', 'AppData', 'Roaming');
+    userBase = join(appdata, 'MARU Live', 'data');
+  } else if (process.platform === 'darwin') {
+    userBase = join(process.env['HOME'] ?? '', 'Library', 'Application Support', 'MARU Live', 'data');
+  } else {
+    userBase = join(process.env['HOME'] ?? '', '.local', 'share', 'MARU Live', 'data');
+  }
 
   return {
     bundleBase: base,

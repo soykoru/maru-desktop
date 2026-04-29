@@ -97,11 +97,11 @@ export function wireSidecarEvents(): () => void {
 
   // gifts:updated → un gift se descargó o reactivó en vivo. Refrescamos
   // el catálogo (RPC) para que la galería muestre la imagen sin polling.
+  // NO publicamos pushLogEntry sintético: el sidecar ya emite el log
+  // entry "🎁✨ Nueva donación detectada" via LogsService → log:entry.
+  // Duplicar acá producía 2 entries idénticos en el panel.
   offs.push(
-    window.maruApi.on('gifts:updated' as never, (payload: unknown) => {
-      const p = payload as { giftId?: string; giftName?: string; action?: string };
-      // Re-fetch del catálogo completo es más seguro que mergear (el
-      // backend puede haber re-normalizado nombres). Es una sola RPC.
+    window.maruApi.on('gifts:updated' as never, () => {
       void window.maruApi.rpc
         .call('donations.list', {})
         .then((r) => {
@@ -109,36 +109,12 @@ export function wireSidecarEvents(): () => void {
           if (gifts) useAppStore.getState().setGifts(gifts);
         })
         .catch(() => undefined);
-      // Log entry visible para que el usuario vea que llegó nueva donación.
-      useAppStore.getState().pushLogEntry({
-        id: `gu-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        ts: Date.now(),
-        level: 'INFO',
-        source: 'donations',
-        category: 'gift',
-        message:
-          p.action === 'reactivated'
-            ? `🎁✅ Donación reactivada: ${p.giftName}`
-            : `🎁✨ Nueva donación detectada: ${p.giftName}`,
-      });
     }),
   );
 
-  // tiktok:error → siempre al log con nivel ERROR (complementa el set state).
-  offs.push(
-    window.maruApi.on('tiktok:error' as never, (payload: unknown) => {
-      const p = payload as { message?: string };
-      if (!p?.message) return;
-      useAppStore.getState().pushLogEntry({
-        id: `tke-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        ts: Date.now(),
-        level: 'ERROR',
-        source: 'tiktok',
-        category: 'error',
-        message: `❌ TikTok: ${String(p.message)}`,
-      });
-    }),
-  );
+  // tiktok:error → solo actualiza el state (banner de error). El sidecar
+  // ya publica un log:entry con level=ERROR para cada error de TikTok,
+  // así que NO hacemos pushLogEntry sintético acá (eso duplicaba).
 
   // G14: Spotify push events (now-playing + queue + status).
   offs.push(
@@ -165,36 +141,12 @@ export function wireSidecarEvents(): () => void {
     }),
   );
 
-  // G14: rules:executed → log feed. El RuleDispatcher publica esto cada
-  // vez que ejecuta una regla (real o desde Probar) — así el usuario ve
-  // si el HTTP/RCON al juego salió OK.
-  offs.push(
-    window.maruApi.on('rules:executed' as never, (payload: unknown) => {
-      const p = payload as {
-        gameId: string;
-        ruleName: string;
-        action: string;
-        message: string;
-        success: boolean;
-        trigger: string;
-        user: string;
-        userRanks?: string;
-      };
-      const store = useAppStore.getState();
-      const userTag = p.user ? `@${p.user}` : '';
-      const ranksTag = p.userRanks ? ` (${p.userRanks})` : '';
-      const userInfo = userTag ? ` · ${userTag}${ranksTag}` : '';
-      store.pushLogEntry({
-        id: `rx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        ts: Date.now(),
-        level: p.success ? 'INFO' : 'ERROR',
-        source: 'rules',
-        category: 'rule',
-        message: `${p.success ? '✅' : '❌'} ${p.ruleName} (${p.action}) → ${p.message}${userInfo}`,
-        meta: p as Record<string, unknown>,
-      });
-    }),
-  );
+  // rules:executed → solo refresca el state UI con el resultado de la
+  // regla. NO pushLogEntry sintético acá: el RuleDispatcher del sidecar
+  // ya emite log.info(...) que llega al panel via log:entry. Antes acá
+  // duplicaba cada ejecución de regla en el panel.
+  // Si en el futuro queremos info adicional (ranks del user, etc), eso
+  // se agrega al log del sidecar para mantener una sola fuente de verdad.
 
   // Sincroniza activeGame en el sidecar cuando el usuario cambia de juego
   // en el sidebar. El RuleDispatcher lo lee para saber a qué juego

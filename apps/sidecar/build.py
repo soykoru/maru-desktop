@@ -127,13 +127,15 @@ def main() -> int:
     step("Verificando output")
     binary = find_binary()
     size = folder_size_mb(DIST)
-    print(f"  ✓ Binario: {binary}")
-    print(f"  ✓ Tamaño total del bundle: {size:.1f} MB")
+    # Usar ASCII puro para evitar UnicodeEncodeError en consola Windows
+    # cp1252 (es solo el script de build, no afecta el binario).
+    print(f"  [OK] Binario: {binary}")
+    print(f"  [OK] Tamano total del bundle: {size:.1f} MB")
 
     smoke_test(binary)
 
-    print(f"\n✓ Sidecar listo en {DIST}")
-    print(f"  Electron-builder lo empaquetará en resources/sidecar/.")
+    print(f"\n[OK] Sidecar listo en {DIST}")
+    print(f"  Electron-builder lo empaquetara en resources/sidecar/.")
     return 0
 
 

@@ -228,6 +228,37 @@ class RuleDispatcher:
                 )
             except Exception:
                 log.exception("no pude publicar rules:executed")
+            # Log entry para el panel UI — UNA sola fuente de verdad
+            # ahora vive en el sidecar (antes el event-wire del frontend
+            # generaba un sintético adicional que duplicaba cada entry).
+            try:
+                ok = bool(res.get("success"))
+                rule_name = str(res.get("rule") or "?")
+                action_ = str(res.get("action") or "")
+                message = str(res.get("message") or "")
+                user = str(evt_data.get("user") or "")
+                user_tag = f" · @{user}" if user else ""
+                ranks_tag = f" ({user_ranks})" if user_ranks else ""
+                bus.publish(
+                    "log:entry",
+                    {
+                        "id": f"rx-{int(__import__('time').time() * 1000)}-{rule_name[:6]}",
+                        "ts": int(__import__('time').time() * 1000),
+                        "level": "INFO" if ok else "ERROR",
+                        "source": "rules",
+                        "category": "rule",
+                        "message": f"{'✅' if ok else '❌'} {rule_name} ({action_}) → {message}{user_tag}{ranks_tag}",
+                        "meta": {
+                            "rule": rule_name,
+                            "gameId": game_id,
+                            "trigger": evt_type,
+                            "user": user,
+                            "success": ok,
+                        },
+                    },
+                )
+            except Exception:
+                log.exception("no pude publicar log:entry de rules")
 
     # ── Test directo de una regla (botón Probar) ─────────────────────────
 

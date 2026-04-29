@@ -328,7 +328,28 @@ class DonationsService:
                 }
                 try:
                     from ..event_bus import get_event_bus
-                    get_event_bus().publish("gifts:updated", event_payload)
+                    bus = get_event_bus()
+                    bus.publish("gifts:updated", event_payload)
+                    # log entry SINGLE-SOURCE (sidecar es el único que
+                    # publica log:entry para gifts ahora — el frontend
+                    # ya no genera duplicados sintéticos).
+                    import time as _t
+                    msg = (
+                        f"🎁✅ Donación reactivada: {gift_name}"
+                        if action_kind == "reactivated"
+                        else f"🎁✨ Nueva donación detectada: {gift_name}"
+                    )
+                    bus.publish(
+                        "log:entry",
+                        {
+                            "id": f"gu-{int(_t.time() * 1000)}-{gift_id[:8]}",
+                            "ts": int(_t.time() * 1000),
+                            "level": "INFO",
+                            "source": "donations",
+                            "category": "gift",
+                            "message": msg,
+                        },
+                    )
                 except Exception:
                     log.exception("no pude publicar gifts:updated")
         return result
