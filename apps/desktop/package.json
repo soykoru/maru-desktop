@@ -1,6 +1,6 @@
 {
   "name": "@maru/desktop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "license": "UNLICENSED",
   "description": "MARU Live Desktop — Electron + React",

@@ -17,7 +17,7 @@
  *  - CSP estricta vía response header en `loadFile`.
  */
 
-import { app, BrowserWindow, session, shell } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { SidecarManager } from './sidecar.js';
@@ -61,24 +61,20 @@ function resolvePreloadPath(): string {
 }
 
 function applyProductionCsp(): void {
-  // Solo aplicar CSP en producción. En dev rompe el HMR de Vite (WS dinámico).
-  if (RUNTIME_CONFIG.isDev) return;
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    const csp =
-      "default-src 'self'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "script-src 'self'; " +
-      // `maru:` es nuestro custom protocol para imágenes del bundle (G2).
-      "img-src 'self' data: blob: https: maru:; " +
-      "font-src 'self' data:; " +
-      "connect-src 'self' ws://127.0.0.1:* http://127.0.0.1:*;";
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [csp],
-      },
-    });
-  });
+  // NO-OP en ambos modos.
+  //
+  // Histórico: una versión previa inyectaba `Content-Security-Policy`
+  // via `onHeadersReceived`. Eso rompía la app empaquetada porque
+  // `script-src 'self'` no resolvía bien para `file://` URLs en
+  // Chromium → los chunks JS del renderer (`./assets/index-XXX.js`)
+  // se bloqueaban silenciosamente → `ready-to-show` nunca disparaba →
+  // ventana invisible para siempre.
+  //
+  // El `index.html` de Vite ya incluye un meta CSP suficiente
+  // (`<meta http-equiv="Content-Security-Policy" content="...">`) que
+  // se aplica al renderer principal. El splash usa `data:text/html`
+  // que vive bajo trust del main process. Doble CSP es redundante y
+  // peligroso.
 }
 
 function resolveAppIcon(): string | undefined {
