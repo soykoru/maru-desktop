@@ -1,0 +1,9 @@
+{
+  "extends": "@maru/tsconfig/react-library.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"]
+}

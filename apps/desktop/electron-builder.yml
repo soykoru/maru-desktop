@@ -1,0 +1,79 @@
+# electron-builder · MARU Live Desktop
+#
+# Empaqueta la app Electron + sidecar Python (PyInstaller --onedir, ver F7)
+# y publica a GitHub Releases. Auto-update via electron-updater lee el feed
+# `latest.yml` que electron-builder genera al publicar.
+
+appId: lat.korugames.maru
+productName: MARU Live
+copyright: Copyright © 2026 soykoru
+
+directories:
+  output: release
+  buildResources: build
+
+asar: true
+compression: maximum
+
+files:
+  - "out/main/**/*"
+  - "out/preload/**/*"
+  - "out/renderer/**/*"
+  # icon + logo dentro del bundle (necesarios al boot del main process)
+  - "resources/icon.ico"
+  - "resources/logo.png"
+  - "package.json"
+  - "!**/.vite/**"
+  - "!**/__pycache__/**"
+  - "!**/*.map"
+
+extraResources:
+  # El sidecar PyInstaller se genera en F7 y se copia acá:
+  - from: ../sidecar/dist/sidecar
+    to: sidecar
+    filter:
+      - "**/*"
+  # Bundle de imágenes (G2): ~88 MB. Va a `process.resourcesPath/data/`
+  # como archivos sueltos (NO dentro del asar) para lectura eficiente
+  # desde el custom protocol `maru://images/...`.
+  - from: resources/data
+    to: data
+    filter:
+      - "**/*"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icon.ico
+  artifactName: MARU-Live-Setup-${version}.${ext}
+
+mac:
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  icon: resources/logo.png
+  artifactName: MARU-Live-${version}-${arch}.${ext}
+  category: public.app-category.entertainment
+
+linux:
+  target:
+    - AppImage
+  icon: resources/logo.png
+  artifactName: MARU-Live-${version}.${ext}
+  category: AudioVideo
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  shortcutName: MARU Live
+
+publish:
+  - provider: github
+    owner: soykoru
+    repo: maru-desktop
+    private: false
+    releaseType: release
+    publishAutoUpdate: true

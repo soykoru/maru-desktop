@@ -1,0 +1,3 @@
+# Runtime mínimo Fase 0. Las deps reales (TikTokLive, pygame, etc.) entran en F1
+# cuando el sidecar empiece a embeber `core/` de MARU.
+websockets>=12.0

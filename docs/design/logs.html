@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Logs · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const log = (lvl, who, msg, t='14:32:08') => `<div style="display:grid; grid-template-columns: 80px 90px 110px 1fr; gap:12px; padding:6px 0; font-family: ui-monospace, monospace; font-size:12px; border-bottom:1px solid var(--border)"><span style="color:var(--fg-subtle)">${t}</span><span class="badge ${lvl==='error'?'danger':lvl==='warning'?'warning':lvl==='debug'?'':'info'}">${lvl}</span><span style="color:var(--fg-muted)">${who}</span><span>${msg}</span></div>`;
+const content = `
+  <div class="page-header"><div><h1>Logs</h1><p>Salida del sidecar y eventos internos</p></div>
+  <div style="display:flex; gap:8px"><button class="btn secondary">Copiar</button><button class="btn ghost">Limpiar</button></div></div>
+  <div class="card"><div class="card-body" style="padding:18px">
+    <div style="display:flex; gap:8px; margin-bottom:14px">
+      <div class="input" style="flex:1"><input placeholder="Filtrar mensaje..." /></div>
+      <div class="tabs"><button class="tab active">all</button><button class="tab">info</button><button class="tab">warning</button><button class="tab">error</button><button class="tab">debug</button></div>
+    </div>
+    <div style="max-height:420px; overflow:auto">
+      ${log('info','main','starting MARU sidecar (port=8770, log=INFO)')}
+      ${log('info','tiktok','client connected: @soykoru')}
+      ${log('debug','event_bus','queued: tiktok:event size=1')}
+      ${log('info','rules','rule fired: gift→spawn Troll Furioso')}
+      ${log('warning','spotify','rate-limited, retry in 6s')}
+      ${log('error','games.valheim','HTTP 503 (host=192.168.1.10:5566)','14:31:55')}
+      ${log('info','backups','retención: eliminados 2 backups del scope rules','14:31:48')}
+      ${log('info','tts.chat','speak ok (cache hit)')}
+      ${log('debug','overlays','POST /event 200 (35ms)')}
+    </div>
+  </div></div>
+`;
+MaruShell.render('logs.html', content, { title: 'Logs' });
+</script></body></html>

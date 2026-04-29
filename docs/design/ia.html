@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>IA · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header"><div><h1>Motor IA</h1><p>Multi-proveedor · comandos del chat · cooldowns</p></div>
+  <span class="badge success">listo · groq · llama-3.3-70b</span></div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-header"><div class="card-title">⚙ Configuración</div></div>
+      <div class="card-body col" style="gap:14px">
+        <div><div style="font-size:10px; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px">Proveedor</div>
+          <div class="tabs" style="width:100%"><button class="tab active">Groq</button><button class="tab">Gemini</button><button class="tab">OpenAI</button><button class="tab">Claude</button></div>
+        </div>
+        <div><div style="font-size:10px; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px">Modelo</div>
+          <div class="input"><input value="llama-3.3-70b-versatile" /></div>
+        </div>
+        <div class="row" style="gap:12px">
+          <div style="flex:1"><div style="font-size:10px; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px">Cooldown</div>
+            <div class="input"><input value="30" /><span style="color:var(--fg-subtle); font-size:12px">seg</span></div>
+          </div>
+          <div style="flex:1"><div style="font-size:10px; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px">Max length</div>
+            <div class="input"><input value="240" /></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">💬 Comandos disponibles</div></div>
+      <div class="card-body"><ul class="list" style="font-size:13px">
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!ia</code><span style="flex:1; color:var(--fg-muted)">Pregunta libre</span><span class="badge success">on</span></li>
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!fortuna</code><span style="flex:1; color:var(--fg-muted)">Tu suerte de hoy</span><span class="badge success">on</span></li>
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!tarot</code><span style="flex:1; color:var(--fg-muted)">Lectura de cartas</span><span class="badge success">on</span></li>
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!horoscopo</code><span style="flex:1; color:var(--fg-muted)">Por signo</span><span class="badge success">on</span></li>
+      </ul></div>
+    </div>
+  </div>
+`;
+MaruShell.render('ia.html', content, { title: 'IA' });
+</script></body></html>

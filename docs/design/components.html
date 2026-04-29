@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Componentes · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header"><div><h1>Componentes</h1><p>Catálogo visual de las primitivas de @maru/ui</p></div></div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-header"><div class="card-title">Botones</div></div>
+      <div class="card-body" style="display:flex; flex-wrap:wrap; gap:8px">
+        <button class="btn">Primary</button>
+        <button class="btn secondary">Secondary</button>
+        <button class="btn ghost">Ghost</button>
+        <button class="btn danger">Danger</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">Badges</div></div>
+      <div class="card-body" style="display:flex; flex-wrap:wrap; gap:6px">
+        <span class="badge">default</span><span class="badge accent">accent</span><span class="badge success">success</span><span class="badge warning">warning</span><span class="badge danger">danger</span><span class="badge info">info</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">Inputs</div></div>
+      <div class="card-body col" style="gap:10px">
+        <div class="input"><input placeholder="Texto normal" /></div>
+        <div class="input"><span style="color:var(--fg-subtle)">@</span><input value="soykoru" /></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">Tabs</div></div>
+      <div class="card-body">
+        <div class="tabs"><button class="tab active">General</button><button class="tab">Avanzado</button><button class="tab">Logs</button></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">Status dots</div></div>
+      <div class="card-body" style="display:flex; gap:16px; font-size:12px; color:var(--fg-muted)">
+        <span><span class="dot connected"></span> connected</span>
+        <span><span class="dot connecting"></span> connecting</span>
+        <span><span class="dot error"></span> error</span>
+        <span><span class="dot"></span> idle</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">Card + Empty</div></div>
+      <div class="card-body">
+        <div class="empty"><div class="empty-icon">📡</div><strong>Sin datos</strong><p style="color:var(--fg-muted); font-size:12px; margin:4px 0 0">Cuando llegue actividad la verás acá</p></div>
+      </div>
+    </div>
+  </div>
+`;
+MaruShell.render('components.html', content, { title: 'Componentes' });
+</script></body></html>

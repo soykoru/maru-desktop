@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Conexión · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header">
+    <div><h1>Conexión TikTok Live</h1><p>Ingresá tu @usuario para conectarte y empezar a recibir eventos</p></div>
+    <span class="badge accent">⚡ sidecar conectado</span>
+  </div>
+  <div class="grid" style="grid-template-columns: 1fr 2fr">
+    <div class="card">
+      <div class="card-header"><div class="card-title">🔌 Conectar</div></div>
+      <div class="card-body col" style="gap:12px">
+        <div class="row"><span style="color:var(--fg-muted); font-size:13px">Estado</span><span class="badge success">conectado</span></div>
+        <div>
+          <div style="font-size:10px; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px">Usuario TikTok</div>
+          <div class="input"><span style="color:var(--fg-subtle)">@</span><input value="soykoru" disabled /></div>
+        </div>
+        <button class="btn danger">⏏ Desconectar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title row"><span>📡 Feed en vivo <span class="badge">128</span></span><button class="btn ghost" style="height:28px">limpiar</button></div></div>
+      <div class="card-body">
+        <ul class="list" style="max-height: 340px; overflow:auto">
+          <li><span class="badge warning" style="width:64px;justify-content:center">gift</span><strong style="flex:1">koru_fan</strong><code>×5</code><code style="color:var(--fg-subtle)">14:32:09</code></li>
+          <li><span class="badge success" style="width:64px;justify-content:center">follow</span><strong style="flex:1">new_viewer_42</strong><code style="color:var(--fg-subtle)">14:32:05</code></li>
+          <li><span class="badge danger" style="width:64px;justify-content:center">like</span><strong style="flex:1">heart_spam</strong><code>×120</code><code style="color:var(--fg-subtle)">14:32:01</code></li>
+          <li><span class="badge accent" style="width:64px;justify-content:center">command</span><strong style="flex:1">user_123</strong><span style="color:var(--fg-muted); font-size:13px">!play despacito</span><code style="color:var(--fg-subtle)">14:31:58</code></li>
+          <li><span class="badge info" style="width:64px;justify-content:center">share</span><strong style="flex:1">amig_2024</strong><code style="color:var(--fg-subtle)">14:31:55</code></li>
+          <li><span style="width:64px;text-align:center;color:var(--fg-subtle); font-size:11px">comment</span><strong style="flex:1">otro_user</strong><span style="color:var(--fg-muted); font-size:13px">"hola maru!"</span><code style="color:var(--fg-subtle)">14:31:51</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+`;
+MaruShell.render('connection.html', content, { title: 'Conexión' });
+</script></body></html>

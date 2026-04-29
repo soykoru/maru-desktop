@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Stream Profiles · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header"><div><h1>Stream Profiles</h1><p>Snapshots completos: reglas + datos + social + IA + overlays</p></div>
+  <button class="btn">+ Guardar perfil actual</button></div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-body" style="padding:18px">
+      <div class="row"><strong>Valheim Hardcore</strong><span class="badge accent">activo</span></div>
+      <p style="color:var(--fg-muted); font-size:12px; margin:4px 0 12px">12 reglas · 86 entidades · 142 items · IA Groq · 3 overlays</p>
+      <div style="display:flex; gap:6px"><button class="btn secondary" style="height:32px; font-size:12px">Cargar</button><button class="btn ghost" style="height:32px; font-size:12px">Duplicar</button><button class="btn ghost" style="height:32px; font-size:12px">Exportar</button></div>
+    </div></div>
+    <div class="card"><div class="card-body" style="padding:18px">
+      <div class="row"><strong>Terraria Casual</strong><span class="badge">guardado</span></div>
+      <p style="color:var(--fg-muted); font-size:12px; margin:4px 0 12px">8 reglas · IA Gemini · 1 overlay</p>
+      <div style="display:flex; gap:6px"><button class="btn secondary" style="height:32px; font-size:12px">Cargar</button><button class="btn ghost" style="height:32px; font-size:12px">Duplicar</button><button class="btn ghost" style="height:32px; font-size:12px">Exportar</button></div>
+    </div></div>
+    <div class="card"><div class="card-body" style="padding:18px">
+      <div class="row"><strong>Minecraft Just Chatting</strong><span class="badge">guardado</span></div>
+      <p style="color:var(--fg-muted); font-size:12px; margin:4px 0 12px">6 reglas · sin IA · 2 overlays</p>
+      <div style="display:flex; gap:6px"><button class="btn secondary" style="height:32px; font-size:12px">Cargar</button><button class="btn ghost" style="height:32px; font-size:12px">Duplicar</button><button class="btn ghost" style="height:32px; font-size:12px">Exportar</button></div>
+    </div></div>
+  </div>
+  <h2 style="font-size:14px; color:var(--fg-muted); margin-top:24px; margin-bottom:8px">Backups recientes</h2>
+  <div class="card"><div class="card-body" style="padding-top:16px">
+    <table class="tbl"><thead><tr><th>ID</th><th>Scope</th><th>Tamaño</th><th>Fecha</th><th></th></tr></thead><tbody>
+      <tr><td><code>rules-1745...</code></td><td><span class="badge">rules</span></td><td>14.3 KB</td><td>Hoy 14:21</td><td style="text-align:right"><button class="btn ghost" style="height:28px; font-size:11px">Restaurar</button></td></tr>
+      <tr><td><code>full-1745...</code></td><td><span class="badge accent">full</span></td><td>248 KB</td><td>Ayer 22:08</td><td style="text-align:right"><button class="btn ghost" style="height:28px; font-size:11px">Restaurar</button></td></tr>
+    </tbody></table>
+  </div></div>
+`;
+MaruShell.render('profiles.html', content, { title: 'Perfiles' });
+</script></body></html>

@@ -1,0 +1,19 @@
+{
+  "name": "@maru/sidecar",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "MARU Live Sidecar — Python (TikTok / juegos / IA / TTS / Spotify)",
+  "scripts": {
+    "dev": "python -m maru_sidecar --rpc-port 8770 --log-level INFO --ready-stdout",
+    "test": "python -m pytest tests -q",
+    "build": "python build.py",
+    "build:check": "python -c \"import PyInstaller\" && echo PyInstaller OK",
+    "typecheck": "echo \"sidecar typecheck via mypy (F1)\" && exit 0",
+    "lint": "echo \"sidecar lint placeholder F0\" && exit 0",
+    "clean": "rimraf dist build .turbo .pytest_cache"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1"
+  }
+}

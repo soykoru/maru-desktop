@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Reglas · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header">
+    <div><h1>Reglas</h1><p>Mapea eventos de TikTok a acciones en tus juegos</p></div>
+    <button class="btn">+ Nueva regla</button>
+  </div>
+  <div class="tabs" style="margin-bottom: 16px">
+    <button class="tab active">Valheim</button>
+    <button class="tab">Terraria</button>
+    <button class="tab">Minecraft</button>
+    <button class="tab">Custom</button>
+  </div>
+  <div class="card">
+    <div class="card-body" style="padding-top:20px">
+      <table class="tbl">
+        <thead><tr><th></th><th>Trigger</th><th>Acción</th><th>Cooldown</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="width:40px"><span class="badge accent">ON</span></td>
+            <td>gift <span style="color:var(--fg-subtle)">·</span> rosa <span style="color:var(--fg-subtle)">≥1💎</span></td>
+            <td><span class="badge warning">spawn</span> Troll Furioso × 1</td>
+            <td><code>5s</code></td>
+            <td><span class="badge success">ok</span></td>
+            <td style="text-align:right"><button class="btn ghost" style="height:28px">⋯</button></td>
+          </tr>
+          <tr>
+            <td><span class="badge accent">ON</span></td>
+            <td>follow</td>
+            <td><span class="badge info">give_item</span> Espada Hierro × 1</td>
+            <td><code>—</code></td>
+            <td><span class="badge success">ok</span></td>
+            <td style="text-align:right"><button class="btn ghost" style="height:28px">⋯</button></td>
+          </tr>
+          <tr style="opacity:.55">
+            <td><span class="badge">OFF</span></td>
+            <td>command <span style="color:var(--fg-subtle)">!ataque</span></td>
+            <td><span class="badge danger">trigger_event</span> raid + 3 acciones aleatorias</td>
+            <td><code>30s</code></td>
+            <td><span class="badge warning">testing</span></td>
+            <td style="text-align:right"><button class="btn ghost" style="height:28px">⋯</button></td>
+          </tr>
+          <tr>
+            <td><span class="badge accent">ON</span></td>
+            <td>like <span style="color:var(--fg-subtle)">≥100</span></td>
+            <td><span class="badge accent">multi</span> 3 acciones</td>
+            <td><code>10s</code></td>
+            <td><span class="badge success">ok</span></td>
+            <td style="text-align:right"><button class="btn ghost" style="height:28px">⋯</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+`;
+MaruShell.render('rules.html', content, { title: 'Reglas' });
+</script></body></html>

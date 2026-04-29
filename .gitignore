@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+out/
+build/
+release/
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# PyInstaller
+*.spec.bak
+
+# Electron
+apps/desktop/release/
+
+# Logs
+logs/
+*.log
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+secrets/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# MARU runtime data (no commitear configuración personal)
+apps/sidecar/runtime_data/
+
+# Runtime data del user (logs, cache, descargas dinámicas).
+# El bundle de imágenes original vive en apps/desktop/resources/data/
+# y SÍ va al repo. Esta carpeta es ephemeral.
+apps/runtime_data/
+
+# Tarballs locales (pnpm pack, npm pack)
+*.tgz

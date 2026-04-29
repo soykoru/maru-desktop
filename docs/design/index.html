@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MARU Desktop · Mockups</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    main { max-width: 980px; margin: 0 auto; padding: 64px 32px; }
+    h1 { font-size: 32px; letter-spacing: -0.02em; margin: 0 0 8px; }
+    p.lead { color: var(--fg-muted); font-size: 16px; max-width: 680px; }
+    .grid-pages { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 32px; }
+    .page-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      background: rgb(from var(--bg-surface) r g b / 0.7);
+      text-decoration: none;
+      color: inherit;
+      transition: transform .2s, border-color .2s;
+    }
+    .page-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .page-card h3 { margin: 0 0 4px; font-size: 14px; }
+    .page-card p { margin: 0; font-size: 12px; color: var(--fg-muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>MARU Desktop · Mockups F2</h1>
+    <p class="lead">Catálogo navegable del nuevo diseño visual. Cada pantalla espeja la UI real (mismos tokens y componentes que <code>@maru/ui</code>). Probá los temas con el switch arriba a la derecha en cada vista.</p>
+
+    <div class="grid-pages">
+      <a class="page-card" href="dashboard.html"><h3>Dashboard</h3><p>Stats live + feed reciente + sistema</p></a>
+      <a class="page-card" href="connection.html"><h3>Conexión</h3><p>Conectar TikTok + feed en vivo</p></a>
+      <a class="page-card" href="rules.html"><h3>Reglas</h3><p>Triggers → acciones por juego</p></a>
+      <a class="page-card" href="data.html"><h3>Datos</h3><p>Entidades / items / eventos</p></a>
+      <a class="page-card" href="social.html"><h3>Social</h3><p>Duelos, ranking, narraciones</p></a>
+      <a class="page-card" href="spotify.html"><h3>Spotify</h3><p>Now playing, cola, control</p></a>
+      <a class="page-card" href="ia.html"><h3>IA</h3><p>Provider + comandos + cooldown</p></a>
+      <a class="page-card" href="overlays.html"><h3>Overlays</h3><p>Galería tipo Tikfinity</p></a>
+      <a class="page-card" href="profiles.html"><h3>Stream Profiles</h3><p>Perfiles guardables</p></a>
+      <a class="page-card" href="logs.html"><h3>Logs</h3><p>Console con filtros</p></a>
+      <a class="page-card" href="settings.html"><h3>Ajustes</h3><p>Apariencia, updates, privacidad</p></a>
+      <a class="page-card" href="components.html"><h3>Componentes</h3><p>Catálogo de primitivas</p></a>
+    </div>
+  </main>
+</body>
+</html>

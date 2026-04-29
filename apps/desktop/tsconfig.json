@@ -1,0 +1,21 @@
+{
+  "extends": "@maru/tsconfig/electron-renderer.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/renderer/*"]
+    }
+  },
+  "include": ["src/renderer/**/*", "src/preload/**/*"],
+  "exclude": [
+    "src/main/**/*",
+    "src/test/**/*",
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "node_modules",
+    "out",
+    "dist",
+    "release"
+  ]
+}

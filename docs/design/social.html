@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Social · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header"><div><h1>Sistema social</h1><p>Duelos, relaciones, ranking y narraciones del chat</p></div></div>
+  <div class="grid grid-4">
+    <div class="stat"><div><div class="stat-label">Registrados</div><div class="stat-value">412</div></div><div class="stat-icon accent">👥</div></div>
+    <div class="stat"><div><div class="stat-label">Duelos hoy</div><div class="stat-value">87</div></div><div class="stat-icon">⚔</div></div>
+    <div class="stat"><div><div class="stat-label">Relaciones</div><div class="stat-value">38</div></div><div class="stat-icon">💞</div></div>
+    <div class="stat"><div><div class="stat-label">TTS narrados</div><div class="stat-value">1,205</div></div><div class="stat-icon">🔊</div></div>
+  </div>
+  <div class="grid" style="grid-template-columns: 2fr 1fr; margin-top:16px">
+    <div class="card"><div class="card-header"><div class="card-title">🏆 Top ranking</div></div>
+      <div class="card-body"><table class="tbl">
+        <thead><tr><th>#</th><th>Usuario</th><th>Nivel</th><th>Duelos</th><th>W/L</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>maru_legend</strong></td><td><span class="badge accent">42</span></td><td>312</td><td>248/64</td></tr>
+          <tr><td>2</td><td><strong>koru_fan</strong></td><td><span class="badge accent">38</span></td><td>280</td><td>198/82</td></tr>
+          <tr><td>3</td><td><strong>chat_warrior</strong></td><td><span class="badge accent">35</span></td><td>246</td><td>180/66</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">⚙ Comandos</div></div>
+      <div class="card-body"><ul class="list" style="font-size:13px">
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!duelo</code><span style="flex:1; color:var(--fg-muted)">Reta a otro user</span><span class="badge success">on</span></li>
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!perfil</code><span style="flex:1; color:var(--fg-muted)">Ver tu perfil</span><span class="badge success">on</span></li>
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!tarot</code><span style="flex:1; color:var(--fg-muted)">Tirada de cartas</span><span class="badge success">on</span></li>
+        <li><code style="background:var(--bg-elevated); padding:1px 6px; border-radius:4px">!fortuna</code><span style="flex:1; color:var(--fg-muted)">Suerte del día</span><span class="badge">off</span></li>
+      </ul></div>
+    </div>
+  </div>
+`;
+MaruShell.render('social.html', content, { title: 'Social' });
+</script></body></html>

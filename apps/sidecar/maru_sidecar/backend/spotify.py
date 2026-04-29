@@ -1,0 +1,653 @@
+"""Adapter `spotify.*` — wrap completo de `core.spotify_client.SpotifyClient` (G14).
+
+Capacidades MARU original (paridad sección O · 23 ítems):
+  - OAuth server local :8888.
+  - Multi-cuenta (`accounts.json`).
+  - Throttling 3s/call + 8/30s, recovery mode 10min cache 120s.
+  - play_request cola random priority + playfan_request cuota diaria.
+  - skip / pause / resume / toggle / get_devices / device_id.
+  - Comandos enabled (5: play/skip/cola/pause/playfan).
+  - Priority users + playfan_uses persistente.
+
+Persistencia propia (G14):
+  - `data/spotify.json` con `{credentials, config, priority_users}`.
+  - Cuentas guardadas: delegado a `SpotifyClient` original (acccounts.json
+    en su lugar) cuando exista; sino se persiste localmente.
+
+Tolerante a `core.spotify_client` no disponible: todas las operaciones
+devuelven shape válido sin crashear.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import threading
+import time
+from pathlib import Path
+from typing import Any
+
+from ..event_bus import get_event_bus
+from ..logger import get_logger
+from ..runtime import DATA_DIR
+
+log = get_logger(__name__)
+
+
+DEFAULT_CONFIG: dict[str, Any] = {
+    "enabled": False,
+    "max_queue": 5,
+    "tts_enabled": True,
+    "device_id": "",
+    "enabled_commands": ["play", "skip", "cola", "pause", "playfan"],
+    # priority_users guardadas como dict username (lower) → daily_uses.
+    "priority_users": {},
+    # Credenciales OAuth — se persisten para que tras reiniciar la app
+    # `try_auto_connect()` funcione sin reabrir el flow del navegador.
+    # Paridad MARU original (`gui.py:9392-9398` que también las guardaba).
+    "client_id": "",
+    "client_secret": "",
+}
+
+
+def _config_path() -> Path:
+    return DATA_DIR / "spotify.json"
+
+
+def _coerce_config(raw: Any) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        return {**DEFAULT_CONFIG, "priority_users": {}}
+    out = {**DEFAULT_CONFIG, "priority_users": {}}
+    out["enabled"] = bool(raw.get("enabled", False))
+    try:
+        out["max_queue"] = max(1, min(50, int(raw.get("max_queue") or 5)))
+    except (TypeError, ValueError):
+        out["max_queue"] = 5
+    out["tts_enabled"] = bool(raw.get("tts_enabled", True))
+    out["device_id"] = str(raw.get("device_id") or "")
+    cmds = raw.get("enabled_commands")
+    if isinstance(cmds, list):
+        out["enabled_commands"] = [
+            c for c in cmds if isinstance(c, str) and c in DEFAULT_CONFIG["enabled_commands"]
+        ]
+    pu = raw.get("priority_users") or {}
+    if isinstance(pu, dict):
+        out["priority_users"] = {
+            str(k).lower(): max(0, min(50, int(v) or 0))
+            for k, v in pu.items()
+            if isinstance(k, str)
+        }
+    out["client_id"] = str(raw.get("client_id") or "").strip()
+    out["client_secret"] = str(raw.get("client_secret") or "").strip()
+    return out
+
+
+class SpotifyService:
+    def __init__(self) -> None:
+        self._client: Any = None
+        self._lock = threading.Lock()
+        self._poll_task: asyncio.Task[None] | None = None
+        self._social_svc: Any = None
+        self._last_pushed_track: str | None = None
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        self._config = self._read_config()
+
+    def attach_social(self, social_svc: Any) -> None:
+        """Cablea SocialService para que después de `connect`/`config_set`
+        re-sincronicemos `social._sys.spotify`."""
+        self._social_svc = social_svc
+
+    def _notify_social(self) -> None:
+        if self._social_svc is None:
+            return
+        try:
+            self._social_svc.refresh_spotify_link()
+        except Exception:
+            log.exception("spotify._notify_social fallo")
+
+    # ── Persistencia ─────────────────────────────────────────────────────
+
+    def _read_config(self) -> dict[str, Any]:
+        path = _config_path()
+        if not path.exists():
+            return _coerce_config({})
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            log.error("spotify.json corrupto — usando defaults")
+            return _coerce_config({})
+        return _coerce_config(raw if isinstance(raw, dict) else {})
+
+    def _write_config(self) -> None:
+        path = _config_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {**self._config, "updatedAt": int(time.time() * 1000)}
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(path)
+
+    # ── Lazy client ──────────────────────────────────────────────────────
+
+    def _ensure_client(self) -> Any:
+        if self._client is not None:
+            return self._client
+        try:
+            from .. import core_bridge
+
+            core_bridge.install()
+            from core.spotify_client import SpotifyClient  # type: ignore
+        except Exception as exc:
+            log.warning("spotify: core no disponible: %s", exc)
+            return None
+        try:
+            self._client = SpotifyClient()
+            # Restaurar credenciales guardadas. Sin esto `try_auto_connect`
+            # falla silencioso porque `client_id`/`client_secret` están en
+            # blanco después de reiniciar la app.
+            cid = self._config.get("client_id") or ""
+            csec = self._config.get("client_secret") or ""
+            if cid and csec:
+                try:
+                    if hasattr(self._client, "configure"):
+                        # `configure` es la API original — preserva max_queue,
+                        # device_id y priority_users si las pasamos.
+                        self._client.configure(
+                            client_id=cid,
+                            client_secret=csec,
+                            device_id=self._config.get("device_id", ""),
+                            max_queue=self._config.get("max_queue", 5),
+                            priority_users=list(
+                                self._config.get("priority_users", {}).keys()
+                            ),
+                        )
+                    elif hasattr(self._client, "set_credentials"):
+                        self._client.set_credentials(cid, csec)
+                    else:
+                        self._client.client_id = cid
+                        self._client.client_secret = csec
+                except Exception:
+                    log.exception("spotify: aplicar credenciales guardadas")
+            try:
+                self._client.try_auto_connect()
+            except Exception:
+                pass
+            return self._client
+        except Exception as exc:
+            log.exception("spotify init error: %s", exc)
+            return None
+
+    # ── RPC: status / now-playing ────────────────────────────────────────
+
+    def status(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None:
+            return {"connected": False, "available": False}
+        try:
+            connected = bool(getattr(c, "is_connected", False))
+            account = c.get_account_info() if connected else None
+        except Exception as exc:
+            log.warning("spotify status: %s", exc)
+            return {"connected": False, "available": True}
+        return {
+            "connected": connected,
+            "available": True,
+            "account": account,
+            "rateLimited": bool(
+                getattr(c, "_is_rate_limited", lambda: False)()
+                if hasattr(c, "_is_rate_limited")
+                else False
+            ),
+        }
+
+    def now_playing(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None or not getattr(c, "is_connected", False):
+            return {"isPlaying": False}
+        try:
+            np = c.get_now_playing() or {}
+        except Exception:
+            return {"isPlaying": False}
+        return self._serialize_now_playing(np)
+
+    # ── RPC: control de reproducción ─────────────────────────────────────
+
+    def play_request(self, params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False, "message": "spotify no disponible"}
+        user = params.get("user", "?")
+        query = params.get("query", "")
+        priority = bool(params.get("priority"))
+        try:
+            ok, msg = (
+                c.playfan_request(user, query)
+                if priority
+                else c.play_request(user, query)
+            )
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+        return {"ok": bool(ok), "message": str(msg)}
+
+    def skip(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False}
+        try:
+            c.skip_current()
+            return {"ok": True}
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+
+    def toggle_playback(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False, "message": "spotify no disponible"}
+        try:
+            ok, msg = c.toggle_playback()
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+        return {"ok": bool(ok), "message": str(msg)}
+
+    # ── RPC: queue / devices (G14) ───────────────────────────────────────
+
+    def queue_list(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None or not getattr(c, "is_connected", False):
+            return {"items": [], "total": 0}
+        try:
+            raw = (
+                c.get_queue_list()
+                if hasattr(c, "get_queue_list")
+                else []
+            )
+        except Exception:
+            return {"items": [], "total": 0}
+        items: list[dict[str, Any]] = []
+        for r in raw or []:
+            if not isinstance(r, dict):
+                continue
+            items.append(
+                {
+                    "trackName": str(r.get("name") or r.get("trackName") or ""),
+                    "artist": str(r.get("artist") or ""),
+                    "requestedBy": str(r.get("user") or r.get("requested_by") or "?"),
+                    "isPriority": bool(r.get("priority", False)),
+                    "trackId": str(r.get("track_id") or r.get("trackId") or ""),
+                }
+            )
+        return {"items": items, "total": len(items)}
+
+    def queue_clear(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False, "message": "spotify no disponible"}
+        try:
+            if hasattr(c, "clear_queue"):
+                c.clear_queue()
+            return {"ok": True}
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+
+    def queue_remove(self, params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False}
+        track_id = params.get("trackId")
+        if not isinstance(track_id, str) or not track_id:
+            raise TypeError("trackId requerido")
+        try:
+            if hasattr(c, "remove_from_queue"):
+                c.remove_from_queue(track_id)
+            return {"ok": True}
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+
+    def devices(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None or not getattr(c, "is_connected", False):
+            return {"devices": []}
+        try:
+            raw = (
+                c.get_devices()
+                if hasattr(c, "get_devices")
+                else []
+            )
+        except Exception:
+            return {"devices": []}
+        out: list[dict[str, Any]] = []
+        for d in raw or []:
+            if not isinstance(d, dict):
+                continue
+            out.append(
+                {
+                    "id": str(d.get("id") or ""),
+                    "name": str(d.get("name") or ""),
+                    "type": str(d.get("type") or "unknown"),
+                    "isActive": bool(d.get("is_active", False)),
+                    "volumePercent": int(d.get("volume_percent") or 0),
+                }
+            )
+        return {"devices": out}
+
+    # ── RPC: cuentas guardadas (G14) ─────────────────────────────────────
+    # Las APIs reales del SpotifyClient original (`spotify_client.py:472-548`):
+    #   - load_saved_accounts() → list[{name, client_id, client_secret}]   (@staticmethod)
+    #   - save_account(name, client_id, client_secret) → bool              (@staticmethod)
+    #   - delete_account(client_id) → bool                                  (@staticmethod)
+    #   - switch_account(client_id, client_secret)                          (instance, desconecta+limpia cache+autentica)
+    # Antes llamábamos a `list_accounts/save_current_account/load_account/delete_account(name)`
+    # que no existen — por eso en la UI no salía ninguna cuenta y "Guardar"
+    # parecía no hacer nada.
+
+    def _client_class(self) -> Any:
+        c = self._ensure_client()
+        return type(c) if c is not None else None
+
+    def accounts_list(self, _params: dict[str, Any]) -> dict[str, Any]:
+        cls = self._client_class()
+        if cls is None or not hasattr(cls, "load_saved_accounts"):
+            return {"accounts": []}
+        try:
+            raw = cls.load_saved_accounts() or []
+        except Exception:
+            return {"accounts": []}
+        # Detectar cuál es la "actual" comparando client_id con el conectado.
+        c = self._client
+        current_id = getattr(c, "client_id", "") if c is not None else ""
+        out: list[dict[str, Any]] = []
+        for a in raw:
+            if isinstance(a, dict):
+                cid = str(a.get("client_id") or "")
+                name = str(a.get("name") or cid or "?")
+                out.append({
+                    "name": name,
+                    "displayName": name,
+                    "isCurrent": bool(current_id) and cid == current_id,
+                })
+        return {"accounts": out}
+
+    def accounts_save(self, params: dict[str, Any]) -> dict[str, Any]:
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False, "message": "spotify no disponible"}
+        name = params.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("name requerido")
+        cid = str(getattr(c, "client_id", "") or "")
+        csec = str(getattr(c, "client_secret", "") or "")
+        if not cid or not csec:
+            return {
+                "ok": False,
+                "message": "primero conectá Spotify para tener credenciales",
+            }
+        try:
+            cls = type(c)
+            ok = bool(cls.save_account(name.strip(), cid, csec))
+            return {"ok": ok}
+        except Exception as exc:
+            log.exception("spotify.accounts_save")
+            return {"ok": False, "message": str(exc)}
+
+    def accounts_load(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Cambiar a una cuenta guardada → switch_account(client_id, client_secret).
+        Persistimos las credenciales en `spotify.json` y notificamos al
+        SocialSystem para que `social._sys.spotify` apunte a la cuenta nueva."""
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False, "message": "spotify no disponible"}
+        name = params.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("name requerido")
+        cls = type(c)
+        try:
+            accounts = cls.load_saved_accounts() if hasattr(cls, "load_saved_accounts") else []
+        except Exception:
+            accounts = []
+        target = next(
+            (a for a in accounts if isinstance(a, dict) and a.get("name") == name.strip()),
+            None,
+        )
+        if target is None:
+            return {"ok": False, "message": f"cuenta '{name}' no encontrada"}
+        cid = str(target.get("client_id") or "")
+        csec = str(target.get("client_secret") or "")
+        if not cid or not csec:
+            return {"ok": False, "message": "cuenta sin credenciales válidas"}
+        try:
+            if hasattr(c, "switch_account"):
+                c.switch_account(cid, csec)
+            else:
+                # Fallback manual: setear creds + try_auto_connect.
+                if hasattr(c, "configure"):
+                    c.configure(client_id=cid, client_secret=csec)
+                else:
+                    c.client_id = cid
+                    c.client_secret = csec
+                if hasattr(c, "try_auto_connect"):
+                    c.try_auto_connect()
+            self._persist_credentials(cid, csec)
+            self._notify_social()
+            return {"ok": True}
+        except Exception as exc:
+            log.exception("spotify.accounts_load")
+            return {"ok": False, "message": str(exc)}
+
+    def accounts_delete(self, params: dict[str, Any]) -> dict[str, Any]:
+        cls = self._client_class()
+        if cls is None or not hasattr(cls, "delete_account"):
+            return {"ok": False}
+        name = params.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("name requerido")
+        # Nuestro RPC recibe el `name`, pero el método real toma `client_id`.
+        # Buscamos el client_id por el nombre en la lista persistida.
+        try:
+            accounts = cls.load_saved_accounts() if hasattr(cls, "load_saved_accounts") else []
+        except Exception:
+            accounts = []
+        target = next(
+            (a for a in accounts if isinstance(a, dict) and a.get("name") == name.strip()),
+            None,
+        )
+        if target is None:
+            return {"ok": True, "removed": False}
+        try:
+            ok = bool(cls.delete_account(str(target.get("client_id") or "")))
+            return {"ok": True, "removed": ok}
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+
+    # ── RPC: connect / disconnect / credentials ──────────────────────────
+
+    def connect(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Inicia OAuth flow del SpotifyClient (paridad MARU original).
+
+        El método del core se llama `authenticate()`, retorna `(ok: bool,
+        message: str)`. Antes se llamaba `c.connect()` que NO EXISTE → fallo
+        silencioso. Ahora ejecutamos el auth real:
+          1. Set credentials si vinieron por params.
+          2. Llamar `authenticate()` que abre navegador + servidor OAuth :8888.
+          3. Devolver resultado al frontend.
+
+        Como `authenticate()` puede tardar hasta 90s (espera del usuario),
+        lo corremos en thread aparte vía run_in_executor para no bloquear
+        el loop del sidecar."""
+        c = self._ensure_client()
+        if c is None:
+            return {"ok": False, "message": "spotify no disponible"}
+        client_id = str(params.get("clientId") or "").strip()
+        client_secret = str(params.get("clientSecret") or "").strip()
+        try:
+            if client_id and client_secret and hasattr(c, "set_credentials"):
+                c.set_credentials(client_id, client_secret)
+            elif client_id and client_secret:
+                # Fallback: setear directamente si el método no existe.
+                c.client_id = client_id
+                c.client_secret = client_secret
+
+            if not hasattr(c, "authenticate"):
+                return {
+                    "ok": False,
+                    "message": "core.spotify_client.authenticate no disponible",
+                }
+            res = c.authenticate()
+            # `authenticate()` retorna (ok: bool, message: str).
+            if isinstance(res, tuple) and len(res) == 2:
+                ok, msg = bool(res[0]), str(res[1])
+                if ok:
+                    self._persist_credentials(client_id, client_secret)
+                    # Wire SpotifyClient en el SocialSystem para que `!play`
+                    # encuentre `self.spotify` no-None y anuncie por TTS.
+                    self._notify_social()
+                return {"ok": ok, "message": msg}
+            if bool(res):
+                self._persist_credentials(client_id, client_secret)
+                self._notify_social()
+            return {"ok": bool(res)}
+        except Exception as exc:
+            log.exception("spotify.connect fallo")
+            return {"ok": False, "message": str(exc)}
+
+    def _persist_credentials(self, client_id: str, client_secret: str) -> None:
+        """Guarda client_id/client_secret en `data/spotify.json` para que
+        `try_auto_connect` funcione tras reiniciar la app. También marca
+        `enabled=True` para que la próxima vez se respete el toggle."""
+        if not client_id or not client_secret:
+            return
+        with self._lock:
+            self._config["client_id"] = client_id
+            self._config["client_secret"] = client_secret
+            self._config["enabled"] = True
+            self._write_config()
+
+    def disconnect(self, _params: dict[str, Any]) -> dict[str, Any]:
+        c = self._client  # no forzar init si no estaba.
+        if c is None:
+            return {"ok": True}
+        try:
+            if hasattr(c, "disconnect"):
+                c.disconnect()
+            return {"ok": True}
+        except Exception:
+            return {"ok": True}
+
+    # ── RPC: config (G14) ───────────────────────────────────────────────
+
+    def config_get(self, _params: dict[str, Any]) -> dict[str, Any]:
+        return {"config": dict(self._config)}
+
+    def config_set(self, params: dict[str, Any]) -> dict[str, Any]:
+        patch = params.get("patch") or {}
+        if not isinstance(patch, dict):
+            raise TypeError("patch requerido")
+        with self._lock:
+            merged = {**self._config, **patch}
+            self._config = _coerce_config(merged)
+            self._write_config()
+            # Aplicar al client si tiene API.
+            c = self._client
+            if c is not None:
+                try:
+                    if hasattr(c, "set_max_queue"):
+                        c.set_max_queue(self._config["max_queue"])
+                    if hasattr(c, "set_device_id"):
+                        c.set_device_id(self._config["device_id"])
+                    if hasattr(c, "set_priority_users"):
+                        c.set_priority_users(dict(self._config["priority_users"]))
+                except Exception as exc:
+                    log.warning("config_set apply: %s", exc)
+        # Re-sincronizar con SocialSystem (tts_enabled puede haber cambiado).
+        self._notify_social()
+        return {"ok": True, "config": dict(self._config)}
+
+    def priority_user_set(self, params: dict[str, Any]) -> dict[str, Any]:
+        username = params.get("username")
+        if not isinstance(username, str) or not username.strip():
+            raise ValueError("username requerido")
+        uses = params.get("uses")
+        try:
+            uses_n = max(0, min(50, int(uses or 0)))
+        except (TypeError, ValueError):
+            uses_n = 2
+        with self._lock:
+            self._config["priority_users"][username.strip().lower()] = uses_n
+            self._write_config()
+        return {"ok": True, "username": username.strip().lower(), "uses": uses_n}
+
+    def priority_user_remove(self, params: dict[str, Any]) -> dict[str, Any]:
+        username = params.get("username")
+        if not isinstance(username, str) or not username.strip():
+            raise ValueError("username requerido")
+        with self._lock:
+            removed = self._config["priority_users"].pop(
+                username.strip().lower(), None
+            )
+            if removed is not None:
+                self._write_config()
+        return {"ok": True, "removed": removed is not None}
+
+    # ── Polling para push event `spotify:now-playing` ───────────────────
+
+    def poll_now_playing_for_push(self) -> dict[str, Any] | None:
+        """Devuelve el payload serializado SOLO cuando cambia el track o el
+        estado de reproducción. El scheduler en `__main__` usa esto para
+        emitir `spotify:now-playing` sin saturar la WS.
+
+        También dispara el monitor `check_and_advance` (paridad
+        `gui.py:9421` que usa un QTimer cada 30s para restaurar contexto
+        post-playfan).
+
+        Warm-start: si `_client` aún no fue inicializado, llamamos a
+        `_ensure_client()` para que `try_auto_connect()` corra en background
+        y el header global empiece a mostrar la canción sin que el usuario
+        tenga que abrir el diálogo."""
+        if self._client is None:
+            try:
+                self._ensure_client()
+            except Exception:
+                pass
+        if self._client is None or not getattr(self._client, "is_connected", False):
+            # Si pasamos de conectado a desconectado, emitimos un cambio.
+            if self._last_pushed_track is not None:
+                self._last_pushed_track = None
+                return {"isPlaying": False}
+            return None
+        try:
+            # Trigger del monitor de cola/contexto (paridad MARU).
+            try:
+                if hasattr(self._client, "check_and_advance"):
+                    self._client.check_and_advance()
+            except Exception:
+                pass
+            np = self._client.get_now_playing() or {}
+        except Exception:
+            return None
+        payload = self._serialize_now_playing(np)
+        # Clave de cambio: track + estado playing.
+        track = payload.get("track") or {}
+        key = (
+            f"{bool(payload.get('isPlaying'))}|"
+            f"{track.get('name','')}|{track.get('artist','')}"
+        )
+        if key == self._last_pushed_track:
+            return None
+        self._last_pushed_track = key
+        return payload
+
+    # ── Helpers ─────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _serialize_now_playing(np: dict[str, Any]) -> dict[str, Any]:
+        if not np or not np.get("is_playing"):
+            return {"isPlaying": False}
+        return {
+            "isPlaying": True,
+            "track": {
+                "name": np.get("name", ""),
+                "artist": np.get("artist", ""),
+                "album": np.get("album"),
+                "durationMs": int(np.get("duration_ms") or 0),
+                "positionMs": int(np.get("progress_ms") or 0),
+            },
+            "requestedBy": np.get("requested_by"),
+        }

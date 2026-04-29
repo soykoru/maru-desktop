@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Ajustes · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header"><div><h1>Ajustes</h1><p>Apariencia, notificaciones, actualizaciones y privacidad</p></div></div>
+  <div class="tabs" style="margin-bottom:16px">
+    <button class="tab active">Apariencia</button><button class="tab">Notificaciones</button><button class="tab">Avanzado</button><button class="tab">Privacidad</button>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">🎨 Tema de la app</div></div>
+    <div class="card-body col" style="gap:16px">
+      <div class="row">
+        <div><div style="font-size:14px">Esquema de color</div><div style="color:var(--fg-muted); font-size:12px">Cambia entre los 3 estilos. Se guarda automáticamente.</div></div>
+        <div class="tabs"><button class="tab active">Midnight</button><button class="tab">Aurora</button><button class="tab">Cyberpunk</button></div>
+      </div>
+      <div class="row" style="border-top:1px solid var(--border); padding-top:14px">
+        <div><div style="font-size:14px">Reducir movimiento</div><div style="color:var(--fg-muted); font-size:12px">Desactiva animaciones suaves para sesiones largas</div></div>
+        <span style="display:inline-flex; width:44px; height:24px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:999px; padding:2px"><span style="display:block; width:18px; height:18px; background:white; border-radius:999px"></span></span>
+      </div>
+    </div>
+  </div>
+`;
+MaruShell.render('settings.html', content, { title: 'Ajustes' });
+</script></body></html>

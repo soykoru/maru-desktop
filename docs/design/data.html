@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Datos · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header"><div><h1>Datos por juego</h1><p>Catálogo de entidades, items y eventos disponibles para reglas</p></div>
+  <div style="display:flex; gap:8px"><button class="btn secondary">Importar</button><button class="btn">+ Añadir</button></div></div>
+  <div class="tabs" style="margin-bottom:16px">
+    <button class="tab active">Valheim</button><button class="tab">Terraria</button><button class="tab">Minecraft</button>
+  </div>
+  <div class="grid grid-3">
+    <div class="card"><div class="card-header"><div class="card-title">🐺 Entidades <span class="badge">86</span></div></div>
+      <div class="card-body">
+        <div class="input" style="margin-bottom:12px"><input placeholder="Buscar entidad..." /></div>
+        <ul class="list" style="font-size:13px">
+          <li><strong style="flex:1">Troll Furioso</strong><code style="color:var(--fg-subtle)">Troll</code></li>
+          <li><strong style="flex:1">Lobo Gris</strong><code style="color:var(--fg-subtle)">Wolf</code></li>
+          <li><strong style="flex:1">Esqueleto</strong><code style="color:var(--fg-subtle)">Skeleton</code></li>
+          <li><strong style="flex:1">Greydwarf</strong><code style="color:var(--fg-subtle)">Greydwarf</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">⚔ Items <span class="badge">142</span></div></div>
+      <div class="card-body"><ul class="list" style="font-size:13px">
+        <li><strong style="flex:1">Espada Hierro</strong><code style="color:var(--fg-subtle)">SwordIron</code></li>
+        <li><strong style="flex:1">Escudo Madera</strong><code style="color:var(--fg-subtle)">ShieldWood</code></li>
+        <li><strong style="flex:1">Poción Salud</strong><code style="color:var(--fg-subtle)">HealthMead</code></li>
+      </ul></div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">⚡ Eventos <span class="badge">12</span></div></div>
+      <div class="card-body"><ul class="list" style="font-size:13px">
+        <li><strong style="flex:1">Raid: Troll Army</strong><code style="color:var(--fg-subtle)">army_theelder</code></li>
+        <li><strong style="flex:1">Tormenta</strong><code style="color:var(--fg-subtle)">army_skeleton</code></li>
+      </ul></div>
+    </div>
+  </div>
+`;
+MaruShell.render('data.html', content, { title: 'Datos' });
+</script></body></html>

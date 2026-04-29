@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Spotify · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header"><div><h1>Spotify</h1><p>Control de reproducción · cola de !play · cuentas multi-usuario</p></div>
+  <span class="badge success">conectado · maicol</span></div>
+  <div class="grid" style="grid-template-columns: 2fr 1fr">
+    <div class="card"><div class="card-header"><div class="card-title">🎵 Reproduciendo ahora</div></div>
+      <div class="card-body">
+        <div style="display:flex; gap:16px; align-items:center">
+          <div style="width:100px; height:100px; border-radius:14px; background:linear-gradient(135deg,var(--accent),var(--info))"></div>
+          <div style="flex:1">
+            <div style="font-size:18px; font-weight:600">Despacito</div>
+            <div style="color:var(--fg-muted); font-size:13px">Luis Fonsi · Daddy Yankee</div>
+            <div style="margin-top:12px; height:4px; background:var(--bg-elevated); border-radius:2px; overflow:hidden">
+              <div style="width:62%; height:100%; background:var(--accent)"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-family: ui-monospace, monospace; font-size:11px; color:var(--fg-subtle); margin-top:4px"><span>2:34</span><span>4:08</span></div>
+          </div>
+          <div style="display:flex; gap:6px">
+            <button class="btn secondary" style="width:40px; padding:0">⏮</button>
+            <button class="btn" style="width:48px; padding:0">⏸</button>
+            <button class="btn secondary" style="width:40px; padding:0">⏭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">📥 Cola</div></div>
+      <div class="card-body"><ul class="list" style="font-size:13px">
+        <li><span class="badge accent">priority</span><div style="flex:1"><strong>Bad Bunny - Tití me preguntó</strong><br><span style="color:var(--fg-subtle); font-size:11px">por @koru_fan</span></div></li>
+        <li><span style="width:48px; text-align:center; color:var(--fg-subtle); font-size:11px">2</span><div style="flex:1"><strong>Karol G - Tusa</strong><br><span style="color:var(--fg-subtle); font-size:11px">por @user_42</span></div></li>
+        <li><span style="width:48px; text-align:center; color:var(--fg-subtle); font-size:11px">3</span><div style="flex:1"><strong>Shakira - Bzrp #53</strong><br><span style="color:var(--fg-subtle); font-size:11px">por @maru_legend</span></div></li>
+      </ul></div>
+    </div>
+  </div>
+`;
+MaruShell.render('spotify.html', content, { title: 'Spotify' });
+</script></body></html>

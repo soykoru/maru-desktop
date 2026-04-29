@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maru-sidecar"
+version = "1.0.0"
+description = "MARU Live sidecar — JSON-RPC sobre WebSocket que expone TikTok/juegos/IA al cliente Electron"
+requires-python = ">=3.10"
+authors = [{ name = "soykoru", email = "maicolchia07@gmail.com" }]
+dependencies = [
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "mypy>=1.10",
+    "ruff>=0.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["maru_sidecar*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_ignores = true

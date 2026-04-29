@@ -1,0 +1,14 @@
+{
+  "extends": "@maru/tsconfig/electron-main.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"]
+  },
+  "include": [
+    "src/main/**/*",
+    "electron.vite.config.ts",
+    "postcss.config.cjs",
+    "tailwind.config.cjs"
+  ]
+}

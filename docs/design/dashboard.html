@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Dashboard · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const content = `
+  <div class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p>En vivo con @soykoru</p>
+    </div>
+    <span class="badge success" style="animation:pulse 1.4s infinite"><span class="dot connected"></span> EN VIVO</span>
+  </div>
+  <div class="grid grid-4">
+    <div class="stat"><div><div class="stat-label">Espectadores</div><div class="stat-value">1,240</div></div><div class="stat-icon accent">👁</div></div>
+    <div class="stat"><div><div class="stat-label">Likes</div><div class="stat-value">9,432</div></div><div class="stat-icon">❤</div></div>
+    <div class="stat"><div><div class="stat-label">Diamantes</div><div class="stat-value">580</div></div><div class="stat-icon">💎</div></div>
+    <div class="stat"><div><div class="stat-label">Shares</div><div class="stat-value">62</div></div><div class="stat-icon">↗</div></div>
+  </div>
+  <div class="grid" style="grid-template-columns: 2fr 1fr; margin-top: 16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 Eventos recientes</div></div>
+      <div class="card-body">
+        <ul class="list">
+          <li><span class="badge accent" style="width:64px;justify-content:center">command</span><strong style="flex:1">user_123</strong><code style="color:var(--fg-subtle); font-size:11px">14:32:11</code></li>
+          <li><span class="badge warning" style="width:64px;justify-content:center">gift</span><strong style="flex:1">koru_fan</strong><code style="font-size:11px">×5</code><code style="color:var(--fg-subtle); font-size:11px">14:32:09</code></li>
+          <li><span class="badge success" style="width:64px;justify-content:center">follow</span><strong style="flex:1">new_viewer_42</strong><code style="color:var(--fg-subtle); font-size:11px">14:32:05</code></li>
+          <li><span class="badge danger" style="width:64px;justify-content:center">like</span><strong style="flex:1">heart_spam</strong><code style="font-size:11px">×120</code><code style="color:var(--fg-subtle); font-size:11px">14:32:01</code></li>
+          <li><span class="badge info" style="width:64px;justify-content:center">share</span><strong style="flex:1">amig_2024</strong><code style="color:var(--fg-subtle); font-size:11px">14:31:58</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">⚙ Sistema</div></div>
+      <div class="card-body">
+        <div class="row"><span style="color:var(--fg-muted)">Sidecar</span><code>v0.2.0</code></div>
+        <div class="row"><span style="color:var(--fg-muted)">Uptime</span><code>27m 14s</code></div>
+        <div class="row"><span style="color:var(--fg-muted)">RAM</span><code>184 MB</code></div>
+        <div class="row"><span style="color:var(--fg-muted)">Eventos hoy</span><code>2,341</code></div>
+      </div>
+    </div>
+  </div>
+`;
+MaruShell.render('dashboard.html', content, { title: 'Dashboard' });
+</script></body></html>

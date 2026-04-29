@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es" data-theme="midnight">
+<head><meta charset="utf-8"><title>Overlays · MARU</title><link rel="stylesheet" href="styles.css"></head>
+<body><div id="root"></div>
+<script src="shell.js"></script>
+<script>
+const card = (title, badge, color) => `
+<div class="card" style="overflow:hidden">
+  <div style="height:140px; background:linear-gradient(135deg, ${color}, var(--accent)); position:relative">
+    <span class="badge ${badge}" style="position:absolute; top:10px; right:10px; backdrop-filter:blur(8px); background:rgb(0 0 0 / .35); border-color:rgb(255 255 255 / .15); color:white">${badge}</span>
+  </div>
+  <div class="card-body" style="padding:14px">
+    <div style="display:flex; align-items:center; justify-content:space-between">
+      <strong style="font-size:14px">${title}</strong>
+      <button class="btn ghost" style="height:28px; padding:0 10px; font-size:11px">⚙ ajustes</button>
+    </div>
+    <p style="margin:6px 0 12px; color:var(--fg-muted); font-size:12px">overlays.korugames.lat/${title.toLowerCase()}</p>
+    <div style="display:flex; gap:6px">
+      <button class="btn secondary" style="height:28px; padding:0 10px; font-size:11px">📋 Copy</button>
+      <button class="btn secondary" style="height:28px; padding:0 10px; font-size:11px">🧪 Test</button>
+      <button class="btn secondary" style="height:28px; padding:0 10px; font-size:11px">🔄 Reload</button>
+    </div>
+  </div>
+</div>`;
+
+const content = `
+  <div class="page-header">
+    <div><h1>Overlays</h1><p>Galería tipo Tikfinity · pegá la URL en TikTok Studio Browser Source</p></div>
+    <div style="display:flex; gap:8px"><button class="btn secondary">Cambiar alias</button><button class="btn">+ Nuevo overlay</button></div>
+  </div>
+  <div class="grid grid-3">
+    ${card('Taps', 'success', '#7c3aed')}
+    ${card('Streak', 'success', '#f43f5e')}
+    ${card('Gifts', 'warning', '#f59e0b')}
+    ${card('Top Likers', 'info', '#06b6d4')}
+    ${card('Follows', 'success', '#10b981')}
+    ${card('Tarot', 'accent', '#a855f7')}
+  </div>
+`;
+MaruShell.render('overlays.html', content, { title: 'Overlays' });
+</script></body></html>

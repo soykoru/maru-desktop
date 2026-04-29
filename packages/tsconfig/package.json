@@ -1,0 +1,13 @@
+{
+  "name": "@maru/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "files": [
+    "base.json",
+    "react-library.json",
+    "node-app.json",
+    "electron-main.json",
+    "electron-renderer.json"
+  ]
+}
