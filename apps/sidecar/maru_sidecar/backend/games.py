@@ -39,6 +39,7 @@ from __future__ import annotations
 import asyncio
 import copy
 import json
+import os
 import re
 import shutil
 import threading
@@ -1022,6 +1023,42 @@ class GamesService:
         if "schemaVersion" not in raw:
             raw["schemaVersion"] = SCHEMA_VERSION
             changed = True
+
+        # IMPORTAR customs del seed si el games.json actual quedó solo
+        # con predefinidos. Esto cubre el caso del .exe v1.0.0/1.0.1
+        # que arrancó SIN MARU_SEED_DIR → escribió games.json default
+        # con 3 standards. Cuando v1.0.4+ pone el seed disponible, los
+        # customs (hytale/ror2/repo/7daystodie) NO aparecían porque el
+        # archivo ya existía y se respetaba.
+        only_standards = bool(games) and all(
+            bool(g.get("isStandard")) for g in games.values() if isinstance(g, dict)
+        )
+        if only_standards:
+            try:
+                seed_dir_env = os.environ.get("MARU_SEED_DIR", "").strip()
+                if seed_dir_env:
+                    seed_games_path = Path(seed_dir_env) / "games.json"
+                    if seed_games_path.is_file():
+                        seed_raw = json.loads(
+                            seed_games_path.read_text(encoding="utf-8")
+                        )
+                        if _looks_like_maru_format(seed_raw):
+                            seed_migrated = _migrate_maru_to_v2(seed_raw)
+                            seed_games = seed_migrated.get("games", {})
+                            imported = 0
+                            for gid, profile in seed_games.items():
+                                if gid not in games:
+                                    games[gid] = profile
+                                    imported += 1
+                            if imported:
+                                changed = True
+                                log.info(
+                                    "games: importados %d customs del seed (%s)",
+                                    imported, list(seed_games.keys()),
+                                )
+            except Exception:
+                log.exception("games: falló import customs del seed")
+
         if changed:
             self._write(raw)
 
