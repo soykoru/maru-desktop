@@ -16,11 +16,30 @@
  */
 
 import { app, BrowserWindow } from 'electron';
+import { existsSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import pkg from 'electron-updater';
 
 const { autoUpdater } = pkg;
 
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 horas
+
+/** Comparación semver-light: devuelve true si `a` > `b`.
+ * Soporta `1.0.10`, `1.0.9` correctamente (numérico, no string).
+ * Si alguno de los dos no parsea, asume false (conservador). */
+function isVersionGreater(a: string, b: string): boolean {
+  const parse = (s: string) => s.split('.').map((p) => parseInt(p, 10) || 0);
+  const av = parse(a);
+  const bv = parse(b);
+  const len = Math.max(av.length, bv.length);
+  for (let i = 0; i < len; i++) {
+    const ai = av[i] ?? 0;
+    const bi = bv[i] ?? 0;
+    if (ai > bi) return true;
+    if (ai < bi) return false;
+  }
+  return false; // iguales
+}
 
 export type UpdateState =
   | { phase: 'idle' }
@@ -73,6 +92,14 @@ export class AutoUpdater {
     autoUpdater.on('checking-for-update', () => this.setState({ phase: 'checking' }));
 
     autoUpdater.on('update-available', (info) => {
+      // Guard: si el feed reporta nuestra versión actual o una anterior,
+      // NO mostrar banner. electron-updater a veces emite este evento
+      // con la versión actual cuando hay download cacheado en
+      // `%APPDATA%/@marudesktop-updater/` de un install previo.
+      if (!isVersionGreater(info.version, app.getVersion())) {
+        this.setState({ phase: 'not-available', current: app.getVersion() });
+        return;
+      }
       this.setState({
         phase: 'available',
         version: info.version,
@@ -96,6 +123,21 @@ export class AutoUpdater {
     });
 
     autoUpdater.on('update-downloaded', (info) => {
+      // Guard CRÍTICO: si el download cacheado es de la versión actual
+      // o anterior (caso típico tras una reinstalación manual donde el
+      // cache del updater queda con el .exe de la versión que acabás
+      // de instalar), NO mostrar el banner "listo para reiniciar".
+      // Antes este caso confundía al user con "vX.Y.Z lista" cuando
+      // ya estaba en X.Y.Z.
+      if (!isVersionGreater(info.version, app.getVersion())) {
+        console.log(
+          `[updater] ignorando update-downloaded: ${info.version} <= ${app.getVersion()}`,
+        );
+        // Limpiar el cache stale para que no vuelva a dispararse.
+        this.cleanStaleUpdateCache();
+        this.setState({ phase: 'not-available', current: app.getVersion() });
+        return;
+      }
       this.setState({ phase: 'ready', version: info.version });
     });
 
@@ -158,5 +200,25 @@ export class AutoUpdater {
         // ignore subscriber errors
       }
     });
+  }
+
+  /** Borra el cache de electron-updater cuando detecta un download
+   * stale (download de la misma versión actualmente instalada). Evita
+   * que se vuelva a disparar el evento update-downloaded en futuras
+   * checks. El cache vive en `%APPDATA%/<appName>/<updaterCacheDirName>/`. */
+  private cleanStaleUpdateCache(): void {
+    try {
+      const cacheRoot = join(
+        process.env['APPDATA'] || app.getPath('userData'),
+        'MARU Live',
+        '@marudesktop-updater',
+      );
+      if (existsSync(cacheRoot)) {
+        rmSync(cacheRoot, { recursive: true, force: true });
+        console.log('[updater] cache stale eliminado:', cacheRoot);
+      }
+    } catch (err) {
+      console.warn('[updater] no pude limpiar cache stale:', err);
+    }
   }
 }
