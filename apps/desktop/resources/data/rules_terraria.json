@@ -1,0 +1,990 @@
+{
+  "rules": [
+    {
+      "id": "f168a089",
+      "name": "OJOCULO",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "little crown",
+      "action_type": "spawn",
+      "action_value": "⭐ JEFE Ojo de Cthulhu",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Ojo de Cthulhu",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "31dea229",
+      "name": "EQUELETO",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "mishka bear",
+      "action_type": "spawn",
+      "action_value": "⭐ JEFE Skeletron",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Skeletron",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "c8fc8358",
+      "name": "ZOMBIE",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "Rose",
+      "action_type": "spawn",
+      "action_value": "🟦 Slime Azul",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🟦 Slime Azul",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "c59f5068",
+      "name": "BOMBA 100",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "Naughty Chicken",
+      "action_type": "give_item",
+      "action_value": "💣 Bomba",
+      "amount": 50,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "💣 Bomba",
+          "amount": 50,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "a13f524d",
+      "name": "abeja reina",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "doughnut",
+      "action_type": "spawn",
+      "action_value": "⭐ JEFE Abeja Reina",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Abeja Reina",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "075ad4c7",
+      "name": "PAYASO",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "heart",
+      "action_type": "spawn",
+      "action_value": "🎪 Payaso",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🎪 Payaso",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "6befedb5",
+      "name": "rey slime",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "cap",
+      "action_type": "spawn",
+      "action_value": "⭐ JEFE Rey Slime",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Rey Slime",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "b3d98952",
+      "name": "POCIONES",
+      "enabled": true,
+      "trigger_type": "share",
+      "trigger_value": "",
+      "action_type": "give_item",
+      "action_value": "🧪 Poción Vida Super",
+      "amount": 5,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🧪 Poción Vida Super",
+          "amount": 5,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "dd7934e9",
+      "name": "UNICORNIO",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "capybara",
+      "action_type": "spawn",
+      "action_value": "🐺 Hombre Lobo",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🐺 Hombre Lobo",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "2d297df1",
+      "name": "clear",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "sage",
+      "action_type": "trigger_event",
+      "action_value": "🧹 Limpiar Inventario",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "🧹 Limpiar Inventario",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "f57de6ca",
+      "name": "JEFE LIKES",
+      "enabled": true,
+      "trigger_type": "like_milestone",
+      "trigger_value": "10000",
+      "action_type": "spawn",
+      "action_value": "⭐ JEFE Ojo de Cthulhu",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Ojo de Cthulhu",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "00d492fc",
+      "name": "KILL",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "forever rosa",
+      "action_type": "trigger_event",
+      "action_value": "💀 Muerte",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "💀 Muerte",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "bb9ea475",
+      "name": "EMPERATRIS",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "galaxy",
+      "action_type": "spawn",
+      "action_value": "🌟 JEFE Emperatriz de Luz",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Emperatriz de Luz",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "ce12e623",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "tiktok",
+      "action_type": "give_item",
+      "action_value": "⛏️ Pico Spectre",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "⛏️ Pico Spectre",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "⚔️ Night's Edge",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "❤️ SET CARMESI Casco",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "❤️ SET CARMESI Pecho",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "❤️ SET CARMESI Piernas",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "👟 Botas Espectrales",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🪄 Crystal Storm",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🪓HACHA GOD",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "111f1b11",
+      "name": "mega espada",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "shiny air balloon",
+      "action_type": "give_item",
+      "action_value": "☀️ SET SOLAR Casco",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "☀️ SET SOLAR Casco",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "☀️ SET SOLAR Pecho",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "☀️ SET SOLAR Piernas",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "⚔️ Zenith",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🐾 Terraprisma",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "💰 Moneda Platino",
+          "amount": 100,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🛡️ Escudo Ankh",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🪽 Alas Vortex",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🎒 Piggy Bank",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "04a7667b",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "gold medal",
+      "action_type": "trigger_event",
+      "action_value": "🌑 Eclipse Solar",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "🌑 Eclipse Solar",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "f20225ad",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "whale diving",
+      "action_type": "trigger_event",
+      "action_value": "⚡ Elemental Arena",
+      "amount": 3,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "⚡ Elemental Arena",
+          "amount": 3,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "☠️ Apocalipsis",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "💥 Blitz de Granadas",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "💥 Lluvia de Dinamita",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "💥💥💥 Mega Dinamita",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "🔥 Lluvia de Fuego",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "🪨 Avalancha de Rocas",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "💣 Tormenta de Bombas",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "⚡ Elemental Arena",
+          "amount": 5,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "☄️ Lluvia de Meteoros",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "🚀 Barrera de Cohetes",
+          "amount": 2,
+          "commands": ""
+        },
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "☠️💀☠️ Destrucción Total",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "c17371f1",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "mystery firework",
+      "action_type": "spawn",
+      "action_value": "⭐ JEFE Abeja Reina",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Abeja Reina",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Cerebro Cthulhu",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Deerclops",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Devoramundos",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Muro de Carne",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Ojo de Cthulhu",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Rey Slime",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Skeletron",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Duque Fishron",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE El Destructor",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Emperatriz de Luz",
+          "amount": 2,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Golem",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Los Gemelos - Retinazer",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Los Gemelos - Spazmatism",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Plantera",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Reina Slime",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Skeletron Prime",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🐛 Devorador",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🦈 Tiburón",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "dcd43dde",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "hand heart",
+      "action_type": "trigger_event",
+      "action_value": "🌑 Luna de Sangre",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "event",
+          "action_type_name": "⚡ Comando/Evento",
+          "action_value": "🌑 Luna de Sangre",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "0dfe68ed",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "sunglasses",
+      "action_type": "spawn",
+      "action_value": "⭐ JEFE Deerclops",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "⭐ JEFE Deerclops",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "8dd13f3c",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "swan",
+      "action_type": "spawn",
+      "action_value": "🌑 EVENTO Pilar Nebula",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌑 EVENTO Pilar Nebula",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "e48f8fbe",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "kitten kneading",
+      "action_type": "spawn",
+      "action_value": "🌟 JEFE Plantera",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entity",
+          "action_type_name": "🐉 Entidad",
+          "action_value": "🌟 JEFE Plantera",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "b850df15",
+      "name": "CONSTRUCCIONES",
+      "enabled": true,
+      "trigger_type": "command",
+      "trigger_value": "!bloques",
+      "action_type": "give_item",
+      "action_value": "cristal",
+      "amount": 500,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "cristal",
+          "amount": 500,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "baculo acutador",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "acutador",
+          "amount": 500,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "quitador acutador",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "⚪ Lingote Hierro",
+          "amount": 100,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "2ca87f45",
+      "name": "pachu",
+      "enabled": true,
+      "trigger_type": "command",
+      "trigger_value": "!pachu",
+      "action_type": "give_item",
+      "action_value": "AGUJERO",
+      "amount": 50,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "AGUJERO",
+          "amount": 50,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "41fdfdc6",
+      "name": "madere boreal",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "",
+      "action_type": "give_item",
+      "action_value": "🪵 Madera Boreal",
+      "amount": 1000,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "item",
+          "action_type_name": "📦 Item",
+          "action_value": "🪵 Madera Boreal",
+          "amount": 1000,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    }
+  ]
+}

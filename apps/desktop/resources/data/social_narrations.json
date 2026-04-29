@@ -1,0 +1,499 @@
+{
+  "_info": "Narraciones v5.0 - CON VIDA, EMOCIÓN Y CLARIDAD para TTS",
+  "_version": "5.0",
+  
+  "registro_exitoso": [
+    "Bienvenido al chat {user}! Ahora eres parte de la familia, ya puedes usar todos los comandos!",
+    "Hey {user}! Te has unido oficialmente! Prepárate para la diversión!",
+    "Registro completado {user}! Bienvenido a la comunidad, ahora sí que empieza lo bueno!"
+  ],
+  "ya_registrado": [
+    "Tranquilo {user}, ya estás registrado! No hace falta hacerlo de nuevo, ya eres de los nuestros!",
+    "Hey {user}, ya estás dentro desde hace rato! Relájate y disfruta!"
+  ],
+  
+  "timeout": [
+    "Se acabó el tiempo! {user2} tardó demasiado en responder y {user1} se quedó esperando como un campeón!",
+    "Timeout! {user2} dejó plantado a {user1}! Qué falta de respeto, el tiempo no espera a nadie!",
+    "El reloj llegó a cero! {user2} nunca respondió! {user1} merece algo mejor!"
+  ],
+  
+  "chateda_inicio": [
+    "CHATEDA ÉPICA! {user1} ha desafiado a {user2} a un duelo legendario! Ambos escriban el comando dado para tirar los dados y decidir quién es el mejor!",
+    "Se armó la grande! {user1} lanza el guante a {user2}! Es hora del duelo! Que ambos tiren sus dados con el comando dado!",
+    "Atención chat! {user1} contra {user2} en una CHATEDA! Esto se pone intenso! Necesito ver esos dados volando!"
+  ],
+  "chateda_ganador": [
+    "VICTORIA APLASTANTE! {ganador} destruye completamente a {perdedor}! Con un {num_ganador} contra un triste {num_perdedor}! Eso fue BRUTAL!",
+    "Y EL GANADOR ES {ganador}! Sacó un poderoso {num_ganador} mientras que {perdedor} solo consiguió un {num_perdedor}! Qué paliza!",
+    "GAME OVER para {perdedor}! {ganador} domina con {num_ganador} contra {num_perdedor}! La chateda ha hablado!"
+  ],
+  "chateda_empate": [
+    "INCREÍBLE! Ambos sacaron {numero}! {user1} y {user2} están igualados! Qué coincidencia tan épica!",
+    "EMPATE LEGENDARIO! {user1} y {user2} con {numero} cada uno! Los dioses de los dados no pudieron decidir!",
+    "Esto es HISTÓRICO! {numero} para ambos! {user1} y {user2} son igual de poderosos! Nadie gana, nadie pierde!"
+  ],
+  
+  "golpe_inicio": [
+    "PELEA! {user1} quiere darle un buen golpe a {user2}! Esto se pone violento! Que ambos tiren los dados con el comando dado!",
+    "Se armó la pelea! {user1} levanta el puño contra {user2}! Es hora de ver quién golpea más fuerte! Dados ahora!"
+  ],
+  "golpe_ganador": [
+    "PUUUM! {ganador} conecta un golpazo DEVASTADOR a {perdedor}! Con un {num_ganador} contra {num_perdedor}! Eso tuvo que doler!",
+    "KNOCKOUT! {ganador} derriba a {perdedor} de un solo golpe! {num_ganador} contra {num_perdedor}! Llamen a la ambulancia!"
+  ],
+  "golpe_empate": [
+    "DOBLE GOLPE! Ambos conectan al mismo tiempo con {numero}! {user1} y {user2} se dan con todo pero nadie cae!",
+    "Empate de puños! {user1} y {user2} sacan {numero}! Los dos golpean, los dos aguantan! Qué guerreros!",
+    "Increíble! {numero} para ambos! {user1} y {user2} se intercambian golpes pero ninguno cede!"
+  ],
+  
+  "batalla_inicio": [
+    "BATALLA ÉPICA! {user1} declara la guerra a {user2}! Esto es grande! Que ambos guerreros tiren sus dados!",
+    "Atención! {user1} reta a {user2} a una batalla legendaria! El campo de guerra está listo! Usen el comando dado!"
+  ],
+  "batalla_ganador": [
+    "VICTORIA GLORIOSA! {ganador} conquista el campo de batalla con un {num_ganador}! {perdedor} cae derrotado con solo {num_perdedor}!",
+    "El ejército de {ganador} TRIUNFA! Con un poderoso {num_ganador} contra el débil {num_perdedor} de {perdedor}! Gloria al vencedor!"
+  ],
+  "batalla_empate": [
+    "EMPATE EN LA GUERRA! {user1} y {user2} sacan {numero}! Ningún ejército pudo dominar! La batalla continúa otro día!",
+    "Tablas en el campo de batalla! {numero} para ambos! {user1} y {user2} son guerreros de igual poder!",
+    "Increíble! La batalla termina en empate con {numero}! {user1} y {user2} deberán enfrentarse de nuevo!"
+  ],
+  
+  "pelea_inicio": [
+    "PELEA CALLEJERA! {user1} contra {user2}! Sin reglas, sin piedad! Que ambos tiren los dados ahora mismo!",
+    "Se desata el caos! {user1} y {user2} van a los golpes! Es una pelea callejera! Dados para decidir el ganador!"
+  ],
+  "pelea_ganador": [
+    "Y CAE {perdedor}! {ganador} domina la pelea callejera con un {num_ganador} contra {num_perdedor}! Brutalidad pura!",
+    "NOCAUT CALLEJERO! {ganador} destroza a {perdedor}! {num_ganador} contra {num_perdedor}! La calle tiene un nuevo rey!"
+  ],
+  "pelea_empate": [
+    "EMPATE CALLEJERO! {user1} y {user2} sacan {numero}! Ambos quedan de pie, ninguno cede! Qué pelea!",
+    "Nadie gana en las calles hoy! {numero} para ambos! {user1} y {user2} empatan en una pelea brutal!",
+    "Increíble! {user1} y {user2} con {numero} cada uno! La pelea termina sin ganador!"
+  ],
+  
+  "patada_inicio": [
+    "PATADA VOLADORA! {user1} prepara una patada épica para {user2}! Esto va a ser espectacular! Que tiren los dados!",
+    "Cuidado {user2}! {user1} viene con una patada voladora! Es hora de ver quién tiene mejores piernas! Dados!"
+  ],
+  "patada_ganador": [
+    "PATADÓN CONECTADO! {ganador} envía a {perdedor} volando por los aires! {num_ganador} contra {num_perdedor}! Qué golpazo!",
+    "WASTED! {ganador} conecta la patada perfecta a {perdedor}! Con un {num_ganador} contra {num_perdedor}! Eso fue cinematográfico!"
+  ],
+  "patada_empate": [
+    "DOBLE PATADA! {user1} y {user2} se conectan al mismo tiempo con {numero}! Ambos vuelan! Empate espectacular!",
+    "Increíble! Ambos patean con {numero}! {user1} y {user2} terminan en el suelo! Nadie gana!",
+    "Empate de patadas voladoras! {numero} para ambos! {user1} y {user2} son igual de ágiles!"
+  ],
+  
+  "cachetada_inicio": [
+    "CACHETADA INMINENTE! {user1} quiere cachetear a {user2}! Esto se pone picante! Que ambos tiren los dados!",
+    "Alerta de drama! {user1} va a soltar una cachetada a {user2}! Prepárense! Dados para ver quién abofetea!"
+  ],
+  "cachetada_ganador": [
+    "PLAAAF! {ganador} le suelta una cachetada ÉPICA a {perdedor}! Con un {num_ganador} contra {num_perdedor}! Esa mejilla va a arder por días!",
+    "Qué CACHETADÓN de {ganador}! {perdedor} ve estrellitas con ese {num_ganador} contra {num_perdedor}! Eso dejó marca!"
+  ],
+  "cachetada_empate": [
+    "PLAF PLAF! Doble cachetada! {user1} y {user2} se abofetean mutuamente con {numero}! Ambos con la mejilla roja!",
+    "Empate de bofetadas! {numero} para ambos! {user1} y {user2} se dan con todo! Drama total!",
+    "Increíble! {user1} y {user2} sacan {numero}! Se cachetean al mismo tiempo! Ninguno se salva!"
+  ],
+  
+  "dado_tirado": [
+    "{user} lanza el dado y sale un {numero}! El destino ha hablado!",
+    "El dado de {user} rueda y cae en {numero}! Veamos si es suficiente!",
+    "{user} tira con fuerza y obtiene un {numero}! Qué emoción!"
+  ],
+  
+  "beso_inicio": [
+    "{user1} quiere darle un besito a {user2}! Qué romántico! {user2} escribe aceptar si quieres el beso o rechazar si prefieres huir!",
+    "Momento romántico! {user1} pide un beso a {user2}! El chat espera tu respuesta! Aceptar o rechazar?"
+  ],
+  "beso_aceptado": [
+    "MUUUAC! {user2} acepta el beso de {user1}! Qué momento tan tierno! El amor está en el aire!",
+    "Besito aceptado! {user1} y {user2} se dan un beso! Awww el chat se derrite de la ternura!"
+  ],
+  "beso_rechazado": [
+    "AUCH! {user2} rechaza el beso de {user1}! Eso tuvo que doler! Mejor suerte la próxima vez!",
+    "Beso RECHAZADO! {user2} le voltea la cara a {user1}! El corazón roto se escucha desde aquí!"
+  ],
+  
+  "abrazo_inicio": [
+    "{user1} abre los brazos queriendo un abrazo de {user2}! Qué tierno! {user2} escribe aceptar para abrazarlo o rechazar para dejarlo con los brazos vacíos!",
+    "Momento emotivo! {user1} quiere un abrazo de {user2}! El chat necesita saber! Aceptas o rechazas?"
+  ],
+  "abrazo_aceptado": [
+    "ABRAZO! {user1} y {user2} se abrazan con cariño! Qué bonito momento para el chat! El amor triunfa!",
+    "Awww! {user2} acepta el abrazo de {user1}! Se funden en un abrazo hermoso! Mis lágrimas!"
+  ],
+  "abrazo_rechazado": [
+    "Qué frío! {user2} rechaza el abrazo de {user1}! Lo deja con los brazos abiertos! Eso fue cruel!",
+    "Sin abrazo hoy! {user2} pasa de largo ignorando a {user1}! El corazón se congela!"
+  ],
+  
+  "morder_inicio": [
+    "Ñam ñam! {user1} quiere morder juguetonamente a {user2}! Qué salvaje! {user2} escribe aceptar si te dejas o rechazar si escapas!",
+    "Alerta de mordida! {user1} muestra los dientes a {user2}! Es juguetón pero intenso! Aceptas o huyes?"
+  ],
+  "morder_aceptado": [
+    "ÑAAAAM! {user1} le da un mordisquito de amor a {user2}! {user2} lo acepta! Qué salvajes son estos dos!",
+    "Mordida de amor conectada! {user2} se deja morder por {user1}! Es raro pero es bonito a su manera!"
+  ],
+  "morder_rechazado": [
+    "Escapó! {user2} huye de los dientes de {user1}! No hay mordida hoy! Mejor para tu piel {user2}!",
+    "{user2} esquiva la mordida de {user1}! Demasiado salvaje para hoy! Los dientes se quedan sin víctima!"
+  ],
+  
+  "bailar_inicio": [
+    "{user1} extiende la mano invitando a bailar a {user2}! Qué elegante! {user2} escribe aceptar para bailar juntos o rechazar para quedarte quieto!",
+    "Música en el aire! {user1} quiere bailar con {user2}! El baile espera! Aceptas la invitación?"
+  ],
+  "bailar_aceptado": [
+    "A BAILAR! {user1} y {user2} se mueven juntos al ritmo! Qué coordinación! El chat aplaude!",
+    "Baile aceptado! {user1} y {user2} danzan con estilo! Parecen profesionales! Hermoso momento!"
+  ],
+  "bailar_rechazado": [
+    "Sin baile! {user2} rechaza la invitación de {user1}! Lo deja bailando solito! Qué pena!",
+    "{user2} se queda quieto mientras {user1} baila solo! La pista se siente vacía! Triste!"
+  ],
+  
+  "guino_inicio": [
+    "{user1} le hace un guiño coqueto a {user2}! Hay chispas! {user2} escribe aceptar para devolver el guiño o rechazar para ignorarlo!",
+    "Coqueteo detectado! {user1} guiña el ojo a {user2}! La tensión se siente! Responderás?"
+  ],
+  "guino_aceptado": [
+    "Guiño devuelto! {user2} también guiña a {user1}! Hay química entre estos dos! El chat siente la tensión!",
+    "Chispas volando! {user1} y {user2} se guiñan el ojo mutuamente! Algo está pasando aquí!"
+  ],
+  "guino_rechazado": [
+    "Ignorado completamente! {user2} ni mira a {user1}! El guiño se pierde en el vacío! Frío total!",
+    "{user2} hace como que no vio nada! {user1} guiñó para nadie! Eso fue helado!"
+  ],
+  
+  "poke_inicio": [
+    "Poke poke! {user1} quiere picar a {user2}! Es juguetón! {user2} escribe aceptar si te dejas picar o rechazar para esquivar!",
+    "{user1} tiene el dedo listo para picar a {user2}! Cosquillas inminentes! Te dejas o huyes?"
+  ],
+  "poke_aceptado": [
+    "POKE! {user1} pica a {user2}! Cosquillas y risas! {user2} lo acepta con alegría!",
+    "Piquete conectado! {user2} recibe el poke de {user1}! Jajaja qué divertido!"
+  ],
+  "poke_rechazado": [
+    "Esquivado! {user2} escapa del poke de {user1}! Sin cosquillas hoy! Muy rápido!",
+    "{user2} es muy ágil! El poke de {user1} no conecta! Fallaste esta vez!"
+  ],
+  
+  "caricia_inicio": [
+    "{user1} quiere acariciar suavemente a {user2}! Qué tierno! {user2} escribe aceptar para recibir mimos o rechazar para apartarte!",
+    "Momento de mimos! {user1} quiere darle caricias a {user2}! Te dejas consentir?"
+  ],
+  "caricia_aceptada": [
+    "Awww! {user1} acaricia suavemente a {user2}! Momento tierno en el chat! Qué lindo!",
+    "Caricias aceptadas! {user2} recibe los mimos de {user1}! Un momento dulce y tranquilo!"
+  ],
+  "caricia_rechazada": [
+    "Sin caricias! {user2} aparta la mano de {user1}! No es momento de mimos! Respetable!",
+    "{user2} no quiere caricias hoy! {user1} guarda su ternura para después!"
+  ],
+  
+  "highfive_inicio": [
+    "{user1} levanta la mano para chocar esos cinco con {user2}! Es épico! {user2} escribe aceptar para el high five o rechazar para dejarlo colgado!",
+    "High five en camino! {user1} espera el choque con {user2}! No lo dejes con la mano arriba!"
+  ],
+  "highfive_aceptado": [
+    "CLAP! {user1} y {user2} chocan esos cinco con estilo! High five épico! Celebración total!",
+    "HIGH FIVE CONECTADO! {user1} y {user2} lo celebran juntos! Ese sonido fue satisfactorio!"
+  ],
+  "highfive_rechazado": [
+    "AWKWARD! {user2} deja a {user1} con la mano levantada! Qué incómodo! El silencio es ensordecedor!",
+    "Left hanging! {user1} se queda con la mano arriba! {user2} lo ignoró! Momento más incómodo del día!"
+  ],
+  
+  "saludo_inicio": [
+    "{user1} saluda cordialmente a {user2}! Un gesto amable! {user2} escribe aceptar para devolver el saludo o rechazar para ignorarlo!",
+    "Hola! {user1} extiende un saludo amistoso a {user2}! Ser cordial es bonito! Respondes?"
+  ],
+  "saludo_aceptado": [
+    "Saludo correspondido! {user2} devuelve el saludo a {user1}! Qué educados! Momento amable!",
+    "Hola para ambos! {user1} y {user2} se saludan como gente civilizada! Bonito gesto!"
+  ],
+  "saludo_rechazado": [
+    "Ignorado! {user2} pasa de largo sin saludar a {user1}! Qué frío! El saludo se pierde!",
+    "{user2} actúa como si {user1} fuera invisible! Sin saludo! Helado total!"
+  ],
+  
+  "regalo_inicio": [
+    "{user1} tiene un regalo especial para {user2}! Qué emoción! {user2} escribe aceptar para recibirlo o rechazar para decir no gracias!",
+    "Sorpresa! {user1} quiere regalar algo a {user2}! Momento generoso! Aceptas el regalo?"
+  ],
+  "regalo_aceptado": [
+    "Regalo aceptado! {user2} recibe el presente de {user1} con alegría! Gracias dice el chat!",
+    "Qué bonito! {user1} entrega el regalo y {user2} lo acepta feliz! Generosidad en el aire!"
+  ],
+  "regalo_rechazado": [
+    "Regalo rechazado! {user2} dice no gracias a {user1}! El presente regresa a su dueño! Triste!",
+    "{user2} no acepta el regalo de {user1}! Qué pena! Era con buena intención!"
+  ],
+  
+  "flor_inicio": [
+    "{user1} ofrece una hermosa flor a {user2}! Qué romántico! {user2} escribe aceptar para tomarla o rechazar para dejarla caer!",
+    "Romance en el aire! {user1} tiene una flor para {user2}! Huele a amor! La aceptas?"
+  ],
+  "flor_aceptada": [
+    "Flor aceptada! {user2} toma la rosa de {user1} con una sonrisa! Momento romántico! Awww!",
+    "Qué tierno! {user2} acepta la flor de {user1}! El romanticismo vive en este chat!"
+  ],
+  "flor_rechazada": [
+    "Flor rechazada! {user2} deja caer la rosa de {user1}! Los pétalos lloran! Momento triste!",
+    "{user2} no quiere la flor! {user1} la ve marchitarse! El romance no florece hoy!"
+  ],
+  
+  "cafe_inicio": [
+    "{user1} invita un cafecito a {user2}! Momento acogedor! {user2} escribe aceptar para tomar café juntos o rechazar para pasar!",
+    "Coffee time! {user1} ofrece café a {user2}! Huele delicioso! Aceptas la invitación?"
+  ],
+  "cafe_aceptado": [
+    "Café aceptado! {user1} y {user2} disfrutan un cafecito juntos! Conversación y cafeína! Perfecto!",
+    "Cafecito para dos! {user2} acepta la invitación de {user1}! Momento cálido y agradable!"
+  ],
+  "cafe_rechazado": [
+    "Sin café! {user2} rechaza la invitación de {user1}! Más café para uno! Bueno, más para ti!",
+    "{user2} pasa del café! {user1} tomará solito! Al menos no lo compartes!"
+  ],
+  
+  "pizza_inicio": [
+    "{user1} invita una pizza a {user2}! Qué generoso! {user2} escribe aceptar para comer juntos o rechazar para pasar!",
+    "Hora de pizza! {user1} quiere compartir una pizza con {user2}! Huele delicioso! Aceptas?"
+  ],
+  "pizza_aceptada": [
+    "PIZZA TIME! {user1} y {user2} comparten una deliciosa pizza! Qué rico momento juntos!",
+    "Pizza compartida! {user2} acepta la invitación de {user1}! A disfrutar cada rebanada!"
+  ],
+  "pizza_rechazada": [
+    "Sin pizza! {user2} rechaza la invitación de {user1}! Más pizza para uno! Bueno, toda tuya!",
+    "{user2} no quiere pizza! {user1} se la comerá solito! Qué desperdicio de oportunidad!"
+  ],
+  
+  "palmada_inicio": [
+    "{user1} quiere darle una palmada en la espalda a {user2}! Gesto de apoyo! {user2} escribe aceptar o rechazar!",
+    "Palmada de ánimo! {user1} quiere animar a {user2}! Es un gesto de compañerismo! Respondes?"
+  ],
+  "palmada_aceptada": [
+    "PAM! {user1} le da una palmada de apoyo a {user2}! Buena vibra entre estos dos! Ánimo!",
+    "Palmada conectada! {user2} recibe el apoyo de {user1}! Momento de compañerismo puro!"
+  ],
+  "palmada_rechazada": [
+    "Sin palmada! {user2} esquiva a {user1}! No quería el contacto! Respetable decisión!",
+    "{user2} prefiere su espacio! La palmada de {user1} no conecta! Cada quien su burbuja!"
+  ],
+  
+  "duelo_inicio": [
+    "DUELO CLÁSICO! {user1} desafía a {user2}! El honor está en juego! Que ambos tiren los dados con el comando dado!",
+    "Se declaró el DUELO! {user1} contra {user2}! Es personal! Que los dados decidan quién es mejor!"
+  ],
+  "duelo_ganador": [
+    "VICTORIA EN EL DUELO! {ganador} vence a {perdedor}! Con un épico {num_ganador} contra {num_perdedor}! El honor es suyo!",
+    "FIN DEL DUELO! {ganador} triunfa sobre {perdedor}! {num_ganador} destruye al {num_perdedor}! Duelo ganado!"
+  ],
+  "duelo_empate": [
+    "EMPATE EN EL DUELO! {user1} y {user2} sacan {numero}! El honor queda intacto para ambos! Qué igualados!",
+    "Duelo sin ganador! {numero} para ambos! {user1} y {user2} son igual de dignos!",
+    "Increíble! El duelo termina en empate con {numero}! Ninguno pierde el honor!"
+  ],
+  
+  "novios_inicio": [
+    "MOMENTO ÉPICO! {user1} se declara a {user2} y le pide ser novios! El chat contiene la respiración! {user2} escribe aceptar para decir sí o rechazar para romper corazones!",
+    "DECLARACIÓN DE AMOR! {user1} quiere ser novio de {user2}! Esto es serio! El destino del romance está en tus manos {user2}!"
+  ],
+  "novios_aceptado": [
+    "SÍ DIJO QUE SÍ! {user1} y {user2} ahora son NOVIOS! FELICIDADES A LA NUEVA PAREJA! El amor triunfa!",
+    "ROMANCE CONFIRMADO! {user2} acepta a {user1}! Son novios oficialmente! El chat celebra! Viva el amor!"
+  ],
+  "novios_rechazado": [
+    "FRIENDZONEADO! {user2} rechaza a {user1}! El corazón se rompe en mil pedazos! Eso tuvo que doler mucho!",
+    "RECHAZADO! {user2} dice que no! {user1} queda en la friendzone más profunda! F en el chat!"
+  ],
+  "ya_novios": [
+    "{user} ya está en una relación! Tiene a {pareja} en su corazón! No puede tener otro!",
+    "Ya hay amor! {user} está con {pareja}! El corazón ya tiene dueño!"
+  ],
+  
+  "casarse_inicio": [
+    "PROPUESTA DE MATRIMONIO! {user1} se arrodilla ante {user2} con un anillo! EL CHAT ENTERO ESPERA! {user2} escribe aceptar para el sí acepto o rechazar para romper el momento!",
+    "BODA EN CAMINO! {user1} le propone matrimonio a {user2}! Este es el momento más importante! Todo el chat quiere saber tu respuesta!"
+  ],
+  "casarse_aceptado": [
+    "SÍ ACEPTO! {user1} y {user2} SE CASAN! FELICIDADES A LOS RECIÉN CASADOS! QUE VIVAN LOS NOVIOS! Momento histórico!",
+    "BODA ÉPICA! {user2} acepta la mano de {user1}! Son marido y mujer! El chat llora de emoción! FELICIDADES!"
+  ],
+  "casarse_rechazado": [
+    "NO EN EL ALTAR! {user2} rechaza la propuesta de {user1}! DEVASTADOR! El anillo cae al suelo! Momento más triste del stream!",
+    "RECHAZADO ANTE TODOS! {user2} dice que NO a {user1}! El corazón se hace añicos! F por {user1}!"
+  ],
+  "ya_casado": [
+    "{user} ya está casado con {pareja}! No puede haber otra boda! El matrimonio es sagrado!",
+    "Ya hay matrimonio! {user} tiene a {pareja} como esposo! Fidelidad ante todo!"
+  ],
+  
+  "mejoresamigos_inicio": [
+    "{user1} quiere ser mejor amigo de {user2}! Una amistad para siempre! {user2} escribe aceptar para ser BFFs o rechazar para romper la ilusión!",
+    "Momento de amistad! {user1} propone ser mejores amigos de {user2}! Best Friends Forever? Tu decides!"
+  ],
+  "mejoresamigos_aceptado": [
+    "BFFs CONFIRMADOS! {user1} y {user2} ahora son MEJORES AMIGOS! La amistad más fuerte del chat! Inseparables!",
+    "AMISTAD SELLADA! {user2} acepta! {user1} y {user2} son mejores amigos para siempre! Qué bonito!"
+  ],
+  "mejoresamigos_rechazado": [
+    "Sin amistad! {user2} rechaza ser amigo de {user1}! El corazón amistoso se rompe! Auch!",
+    "{user2} no quiere ser BFF de {user1}! La amistad no florece hoy! Momento triste!"
+  ],
+  "ya_amigos": [
+    "Ya son amigos! {user1} y {user2} ya tienen esa conexión especial! No hace falta repetir!",
+    "La amistad ya existe! {user1} y {user2} son mejores amigos desde antes!"
+  ],
+  "ya_son_mejores_amigos": [
+    "Oye {user1}! Ya eres mejor amigo de {user2} desde hace {dias} días! Qué memoria tan corta tienes!",
+    "Tranquilo {user1}! {user2} ya es tu BFF hace {dias} días! No necesitas pedirlo de nuevo!"
+  ],
+  "ya_tiene_mejor_amigo": [
+    "ALTO AHÍ {user}! Ya tienes un mejor amigo que es {amigo_actual}! No puedes tener dos! Si quieres a {nuevo}, primero rompe tu amistad actual!",
+    "Espera {user}! Tu mejor amigo es {amigo_actual}! Solo puedes tener UNO! Usa romperamistad si quieres cambiar!",
+    "No tan rápido {user}! {amigo_actual} es tu BFF! Un corazón solo tiene espacio para UN mejor amigo! Rompe esa amistad primero!"
+  ],
+  "objetivo_tiene_mejor_amigo": [
+    "Malas noticias {pretendiente}! {user} ya tiene mejor amigo y es {amigo_actual}! Solo puede tener uno! Busca otro amigo!",
+    "Lo siento {pretendiente}! El corazón de {user} ya tiene dueño como mejor amigo y es {amigo_actual}! No hay espacio!",
+    "{pretendiente} llegó tarde! {user} ya tiene a {amigo_actual} como mejor amigo! Mala suerte!"
+  ],
+  
+  "rival_inicio": [
+    "RIVALIDAD DECLARADA! {user1} marca a {user2} como su RIVAL ETERNO! {user2} escribe aceptar para aceptar el desafío o rechazar para ignorarlo!",
+    "ENEMIGOS! {user1} declara guerra a {user2}! Serán rivales oficiales! Aceptas el reto?"
+  ],
+  "rival_aceptado": [
+    "RIVALES OFICIALES! {user1} y {user2} ahora son ENEMIGOS DECLARADOS! Que empiece la guerra eterna!",
+    "RIVALIDAD CONFIRMADA! {user1} contra {user2}! Esta enemistad es oficial! El chat toma palomitas!"
+  ],
+  "rival_rechazado": [
+    "{user2} ignora la rivalidad! {user1} queda sin enemigo! No hay guerra hoy! Paz forzada!",
+    "Sin rival! {user2} pasa de la enemistad de {user1}! No vale la pena pelear!"
+  ],
+  "ya_rivales": [
+    "Ya son rivales! {user1} y {user2} ya se odian oficialmente! La guerra ya empezó!",
+    "La rivalidad ya existe! {user1} contra {user2} desde hace tiempo!"
+  ],
+  "ya_son_rivales": [
+    "Oye {user1}! Ya odias a {user2} desde hace {dias} días! Cuánto rencor guardado!",
+    "Cálmate {user1}! {user2} ya es tu rival hace {dias} días! No se te olvida el odio!"
+  ],
+  "ya_tiene_rival": [
+    "ALTO AHÍ {user}! Ya tienes un rival que es {rival_actual}! No puedes odiar a dos personas! Si quieres enemistarte con {nuevo}, primero haz las paces con tu enemigo actual!",
+    "Espera {user}! Tu rival oficial es {rival_actual}! Solo puedes tener UN enemigo! Usa hacerpaz si quieres cambiar!",
+    "Calma {user}! Ya odias a {rival_actual}! Solo se permite UN rival! Haz la paz primero si quieres otro enemigo!"
+  ],
+  "objetivo_tiene_rival": [
+    "Malas noticias {pretendiente}! {user} ya tiene un rival y es {rival_actual}! Solo puede tener un enemigo! Busca otro!",
+    "Lo siento {pretendiente}! {user} ya gasta su odio en {rival_actual}! No le queda espacio para odiarte también!",
+    "{pretendiente} llegó tarde! {user} ya tiene enemigo que es {rival_actual}! Intenta con otro!"
+  ],
+  
+  "intento_infidelidad": [
+    "ESCÁNDALO! {user} está CASADO con {pareja} y quiere casarse con {tercero}! Eso es INFIDELIDAD! Primero divórciate!",
+    "ALTO AHÍ {user}! Ya tienes esposo que es {pareja}! Querías ser infiel con {tercero}! Qué atrevido!"
+  ],
+  "objetivo_casado": [
+    "IMPOSIBLE! {user} ya está CASADO con {pareja}! {pretendiente} llegó tarde! Ese amor no puede ser!",
+    "Lo siento {pretendiente}! {user} ya tiene dueño que es {pareja}! Busca en otro lado!"
+  ],
+  "casado_consigo_mismo": [
+    "Oye {user1}! Ya estás casado con {user2} hace {dias} días! Se te olvidó tu propia boda?",
+    "Tranquilo {user1}! Ya llevas {dias} días de matrimonio con {user2}! Qué memoria tan mala!"
+  ],
+  
+  "intento_infidelidad_novios": [
+    "INFIEL! {user} tiene novio que es {pareja} y quiere con {tercero}! Primero termina tu relación!",
+    "OYE {user}! Ya tienes a {pareja}! Querías engañarlo con {tercero}! Qué sinvergüenza!"
+  ],
+  "objetivo_tiene_novio": [
+    "TARDE {pretendiente}! {user} ya tiene novio que es {pareja}! Ese corazón ya tiene dueño!",
+    "Lo siento {pretendiente}! {user} está con {pareja}! No hay espacio para ti!"
+  ],
+  "ya_son_novios_entre_si": [
+    "Oye {user1}! Ya eres novio de {user2} hace {dias} días! Se te olvidó tu relación?",
+    "Cálmate {user1}! Ya llevas {dias} días de novios con {user2}! Qué romántico eres que quieres repetir!"
+  ],
+  "casado_quiere_novio": [
+    "OYE {user}! Estás CASADO con {esposo}! No puedes tener novio si ya tienes esposo! Divorcia primero!",
+    "ERROR! {user} ya está casado con {esposo}! El noviazgo es antes del matrimonio, no después!"
+  ],
+  
+  "divorcio": [
+    "DIVORCIO! {user1} y {user2} terminan su matrimonio después de {dias} días juntos! El amor se acabó! Momento triste!",
+    "FIN DEL MATRIMONIO! {user1} firma el divorcio con {user2}! {dias} días de amor terminan hoy! F en el chat!"
+  ],
+  "terminar_novios": [
+    "RUPTURA! {user1} termina con {user2} después de {dias} días de noviazgo! El corazón se rompe! Ya no son pareja!",
+    "SE ACABÓ EL AMOR! {user1} y {user2} ya no son novios! {dias} días perdidos! Momento doloroso!"
+  ],
+  "amistad_rota": [
+    "AMISTAD ROTA! {user1} y {user2} ya no son mejores amigos después de {dias} días! El lazo se rompe! Triste final!",
+    "Se acabó la amistad de {dias} días! {user1} deja de ser BFF de {user2}! Las cosas cambian!"
+  ],
+  "paz_hecha": [
+    "PAZ DECLARADA! {user1} y {user2} dejan su rivalidad de {dias} días atrás! Ya no son enemigos! El odio termina!",
+    "FIN DE LA GUERRA! {user1} hace las paces con {user2} después de {dias} días! La rivalidad es historia!"
+  ],
+  
+  "ver_matrimonio": [
+    "{user} está felizmente casado con {pareja}! Llevan {dias} días de matrimonio! El amor sigue vivo!",
+    "Matrimonio de {user} con {pareja}! Ya van {dias} días juntos! Qué bonito!"
+  ],
+  "ver_novios": [
+    "{user} está en una relación con {pareja}! Llevan {dias} días de novios! Romance activo!",
+    "Novios! {user} y {pareja} llevan {dias} días juntos! El amor florece!"
+  ],
+  "ver_perfil_soltero": [
+    "{user} está soltero y con una racha de {racha} días! Disponible para el amor!",
+    "Perfil de {user}! Soltero con {racha} días de racha! El corazón busca dueño!"
+  ],
+  
+  "racha_inicio": [
+    "{user} comienza su racha! Día número uno! Ahora a mantenerla viva cada día!",
+    "Primera racha de {user}! Día uno de muchos! Que empiece la constancia!"
+  ],
+  "racha_continua": [
+    "RACHA IMPARABLE! {user} lleva {dias} días seguidos! Eso es dedicación! Increíble!",
+    "{user} mantiene la racha con {dias} días! No para! Qué crack!"
+  ],
+  "racha_rota": [
+    "RACHA PERDIDA! {user} pierde su racha de {dias_anterior} días! Hay que empezar de cero! F!",
+    "Se acabó la racha! {user} perdió {dias_anterior} días de progreso! A levantarse de nuevo!"
+  ],
+  "racha_ya_hoy": [
+    "Tranquilo {user}! Ya marcaste tu racha hoy! Llevas {dias} días seguidos! Vuelve mañana!",
+    "{user} ya cumplió hoy! Tu racha de {dias} días está segura! Nos vemos mañana!"
+  ],
+  
+  "decision_si": [
+    "La bola mágica ha hablado para {user}! La respuesta es un rotundo SÍ!",
+    "{user} preguntó y el destino responde! SÍ! Adelante con confianza!"
+  ],
+  "decision_no": [
+    "La bola mágica ha hablado para {user}! La respuesta es un claro NO!",
+    "{user} preguntó y el destino responde! NO! Mejor busca otra opción!"
+  ],
+  "decision_talvez": [
+    "La bola mágica está indecisa para {user}! La respuesta es TALVEZ! El misterio continúa!",
+    "{user} preguntó pero el destino no está seguro! TALVEZ! Intenta de nuevo después!"
+  ],
+  
+  "ranking": [
+    "RANKING DE RACHAS! Los más constantes del chat son {ranking}! Aplausos para los campeones!",
+    "TOP DEL CHAT! El ranking de rachas muestra a {ranking}! Estos son los verdaderos dedicados!"
+  ]
+}

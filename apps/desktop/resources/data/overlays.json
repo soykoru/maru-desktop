@@ -1,0 +1,17 @@
+{
+  "user_id": "user-27fa20",
+  "overlays": {
+    "taps": {
+      "enabled": true,
+      "goal": 50000,
+      "color": "#ffff7f",
+      "message": "¡Lo logramos!",
+      "reset_on_goal": true
+    },
+    "streak": {
+      "enabled": true,
+      "duration": 6000,
+      "label": "DÍAS DE RACHA"
+    }
+  }
+}

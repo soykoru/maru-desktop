@@ -1,0 +1,441 @@
+{
+  "custom_games": {
+    "repo": {
+      "id": "repo",
+      "name": "R.E.P.O.",
+      "icon": "👻",
+      "host": "127.0.0.1",
+      "port": 5000,
+      "connection_type": "http",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true,
+      "categories": [
+        {
+          "id": "entities",
+          "name": "👹 Enemigos",
+          "type": "entity",
+          "icon": "👹",
+          "data_key": "entities",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "summon {entity}",
+          "tutorial": "📝 R.E.P.O. ENEMIGOS\\n\\nFormato: NombreVisible:Enemy - NombreReal\\n\\n⚠️ Los nombres EXACTOS dependen de REPOLib.\\nUsa el comando 'list' en eventos para ver los nombres reales.\\n\\nEjemplos conocidos:\\n• Bowtie:Enemy - Bowtie\\n• Spider:Enemy - Spider\\n• Shadow Child:Enemy - Shadow Child\\n• Huntsman:Enemy - Huntsman\\n• Apex Predator:Enemy - Apex Predator"
+        },
+        {
+          "id": "items",
+          "name": "🎒 Items",
+          "type": "item",
+          "icon": "🎒",
+          "data_key": "items",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+          "rcon_cmd": "give {user} {entity} {amount}",
+          "tutorial": "📝 R.E.P.O. ITEMS\\n\\nFormato: NombreVisible:Item - NombreReal\\n\\n⚠️ Usa el comando 'items' para ver lista real.\\n\\nEjemplos:\\n• Pistola:Item - Gun Handgun\\n• Escopeta:Item - Gun Shotgun\\n• Botiquín:Item - Health Pack Small\\n• Bate:Item - Melee Baseball Bat\\n• Granada:Item - Grenade Explosive"
+        },
+        {
+          "id": "valuables",
+          "name": "💎 Valuables",
+          "type": "valuable",
+          "icon": "💎",
+          "data_key": "valuables",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"valuable\"}",
+          "rcon_cmd": "spawn {entity}",
+          "tutorial": "📝 R.E.P.O. VALUABLES\\n\\nObjetos valiosos que se pueden spawnear.\\nFormato: NombreVisible:Valuable - NombreReal\\n\\n⚠️ Usa el comando 'valuables' para ver lista real.\\n\\nEjemplos:\\n• Diamante:Valuable - Diamond\\n• Rubí:Valuable - Ruby\\n• Oro Barra:Valuable - Gold Bar\\n• Corona:Valuable - Crown\\n• Estatua:Valuable - Statue"
+        },
+        {
+          "id": "events",
+          "name": "⚡ Comandos",
+          "type": "event",
+          "icon": "⚡",
+          "data_key": "events",
+          "endpoint": "/",
+          "payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+          "rcon_cmd": "{command}",
+          "tutorial": "📝 R.E.P.O. COMANDOS\\n\\nComandos disponibles:\\n• list - Ver enemigos disponibles\\n• items - Ver items disponibles\\n• valuables - Ver valuables\\n• all - Ver todo\\n• horde X - Spawn X enemigos aleatorios (max 20)\\n\\nFormato: NombreVisible:comando\\nCon valor: NombreVisible:comando:valor\\n\\nEjemplos:\\n• Ver Enemigos:list\\n• Horda x5:horde:5\\n• Horda CAOS:horde:20"
+        }
+      ],
+      "spawn_endpoint": "/",
+      "item_endpoint": "/",
+      "event_endpoint": "/",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}"
+    },
+    "7_days_to_die": {
+      "id": "7_days_to_die",
+      "name": "7 DAYS TO DIE",
+      "icon": "🧟",
+      "host": "localhost",
+      "port": 5000,
+      "connection_type": "http",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true,
+      "categories": [
+        {
+          "id": "entities",
+          "name": "🧟 Entidades/Zombies",
+          "type": "entity",
+          "icon": "🧟",
+          "data_key": "entities",
+          "endpoint": "/spawn",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "spawnentity {entity}",
+          "tutorial": "📝 7 DAYS TO DIE - ENTIDADES\\n\\n🧟 ZOMBIES BÁSICOS:\\n• zombieBoe, zombieMoe, zombieJoe\\n• zombieMarlene, zombieSteve, zombieArlene\\n• zombiePartyGirl, zombieBusinessMan, zombieBurnt\\n\\n🕷️ ZOMBIES ESPECIALES:\\n• zombieSpider (araña)\\n• zombieMaleHazmat (traje hazmat)\\n• zombieScreamer (gritadora)\\n• zombieFatCop (policía gordo)\\n• zombieDemolition (demoledor)\\n\\n💀 FERAL/RADIATED:\\n• zombieBoeFeral, zombieBoeRadiated\\n• zombieWightFeral, zombieWightRadiated\\n\\n🐕 ANIMALES ZOMBIE:\\n• animalZombieDog, animalZombieBear\\n• animalZombieVulture, animalZombieBoar\\n\\n🦌 ANIMALES NORMALES:\\n• animalChicken, animalBoar, animalPig\\n• animalWolf, animalBear, animalDireWolf\\n\\n⚠️ Usa los nombres EXACTOS del juego\\nEjemplo: zombieBoe (no 'zombie')"
+        },
+        {
+          "id": "items",
+          "name": "📦 Items/Armas",
+          "type": "item",
+          "icon": "📦",
+          "data_key": "items",
+          "endpoint": "/item",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "giveself {entity} {amount}",
+          "tutorial": "📝 7 DAYS TO DIE - ITEMS\\n\\n🔫 ARMAS:\\n• gunHandgunT1Pistol (pistola)\\n• gunShotgunT2PumpShotgun (escopeta)\\n• gunRifleT3SniperRifle (sniper)\\n• gunMGT1AK47 (AK-47)\\n• gunBowT1WoodenBow (arco)\\n\\n💣 EXPLOSIVOS:\\n• thrownDynamite (dinamita)\\n• thrownAmmoMolotovCocktail (molotov)\\n• thrownGrenade (granada)\\n• ammoRocketHE (cohete)\\n\\n💊 MEDICINA:\\n• medicalFirstAidKit (botiquín)\\n• medicalBandage (vendaje)\\n• drugAntibiotics (antibióticos)\\n\\n🛠️ HERRAMIENTAS:\\n• meleeToolAxeT2SteelAxe (hacha)\\n• meleeToolPickT2SteelPickaxe (pico)\\n• meleeToolAxeT3Chainsaw (motosierra)\\n\\n🚗 VEHÍCULOS:\\n• vehicleMotorcyclePlaceable\\n• vehicleTruck4x4Placeable\\n• vehicleGyrocopterPlaceable\\n\\n⚠️ Usa nombres EXACTOS del juego"
+        },
+        {
+          "id": "events",
+          "name": "⚡ Comandos/Eventos",
+          "type": "event",
+          "icon": "⚡",
+          "data_key": "events",
+          "endpoint": "/command",
+          "payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+          "rcon_cmd": "{command}",
+          "tutorial": "📝 7 DAYS TO DIE - COMANDOS\\n\\n💀 VIDA/MUERTE:\\n• kill - Matar jugador\\n• heal - Curar\\n• fullheal - Curación completa\\n• damage [N] - Hacer daño (ej: damage 50)\\n\\n🎒 INVENTARIO:\\n• clear - Vaciar inventario\\n\\n⏰ TIEMPO:\\n• day - Cambiar a día\\n• night - Cambiar a noche\\n• noon - Mediodía\\n• midnight - Medianoche\\n\\n🌧️ CLIMA:\\n• rain - Lluvia\\n• snow - Nieve\\n• fog - Niebla\\n• clearweather - Normal\\n\\n☠️ HORDAS/CAOS:\\n• horde - Invocar horda\\n• chaos - Zombies + explosivos\\n• nuke - Explosivos masivos\\n• armageddon - Destrucción total\\n• firestorm - Molotovs + zombies quemados\\n\\n⭐ OTROS:\\n• xp [N] - Dar XP\\n• levelup - Subir nivel\\n• randomtp - Teleport aleatorio\\n• airdrop - Suministros\\n• killall - Matar todos zombies\\n• god - Modo dios"
+        }
+      ],
+      "spawn_endpoint": "/spawn",
+      "item_endpoint": "/item",
+      "event_endpoint": "/command",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "rcon_spawn_cmd": "spawnentity {entity}",
+      "rcon_item_cmd": "giveself {entity} {amount}",
+      "rcon_event_cmd": "{command}"
+    },
+    "ror2": {
+      "id": "ror2",
+      "name": "Risk of Rain 2",
+      "icon": "🚀",
+      "host": "127.0.0.1",
+      "port": 5000,
+      "connection_type": "http",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true,
+      "categories": [
+        {
+          "id": "entities",
+          "name": "👹 Enemigos",
+          "type": "entity",
+          "icon": "👹",
+          "data_key": "entities",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "summon {entity}",
+          "tutorial": "📝 RISK OF RAIN 2 - ENEMIGOS\\n\\n🎮 SISTEMA DE SPAWN:\\nLos enemigos aparecen cerca del jugador.\\nEl mod busca SpawnCards por nombre parcial.\\n\\n👹 ENEMIGOS COMUNES:\\n• Beetle, Lemurian, Jellyfish\\n• Wisp, Greater Wisp, Golem\\n• Imp, Hermit Crab, Vulture\\n• Clay Templar, Void Reaver\\n\\n⭐ JEFES:\\n• Beetle Queen, Wandering Vagrant\\n• Stone Titan, Magma Worm\\n• Imp Overlord, Clay Dunestrider\\n• Aurelionite, Mithrix\\n\\n💡 Usa el nombre interno (después de :)\\nEjemplo: Beetle = cscBeetle"
+        },
+        {
+          "id": "items",
+          "name": "🎒 Items",
+          "type": "item",
+          "icon": "🎒",
+          "data_key": "items",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+          "rcon_cmd": "give {user} {entity} {amount}",
+          "tutorial": "📝 RISK OF RAIN 2 - ITEMS\\n\\n🎮 SISTEMA DE ITEMS:\\nSe añaden al inventario del jugador.\\nPueden acumularse (stacks).\\n\\n⚪ BLANCOS (Común):\\n• Soldier's Syringe, Tougher Times\\n• Lens-Maker's Glasses, Tri-Tip Dagger\\n\\n🟢 VERDES (Poco Común):\\n• Ukulele, AtG Missile, Hopoo Feather\\n• Predatory Instincts, Will-o-the-wisp\\n\\n🔴 ROJOS (Legendario):\\n• 57 Leaf Clover, Brilliant Behemoth\\n• Dio's Best Friend, Tesla Coil\\n\\n🟡 AMARILLOS (Jefe):\\n• Shatterspleen, Queen's Gland\\n• Titanic Knurl, Pearl\\n\\n🌙 LUNARES y 🟣 VOID también disponibles!"
+        },
+        {
+          "id": "equipment",
+          "name": "🔧 Equipment",
+          "type": "item",
+          "icon": "🔧",
+          "data_key": "equipment",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"type\": \"equipment\"}",
+          "rcon_cmd": "give_equip {entity}",
+          "tutorial": "📝 RISK OF RAIN 2 - EQUIPMENT\\n\\n🎮 SISTEMA DE EQUIPMENT:\\nReemplaza el equipment actual.\\nSolo puedes tener 1 a la vez.\\nSe usa con tecla Q (default).\\n\\n⚡ EQUIPMENT POPULAR:\\n• Disposable Missile Launcher\\n• Preon Accumulator\\n• Royal Capacitor\\n• Volcanic Egg\\n• Milky Chrysalis\\n• The Crowdfunder\\n• Blast Shower\\n\\n🌙 EQUIPMENT LUNAR:\\n• Glowing Meteorite\\n• Effigy of Grief\\n• Spinel Tonic\\n\\n⭐ ESPECIALES:\\n• Sawmerang\\n• Super Massive Leech"
+        },
+        {
+          "id": "events",
+          "name": "⚡ Comandos",
+          "type": "event",
+          "icon": "⚡",
+          "data_key": "events",
+          "endpoint": "/",
+          "payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+          "rcon_cmd": "{command}",
+          "tutorial": "📝 RISK OF RAIN 2 - COMANDOS\\n\\n🎮 COMANDOS DISPONIBLES:\\n\\n💀 VIDA/MUERTE:\\n• kill - Matar jugador\\n• heal - Curar al 100%\\n• damage X - Hacer X daño\\n\\n💰 DINERO:\\n• money X - Dar $X\\nEjemplos: money 100, money 1000\\n\\n💡 USO:\\nFormato: Nombre:comando\\nCon valor: Nombre:comando:valor\\n\\nEjemplos:\\n• Curar:heal\\n• Daño x50:damage:50\\n• $1000:money:1000"
+        }
+      ],
+      "spawn_endpoint": "/",
+      "item_endpoint": "/",
+      "event_endpoint": "/",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}"
+    },
+    "hytale": {
+      "id": "hytale",
+      "name": "Hytale",
+      "icon": "🧌",
+      "host": "localhost",
+      "port": 5000,
+      "connection_type": "http",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true,
+      "categories": [
+        {
+          "id": "entities",
+          "name": "🐉 Entidades/Mobs",
+          "type": "entity",
+          "icon": "🐉",
+          "data_key": "entities",
+          "endpoint": "/spawn",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "summon {entity}",
+          "tutorial": "📝 HYTALE ENTIDADES\n\nFormato: NombreVisible:ID_Entidad\n\nEjemplos:\n• 👹 Guerrero Trork:Trork_Warrior\n• 💀 Esqueleto:Skeleton\n• 🐺 Lobo Negro:Wolf_Black\n\n⭐ JEFES:\n• Trork_Chieftain\n• Goblin_Duke\n• Dragon_Fire\n\n💡 Ver lista completa en ITEMS_Y_ENTIDADES_VALIDAS.md"
+        },
+        {
+          "id": "items",
+          "name": "📦 Items/Armas",
+          "type": "item",
+          "icon": "📦",
+          "data_key": "items",
+          "endpoint": "/item",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "give {user} {entity} {amount}",
+          "tutorial": "📝 HYTALE ITEMS/ARMAS\n\nFormato: NombreVisible:ID_Item\n\nEjemplos:\n• ⚔️ Espada Hierro:Weapon_Sword_Iron\n• 🏹 Arco Corto:Weapon_Shortbow_Iron\n• 🛡️ Escudo Madera:Weapon_Shield_Wood\n\n💡 Ver lista completa en ITEMS_Y_ENTIDADES_VALIDAS.md"
+        },
+        {
+          "id": "events",
+          "name": "⚡ Comandos",
+          "type": "event",
+          "icon": "⚡",
+          "data_key": "events",
+          "endpoint": "/command",
+          "payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+          "rcon_cmd": "{command}",
+          "tutorial": "📝 HYTALE COMANDOS\n\nFormato: NombreVisible:comando\nCon valor: NombreVisible:comando valor\n\n💀 Daño/Vida:\n• kill - Matar jugador\n• heal - Curar\n• explode - Explosión\n\n🕐 Tiempo:\n• day, noon, evening, night\n\n🌧️ Clima:\n• rain, storm, clear\n\n👹 Spawns:\n• horde (ej: horde 20)\n• boss (ej: boss Goblin_Duke)\n\n🎮 Modos:\n• godmode, survival\n• inventory_clear"
+        }
+      ],
+      "spawn_endpoint": "/spawn",
+      "item_endpoint": "/item",
+      "event_endpoint": "/command",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}"
+    }
+  },
+  "game_configs": {
+    "repo": {
+      "id": "repo",
+      "name": "R.E.P.O.",
+      "icon": "👻",
+      "host": "127.0.0.1",
+      "port": 5000,
+      "connection_type": "http",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true,
+      "categories": [
+        {
+          "id": "entities",
+          "name": "👹 Enemigos",
+          "type": "entity",
+          "icon": "👹",
+          "data_key": "entities",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "summon {entity}",
+          "tutorial": "📝 R.E.P.O. ENEMIGOS\\n\\nFormato: NombreVisible:Enemy - NombreReal\\n\\n⚠️ Los nombres EXACTOS dependen de REPOLib.\\nUsa el comando 'list' en eventos para ver los nombres reales.\\n\\nEjemplos conocidos:\\n• Bowtie:Enemy - Bowtie\\n• Spider:Enemy - Spider\\n• Shadow Child:Enemy - Shadow Child\\n• Huntsman:Enemy - Huntsman\\n• Apex Predator:Enemy - Apex Predator"
+        },
+        {
+          "id": "items",
+          "name": "🎒 Items",
+          "type": "item",
+          "icon": "🎒",
+          "data_key": "items",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+          "rcon_cmd": "give {user} {entity} {amount}",
+          "tutorial": "📝 R.E.P.O. ITEMS\\n\\nFormato: NombreVisible:Item - NombreReal\\n\\n⚠️ Usa el comando 'items' para ver lista real.\\n\\nEjemplos:\\n• Pistola:Item - Gun Handgun\\n• Escopeta:Item - Gun Shotgun\\n• Botiquín:Item - Health Pack Small\\n• Bate:Item - Melee Baseball Bat\\n• Granada:Item - Grenade Explosive"
+        },
+        {
+          "id": "valuables",
+          "name": "💎 Valuables",
+          "type": "valuable",
+          "icon": "💎",
+          "data_key": "valuables",
+          "endpoint": "/",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"valuable\"}",
+          "rcon_cmd": "spawn {entity}",
+          "tutorial": "📝 R.E.P.O. VALUABLES\\n\\nObjetos valiosos que se pueden spawnear.\\nFormato: NombreVisible:Valuable - NombreReal\\n\\n⚠️ Usa el comando 'valuables' para ver lista real.\\n\\nEjemplos:\\n• Diamante:Valuable - Diamond\\n• Rubí:Valuable - Ruby\\n• Oro Barra:Valuable - Gold Bar\\n• Corona:Valuable - Crown\\n• Estatua:Valuable - Statue"
+        },
+        {
+          "id": "events",
+          "name": "⚡ Comandos",
+          "type": "event",
+          "icon": "⚡",
+          "data_key": "events",
+          "endpoint": "/",
+          "payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+          "rcon_cmd": "{command}",
+          "tutorial": "📝 R.E.P.O. COMANDOS\\n\\nComandos disponibles:\\n• list - Ver enemigos disponibles\\n• items - Ver items disponibles\\n• valuables - Ver valuables\\n• all - Ver todo\\n• horde X - Spawn X enemigos aleatorios (max 20)\\n\\nFormato: NombreVisible:comando\\nCon valor: NombreVisible:comando:valor\\n\\nEjemplos:\\n• Ver Enemigos:list\\n• Horda x5:horde:5\\n• Horda CAOS:horde:20"
+        }
+      ],
+      "spawn_endpoint": "/",
+      "item_endpoint": "/",
+      "event_endpoint": "/",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}"
+    },
+    "ss": {
+      "id": "ss",
+      "name": "ssss",
+      "icon": "🎮",
+      "host": "localhost",
+      "port": 5002,
+      "connection_type": "http",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true,
+      "categories": [
+        {
+          "id": "entities",
+          "name": "🐉 Entidades",
+          "type": "entity",
+          "icon": "🐉",
+          "data_key": "entities",
+          "endpoint": "/spawn",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "summon {entity}"
+        },
+        {
+          "id": "items",
+          "name": "📦 Items",
+          "type": "item",
+          "icon": "📦",
+          "data_key": "items",
+          "endpoint": "/spawn",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "give {user} {entity} {amount}"
+        },
+        {
+          "id": "events",
+          "name": "⚡ Comandos",
+          "type": "event",
+          "icon": "⚡",
+          "data_key": "events",
+          "endpoint": "/command",
+          "payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+          "rcon_cmd": "{command}"
+        }
+      ],
+      "spawn_endpoint": "/spawn",
+      "item_endpoint": "/spawn",
+      "event_endpoint": "/command",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}"
+    },
+    "valheim": {
+      "id": "valheim",
+      "name": "Valheim",
+      "icon": "⚔️",
+      "host": "localhost",
+      "port": 5000,
+      "tab_names": {
+        "entities": "🐉 Entidades",
+        "items": "📦 Items",
+        "events": "⚡ Eventos"
+      }
+    },
+    "7_days_to_die": {
+      "id": "7_days_to_die",
+      "name": "7 DAYS TO DIE",
+      "icon": "🧟",
+      "host": "localhost",
+      "port": 5000,
+      "connection_type": "http",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true,
+      "categories": [
+        {
+          "id": "entities",
+          "name": "🧟 Entidades/Zombies",
+          "type": "entity",
+          "icon": "🧟",
+          "data_key": "entities",
+          "endpoint": "/spawn",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "spawnentity {entity}",
+          "tutorial": "📝 7 DAYS TO DIE - ENTIDADES\\n\\n🧟 ZOMBIES BÁSICOS:\\n• zombieBoe, zombieMoe, zombieJoe\\n• zombieMarlene, zombieSteve, zombieArlene\\n• zombiePartyGirl, zombieBusinessMan, zombieBurnt\\n\\n🕷️ ZOMBIES ESPECIALES:\\n• zombieSpider (araña)\\n• zombieMaleHazmat (traje hazmat)\\n• zombieScreamer (gritadora)\\n• zombieFatCop (policía gordo)\\n• zombieDemolition (demoledor)\\n\\n💀 FERAL/RADIATED:\\n• zombieBoeFeral, zombieBoeRadiated\\n• zombieWightFeral, zombieWightRadiated\\n\\n🐕 ANIMALES ZOMBIE:\\n• animalZombieDog, animalZombieBear\\n• animalZombieVulture, animalZombieBoar\\n\\n🦌 ANIMALES NORMALES:\\n• animalChicken, animalBoar, animalPig\\n• animalWolf, animalBear, animalDireWolf\\n\\n⚠️ Usa los nombres EXACTOS del juego\\nEjemplo: zombieBoe (no 'zombie')"
+        },
+        {
+          "id": "items",
+          "name": "📦 Items/Armas",
+          "type": "item",
+          "icon": "📦",
+          "data_key": "items",
+          "endpoint": "/item",
+          "payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+          "rcon_cmd": "giveself {entity} {amount}",
+          "tutorial": "📝 7 DAYS TO DIE - ITEMS\\n\\n🔫 ARMAS:\\n• gunHandgunT1Pistol (pistola)\\n• gunShotgunT2PumpShotgun (escopeta)\\n• gunRifleT3SniperRifle (sniper)\\n• gunMGT1AK47 (AK-47)\\n• gunBowT1WoodenBow (arco)\\n\\n💣 EXPLOSIVOS:\\n• thrownDynamite (dinamita)\\n• thrownAmmoMolotovCocktail (molotov)\\n• thrownGrenade (granada)\\n• ammoRocketHE (cohete)\\n\\n💊 MEDICINA:\\n• medicalFirstAidKit (botiquín)\\n• medicalBandage (vendaje)\\n• drugAntibiotics (antibióticos)\\n\\n🛠️ HERRAMIENTAS:\\n• meleeToolAxeT2SteelAxe (hacha)\\n• meleeToolPickT2SteelPickaxe (pico)\\n• meleeToolAxeT3Chainsaw (motosierra)\\n\\n🚗 VEHÍCULOS:\\n• vehicleMotorcyclePlaceable\\n• vehicleTruck4x4Placeable\\n• vehicleGyrocopterPlaceable\\n\\n⚠️ Usa nombres EXACTOS del juego"
+        },
+        {
+          "id": "events",
+          "name": "⚡ Comandos/Eventos",
+          "type": "event",
+          "icon": "⚡",
+          "data_key": "events",
+          "endpoint": "/command",
+          "payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+          "rcon_cmd": "{command}",
+          "tutorial": "📝 7 DAYS TO DIE - COMANDOS\\n\\n💀 VIDA/MUERTE:\\n• kill - Matar jugador\\n• heal - Curar\\n• fullheal - Curación completa\\n• damage [N] - Hacer daño (ej: damage 50)\\n\\n🎒 INVENTARIO:\\n• clear - Vaciar inventario\\n\\n⏰ TIEMPO:\\n• day - Cambiar a día\\n• night - Cambiar a noche\\n• noon - Mediodía\\n• midnight - Medianoche\\n\\n🌧️ CLIMA:\\n• rain - Lluvia\\n• snow - Nieve\\n• fog - Niebla\\n• clearweather - Normal\\n\\n☠️ HORDAS/CAOS:\\n• horde - Invocar horda\\n• chaos - Zombies + explosivos\\n• nuke - Explosivos masivos\\n• armageddon - Destrucción total\\n• firestorm - Molotovs + zombies quemados\\n\\n⭐ OTROS:\\n• xp [N] - Dar XP\\n• levelup - Subir nivel\\n• randomtp - Teleport aleatorio\\n• airdrop - Suministros\\n• killall - Matar todos zombies\\n• god - Modo dios"
+        }
+      ],
+      "spawn_endpoint": "/spawn",
+      "item_endpoint": "/item",
+      "event_endpoint": "/command",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "rcon_spawn_cmd": "spawnentity {entity}",
+      "rcon_item_cmd": "giveself {entity} {amount}",
+      "rcon_event_cmd": "{command}"
+    }
+  },
+  "entity_images": {
+    "valheim": {
+      "entities": {
+        "Dragon": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\game_images\\valheim\\entities\\Dragon.png",
+        "gd_king": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\game_images\\valheim\\entities\\gd_king.png"
+      }
+    }
+  }
+}

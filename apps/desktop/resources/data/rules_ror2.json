@@ -1,0 +1,56 @@
+{
+  "rules": [
+    {
+      "id": "ea2d3f0c",
+      "name": "PEQUEÑO WIAST",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "rose",
+      "action_type": "spawn",
+      "action_value": "🦑 Wisp",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entities",
+          "action_type_name": "👹 Enemigos",
+          "action_value": "🦑 Wisp",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    },
+    {
+      "id": "47ecaadf",
+      "name": "JELLYFISH",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "finger heart",
+      "action_type": "spawn",
+      "action_value": "🪼 Jellyfish",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entities",
+          "action_type_name": "👹 Enemigos",
+          "action_value": "🪼 Jellyfish",
+          "amount": 1,
+          "commands": ""
+        }
+      ],
+      "random_action": false
+    }
+  ]
+}

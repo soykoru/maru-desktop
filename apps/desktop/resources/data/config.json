@@ -1,0 +1,156 @@
+{
+  "tts_volume": 17,
+  "tts_enabled": false,
+  "default_voice": "es_002",
+  "current_game": "terraria",
+  "tiktok_username": "ivers0nherrera",
+  "games": {
+    "valheim": {
+      "host": "localhost",
+      "port": 5000
+    },
+    "terraria": {
+      "host": "localhost",
+      "port": 5000
+    },
+    "minecraft": {
+      "host": "localhost",
+      "port": 7030,
+      "password": ""
+    },
+    "repo": {
+      "name": "R.E.P.O.",
+      "host": "localhost",
+      "port": 5000,
+      "connection_type": "http",
+      "spawn_endpoint": "/",
+      "item_endpoint": "/",
+      "event_endpoint": "/",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "http_method": "POST",
+      "rcon_password": "",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true
+    },
+    "7_days_to_die": {
+      "name": "7 DAYS TO DIE",
+      "host": "localhost",
+      "port": 5000,
+      "connection_type": "http",
+      "spawn_endpoint": "/spawn",
+      "item_endpoint": "/item",
+      "event_endpoint": "/command",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "http_method": "POST",
+      "rcon_password": "",
+      "rcon_spawn_cmd": "spawnentity {entity}",
+      "rcon_item_cmd": "giveself {entity} {amount}",
+      "rcon_event_cmd": "{command}",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true
+    },
+    "ror2": {
+      "name": "Risk of Rain 2",
+      "host": "localhost",
+      "port": 5000,
+      "connection_type": "http",
+      "spawn_endpoint": "/",
+      "item_endpoint": "/",
+      "event_endpoint": "/",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}, \"type\": \"item\"}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "http_method": "POST",
+      "rcon_password": "",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true
+    },
+    "hytale": {
+      "name": "Hytale",
+      "host": "localhost",
+      "port": 5000,
+      "connection_type": "http",
+      "spawn_endpoint": "/spawn",
+      "item_endpoint": "/item",
+      "event_endpoint": "/command",
+      "spawn_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "item_payload": "{\"entity_name\": \"{entity}\", \"amount\": {amount}}",
+      "event_payload": "{\"command\": \"{command}\", \"value\": \"{value}\"}",
+      "http_method": "POST",
+      "rcon_password": "",
+      "rcon_spawn_cmd": "summon {entity}",
+      "rcon_item_cmd": "give {user} {entity} {amount}",
+      "rcon_event_cmd": "{command}",
+      "has_entities": true,
+      "has_items": true,
+      "has_events": true
+    }
+  },
+  "theme": "dracula",
+  "sound_volume": 16,
+  "fortune_enabled": true,
+  "fortune_gift": "Heart Me",
+  "fortune_voice": "es_002",
+  "fortune_volume": 33,
+  "social_enabled": true,
+  "social_cooldown": 10,
+  "social_timeout": 90,
+  "social_volume": 30,
+  "social_voice": "",
+  "social_require_register": true,
+  "use_global_voices": true,
+  "spotify": {
+    "enabled": true,
+    "client_id": "",
+    "client_secret": "",
+    "device_id": "",
+    "max_queue": 8,
+    "priority_users": [
+      "gottina",
+      "cristian_rivasxd"
+    ],
+    "priority_users_data": [
+      {
+        "user": "gottina",
+        "playfan_uses": 2
+      },
+      {
+        "user": "cristian_rivasxd",
+        "playfan_uses": 3
+      }
+    ],
+    "tts_enabled": true,
+    "enabled_commands": [
+      "play",
+      "skip",
+      "playfan"
+    ]
+  },
+  "ia": {
+    "ia_enabled": true,
+    "ia_provider": "claude",
+    "ia_api_key": "",
+    "ia_api_keys": {
+      "gemini": "",
+      "claude": "",
+      "groq": ""
+    },
+    "ia_model": "claude-opus-4-6",
+    "ia_max_length": 400,
+    "ia_cooldown": 31,
+    "ia_system_prompt": "Eres un asistente en vivo para un stream de TikTok. Sigue estas reglas sin excepcion:\n\n1. Responde DIRECTO a la pregunta. Sin saludos, sin \"buena pregunta\", sin frases de relleno.\n2. Usa solo texto plano. Cero emojis, cero simbolos especiales, cero asteriscos, cero guiones decorativos.\n3. No repitas el nombre del usuario. El sistema ya lo muestra.\n4. Responde siempre en espanol. Maximo 2 o 3 oraciones. Ve al grano.\n5. Si preguntan la fecha o la hora, di la fecha o la hora directamente.\n6. Si preguntan por una persona famosa, da el dato concreto.\n7. Si preguntan por suerte, horoscopo, tarot, cartas, signos o temas similares: inventa una respuesta entretenida y positiva. Elige una carta de tarot al azar, da un numero de la suerte inventado, o di una prediccion corta y divertida. Hazlo con confianza, como si fuera real, para entretener.\n8. Si la pregunta es ofensiva o inapropiada, ignora el contenido y responde: \"Esa pregunta no la puedo responder.\"\n\nTono: directo, seguro, sin rodeos. El objetivo es responder rapido y claro para el chat en vivo."
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "rules": [
+    {
+      "id": "5bfe0913",
+      "name": "ARMAS Y COSAS",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "",
+      "action_type": "give_item",
+      "action_value": "💀 AK-47",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "items",
+          "action_type_name": "📦 Items/Armas",
+          "action_value": "💀 AK-47",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "items",
+          "action_type_name": "📦 Items/Armas",
+          "action_value": "💥 Balas 7.62mm",
+          "amount": 500,
+          "commands": ""
+        }
+      ]
+    },
+    {
+      "id": "8eb88981",
+      "name": "AUTOS",
+      "enabled": true,
+      "trigger_type": "gift",
+      "trigger_value": "",
+      "action_type": "give_item",
+      "action_value": "🚗 Camioneta 4x4",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "items",
+          "action_type_name": "📦 Items/Armas",
+          "action_value": "🚗 Camioneta 4x4",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "items",
+          "action_type_name": "📦 Items/Armas",
+          "action_value": "🚁 Dron",
+          "amount": 1,
+          "commands": ""
+        },
+        {
+          "action_type": "items",
+          "action_type_name": "📦 Items/Armas",
+          "action_value": "⛽ Bidón de Gasolina",
+          "amount": 500,
+          "commands": ""
+        },
+        {
+          "action_type": "items",
+          "action_type_name": "📦 Items/Armas",
+          "action_value": "⛽ Bidón de Gasolina",
+          "amount": 500,
+          "commands": ""
+        },
+        {
+          "action_type": "items",
+          "action_type_name": "📦 Items/Armas",
+          "action_value": "⛽ Bidón de Gasolina",
+          "amount": 500,
+          "commands": ""
+        }
+      ]
+    }
+  ]
+}

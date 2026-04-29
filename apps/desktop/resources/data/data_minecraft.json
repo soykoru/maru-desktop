@@ -1,0 +1,10 @@
+{
+  "entities": [
+    "zombie:effect give @a minecraft:levitation 1 100 false\ngive @a water_bucket\nexecute run title soykoru times 20 20 20\nexecute run title soykoru subtitle \"{username}\"\nexecute run title soykoru title [\"\",{\"text\":\"G\",\"obfuscated\":true,\"color\":\"light_purple\"},{\"text\":\"GRACIAS\",\"bold\":true,\"color\":\"aqua\"},{\"text\":\"G\",\"obfuscated\":true,\"color\":\"light_purple\"}]"
+  ],
+  "items": [
+    "siu:execute as soykoru at soykoru run function koru_void:start"
+  ],
+  "events": [],
+  "valuables": []
+}

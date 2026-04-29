@@ -57,9 +57,31 @@ export class SidecarManager extends EventEmitter {
     const { command, args, cwd } = this.resolveLaunch();
     console.log(`[sidecar] spawn ${command} ${args.join(' ')} (cwd=${cwd})`);
 
+    // Pasar al sidecar el path al seed dir (data/ del bundle de
+    // electron-builder). Sin esto, el bootstrap no encuentra los JSONs
+    // de estado (gifts.json, games.json, data_*.json, rules_*.json) ni
+    // las imágenes default → la app abre vacía sin tutoriales, gifts,
+    // perfiles de juego, datos de social/rachas, etc.
+    //
+    // En dev `process.resourcesPath` apunta al runtime electron, no
+    // sirve. Usamos el sidecarRuntimeDataRoot que ya apunta al
+    // runtime_data/ del repo en dev.
+    const seedDir = RUNTIME_CONFIG.isDev
+      ? '' // en dev el bootstrap busca por heurística (encuentra LiveChaosEngine_Refactored)
+      : resolve(process.resourcesPath ?? '', 'data');
+
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      PYTHONIOENCODING: 'utf-8',
+      PYTHONUNBUFFERED: '1',
+    };
+    if (seedDir) {
+      env['MARU_SEED_DIR'] = seedDir;
+    }
+
     const proc = spawn(command, args, {
       cwd,
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1' },
+      env,
       windowsHide: true,
     });
     this.proc = proc;

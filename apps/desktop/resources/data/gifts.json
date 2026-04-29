@@ -1,0 +1,3140 @@
+{
+  "custom_gifts": {
+    "TikTok": {
+      "name": "TikTok",
+      "icon": "🎵",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok (2).png"
+    },
+    "GG": {
+      "name": "GG",
+      "icon": "🎮",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\GG.png"
+    },
+    "You're awesome": {
+      "name": "Eres increíble",
+      "icon": "😺",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Youre_awesome.png"
+    },
+    "Ice Cream Cone": {
+      "name": "Cono de helado",
+      "icon": "🍦",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Ice_Cream_Cone.png"
+    },
+    "Love you so much": {
+      "name": "Te amo mucho",
+      "icon": "🥰",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_you_so_much.png"
+    },
+    "Cake Slice": {
+      "name": "Rebanada de pastel",
+      "icon": "🍰",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cake_Slice.png"
+    },
+    "Heart Me": {
+      "name": "Corazóname",
+      "icon": "❤️",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Heart_Me.png"
+    },
+    "Pumpkin": {
+      "name": "Calabaza",
+      "icon": "🎃",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Thumbs Up": {
+      "name": "Pulgar arriba",
+      "icon": "👍",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Thumbs_Up.png"
+    },
+    "Glow Stick": {
+      "name": "Barra luminosa",
+      "icon": "✨",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Glow_Stick.png"
+    },
+    "Love you": {
+      "name": "Te amo",
+      "icon": "💖",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_you.png"
+    },
+    "Maracas": {
+      "name": "Maracas",
+      "icon": "🎺",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Maracas.png"
+    },
+    "It's corn": {
+      "name": "Es maíz",
+      "icon": "🌽",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Its_corn.png",
+      "disabled": false
+    },
+    "White Rose": {
+      "name": "Rosa blanca",
+      "icon": "🌹",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\White_Rose.png"
+    },
+    "Guardian Wings": {
+      "name": "Alas guardianas",
+      "icon": "🕊️",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Guardian_Wings.png"
+    },
+    "Music Album": {
+      "name": "Álbum musical",
+      "icon": "💿",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Music_Album.png"
+    },
+    "Go Popular": {
+      "name": "Hazte popular",
+      "icon": "🔥",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Go_Popular.png"
+    },
+    "Club Cheers": {
+      "name": "Salud del club",
+      "icon": "🍻",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Club_Cheers.png"
+    },
+    "Wink Charm": {
+      "name": "Guiño encantador",
+      "icon": "😉",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Wink_Charm.png"
+    },
+    "Team Bracelet": {
+      "name": "Pulsera de equipo",
+      "icon": "💝",
+      "coins": 2,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Team_Bracelet.png"
+    },
+    "Finger Heart": {
+      "name": "Corazón con dedos",
+      "icon": "🤟",
+      "coins": 5,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Finger_Heart.png"
+    },
+    "Pumpkin Pie": {
+      "name": "Pastel de calabaza",
+      "icon": "🥧",
+      "coins": 5,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Wave Firework": {
+      "name": "Fuegos artificiales",
+      "icon": "🎆",
+      "coins": 5,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Wave_Firework.png"
+    },
+    "Super Popular": {
+      "name": "Súper popular",
+      "icon": "🔥",
+      "coins": 9,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Super_Popular.png"
+    },
+    "Cheer You Up": {
+      "name": "Animarte",
+      "icon": "🎀",
+      "coins": 9,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cheer_You_Up.png"
+    },
+    "Club Power": {
+      "name": "Poder del club",
+      "icon": "💪",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Club_Power.png"
+    },
+    "Boo": {
+      "name": "Boo",
+      "icon": "👻",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Rosa": {
+      "name": "Rosa premium",
+      "icon": "🌹",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rosa.png"
+    },
+    "Friendship Necklace": {
+      "name": "Collar de amistad",
+      "icon": "💎",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Friendship_Necklace.png"
+    },
+    "Journey Pass": {
+      "name": "Pase de viaje",
+      "icon": "🎫",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Journey_Pass.png"
+    },
+    "Tiny Diny": {
+      "name": "Tiny Diny",
+      "icon": "🦖",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Pumpkin Latte": {
+      "name": "Café de calabaza",
+      "icon": "☕",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Heart": {
+      "name": "Corazón rojo",
+      "icon": "❤️",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Heart_2.png"
+    },
+    "Balloons": {
+      "name": "Globos",
+      "icon": "🎈",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Balloons_2.png"
+    },
+    "Wata Drum": {
+      "name": "Tambor Wata",
+      "icon": "🥁",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Furious Fire": {
+      "name": "Fuego furioso",
+      "icon": "🔥",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Furious_Fire.png"
+    },
+    "Heart Gaze": {
+      "name": "Mirada de corazón",
+      "icon": "💙",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Heart_Gaze.png"
+    },
+    "Tiny Diny in Love": {
+      "name": "Tiny Diny enamorado",
+      "icon": "🦕",
+      "coins": 15,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Perfume": {
+      "name": "Perfume",
+      "icon": "💐",
+      "coins": 20,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Perfume.png"
+    },
+    "Tiny Diny Hotdog": {
+      "name": "Tiny Diny Hotdog",
+      "icon": "🌭",
+      "coins": 20,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Trumpet": {
+      "name": "Trompeta",
+      "icon": "🎺",
+      "coins": 29,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Doughnut": {
+      "name": "Dona",
+      "icon": "🍩",
+      "coins": 30,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Doughnut.png"
+    },
+    "Capybara": {
+      "name": "Capibara",
+      "icon": "🦫",
+      "coins": 30,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Capybara.png"
+    },
+    "Woodland Wonder": {
+      "name": "Maravilla del bosque",
+      "icon": "🦌",
+      "coins": 30,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Woodland_Wonder.png"
+    },
+    "PK crown ring": {
+      "name": "Anillo corona PK",
+      "icon": "👑",
+      "coins": 30,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Paper Crane": {
+      "name": "Grulla de papel",
+      "icon": "🦢",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Paper_Crane.png"
+    },
+    "Little Crown": {
+      "name": "Pequeña corona",
+      "icon": "👑",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Little_Crown.png"
+    },
+    "Cap": {
+      "name": "Gorra",
+      "icon": "🧢",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cap.png"
+    },
+    "Hat and Mustache": {
+      "name": "Sombrero y bigote",
+      "icon": "🎩",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hat_and_Mustache.png"
+    },
+    "Like-Pop": {
+      "name": "Like-Pop",
+      "icon": "🎉",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Like-Pop.png"
+    },
+    "Love Painting": {
+      "name": "Pintura de amor",
+      "icon": "🎨",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_Painting.png"
+    },
+    "Bubble Gum": {
+      "name": "Chicle",
+      "icon": "🍬",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bubble_Gum.png"
+    },
+    "Mark of Love": {
+      "name": "Marca de amor",
+      "icon": "💘",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Mark_of_Love.png"
+    },
+    "Sundae Bowl": {
+      "name": "Copa de helado",
+      "icon": "🍨",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sundae_Bowl.png"
+    },
+    "Club Victory": {
+      "name": "Victoria del club",
+      "icon": "🏆",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Club_Victory.png"
+    },
+    "Level-up Sparks": {
+      "name": "Chispas de nivel",
+      "icon": "✨",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Level-up_Sparks.png"
+    },
+    "Greeting Heart": {
+      "name": "Corazón de saludo",
+      "icon": "💕",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Greeting_Heart.png"
+    },
+    "Game Controller": {
+      "name": "Control de juego",
+      "icon": "🎮",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Game_Controller.png"
+    },
+    "Super GG": {
+      "name": "Super GG",
+      "icon": "🏅",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Super_GG.png"
+    },
+    "Mishka Bear": {
+      "name": "Oso Mishka",
+      "icon": "🧸",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Mishka_Bear.png"
+    },
+    "Confetti": {
+      "name": "Confeti",
+      "icon": "🎊",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Confetti.png"
+    },
+    "Hand Hearts": {
+      "name": "Corazones de manos",
+      "icon": "💗",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hand_Hearts.png"
+    },
+    "Heart Signal": {
+      "name": "Señal de corazón",
+      "icon": "💌",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Marvelous Confetti": {
+      "name": "Confeti maravilloso",
+      "icon": "🎉",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Marvelous_Confetti.png"
+    },
+    "Singing Magic": {
+      "name": "Magia cantante",
+      "icon": "🎤",
+      "coins": 100,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Singing_Magic.png"
+    },
+    "Heart Rain": {
+      "name": "Lluvia de corazones",
+      "icon": "💖",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Bowknot": {
+      "name": "Moño",
+      "icon": "🎀",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bowknot.png"
+    },
+    "Big Shout Out": {
+      "name": "Gran grito",
+      "icon": "📣",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Big_Shout_Out.png"
+    },
+    "Chatting Popcorn": {
+      "name": "Palomitas parlantes",
+      "icon": "🍿",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Chatting_Popcorn.png"
+    },
+    "Masquerade": {
+      "name": "Mascarada",
+      "icon": "🎭",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Masquerade.png"
+    },
+    "Balloon Crown": {
+      "name": "Corona de globos",
+      "icon": "👑",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Balloon_Crown.png"
+    },
+    "Feather Tiara": {
+      "name": "Tiara de plumas",
+      "icon": "👸",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Feather_Tiara.png"
+    },
+    "Caterpillar Chaos": {
+      "name": "Caos de oruga",
+      "icon": "🐛",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Caterpillar_Chaos.png"
+    },
+    "Catrina": {
+      "name": "Catrina",
+      "icon": "💀",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Catrina.png"
+    },
+    "Potato Transformer": {
+      "name": "Transformador de papa",
+      "icon": "🥔",
+      "coins": 150,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Love Charger": {
+      "name": "Cargador de amor",
+      "icon": "💝",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Sunglasses": {
+      "name": "Gafas de sol",
+      "icon": "😎",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sunglasses.png"
+    },
+    "Hearts": {
+      "name": "Corazones",
+      "icon": "💕",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hearts.png"
+    },
+    "Coconut": {
+      "name": "Coco",
+      "icon": "🥥",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Coconut.png"
+    },
+    "Garland Headpiece": {
+      "name": "Guirnalda",
+      "icon": "🌸",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Garland_Headpiece.png"
+    },
+    "Love You": {
+      "name": "Te amo 2",
+      "icon": "💖",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_you.png"
+    },
+    "Cheer For You": {
+      "name": "Animo por ti",
+      "icon": "💙",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cheer_For_You.png"
+    },
+    "Stinging Bee": {
+      "name": "Abeja picante",
+      "icon": "🐝",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Stinging_Bee.png"
+    },
+    "Massage for You": {
+      "name": "Masaje para ti",
+      "icon": "💆",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Massage_for_You.png"
+    },
+    "Coffee Magic": {
+      "name": "Magia del café",
+      "icon": "☕",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Coffee_Magic.png"
+    },
+    "Eye See You": {
+      "name": "Te veo",
+      "icon": "👀",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Eye_See_You.png"
+    },
+    "Dancing Hands": {
+      "name": "Manos bailarinas",
+      "icon": "👐",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Dancing_Hands.png"
+    },
+    "Cheering Crab": {
+      "name": "Cangrejo animador",
+      "icon": "🦀",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cheering_Crab.png"
+    },
+    "Night Star": {
+      "name": "Estrella nocturna",
+      "icon": "⭐",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Night_Star.png"
+    },
+    "Twinkling Star": {
+      "name": "Estrella brillante",
+      "icon": "✨",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Twinkling_Star.png"
+    },
+    "Floating Octopus": {
+      "name": "Pulpo flotante",
+      "icon": "🐙",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Floating_Octopus.png"
+    },
+    "Flower Headband": {
+      "name": "Diadema de flores",
+      "icon": "🌺",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Flower_Headband.png"
+    },
+    "Sparklers": {
+      "name": "Bengalas",
+      "icon": "🎇",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sparklers.png"
+    },
+    "Hampers": {
+      "name": "Cestas",
+      "icon": "🧺",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hampers.png"
+    },
+    "Bowtiful Crown": {
+      "name": "Corona hermosa",
+      "icon": "👑",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bowtiful_Crown.png"
+    },
+    "Panda Climb": {
+      "name": "Panda escalador",
+      "icon": "🐼",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Panda_Climb.png"
+    },
+    "Sour Buddy": {
+      "name": "Amigo agrio",
+      "icon": "🍋",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sour_Buddy.png"
+    },
+    "Coconut Juice": {
+      "name": "Jugo de coco",
+      "icon": "🥥",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Coconut_Juice.png"
+    },
+    "Chirpy Kisses": {
+      "name": "Besos alegres",
+      "icon": "😘",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Chirpy_Kisses.png"
+    },
+    "Melon Juice": {
+      "name": "Jugo de melón",
+      "icon": "🍉",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Melon_Juice.png"
+    },
+    "Juicy Smile": {
+      "name": "Sonrisa jugosa",
+      "icon": "😊",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Juicy_Smile.png"
+    },
+    "Rose Hand": {
+      "name": "Mano rosa",
+      "icon": "🌹",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_Hand_2.png"
+    },
+    "Firecracker": {
+      "name": "Petardo",
+      "icon": "🧨",
+      "coins": 200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Tulip Box": {
+      "name": "Caja de tulipanes",
+      "icon": "🌷",
+      "coins": 200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Tulip_Box.png"
+    },
+    "Gold Medal": {
+      "name": "Medalla de oro",
+      "icon": "🥇",
+      "coins": 200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Gold_Medal.png"
+    },
+    "Magic Genie": {
+      "name": "Genio mágico",
+      "icon": "🧞",
+      "coins": 200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Magic_Genie.png"
+    },
+    "Rose Bear": {
+      "name": "Oso de rosas",
+      "icon": "🧸",
+      "coins": 214,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_Bear_2.png"
+    },
+    "Pinch Face": {
+      "name": "Cara pellizcada",
+      "icon": "🤗",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pinch_Face.png"
+    },
+    "Candy Bouquet": {
+      "name": "Ramo de dulces",
+      "icon": "🍭",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Candy_Bouquet_2.png"
+    },
+    "Star Goggles": {
+      "name": "Gafas estrella",
+      "icon": "🌟",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Star_Goggles.png"
+    },
+    "Cheer Mic": {
+      "name": "Micrófono animador",
+      "icon": "🎤",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cheer_Mic.png"
+    },
+    "Music Bubbles": {
+      "name": "Burbujas musicales",
+      "icon": "🎵",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Music_Bubbles.png"
+    },
+    "Palm Breeze": {
+      "name": "Brisa de palma",
+      "icon": "🌴",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Palm_Breeze.png"
+    },
+    "Forest Elf": {
+      "name": "Elfo del bosque",
+      "icon": "🧚",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Forest_Elf.png"
+    },
+    "Face-pulling": {
+      "name": "Haciendo muecas",
+      "icon": "😜",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Face-pulling.png"
+    },
+    "Gamer 2025": {
+      "name": "Gamer 2025",
+      "icon": "🎮",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Dream Team": {
+      "name": "Dream Team",
+      "icon": "⚽",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Boxing Gloves": {
+      "name": "Guantes de boxeo",
+      "icon": "🥊",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Boxing_Gloves.png"
+    },
+    "Corgi": {
+      "name": "Corgi",
+      "icon": "🐶",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Corgi.png"
+    },
+    "Fruit Friends": {
+      "name": "Amigos frutas",
+      "icon": "🍎",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fruit_Friends.png"
+    },
+    "Naughty Chicken": {
+      "name": "Pollo travieso",
+      "icon": "🐔",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Naughty_Chicken.png"
+    },
+    "Play for You": {
+      "name": "Toco para ti",
+      "icon": "🎸",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Play_for_You.png"
+    },
+    "Rock Star": {
+      "name": "Estrella de rock",
+      "icon": "🎸",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rock_Star.png"
+    },
+    "Elephant trunk": {
+      "name": "Trompa de elefante",
+      "icon": "🐘",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Elephant_trunk.png"
+    },
+    "TikTok Crown": {
+      "name": "Corona TikTok",
+      "icon": "👑",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok_Crown.png"
+    },
+    "Butterfly for You": {
+      "name": "Mariposa para ti",
+      "icon": "🦋",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Butterfly_for_You.png"
+    },
+    "Puppy Kisses": {
+      "name": "Besos de cachorro",
+      "icon": "🐶",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Puppy_Kisses.png"
+    },
+    "United Heart": {
+      "name": "Corazón unido",
+      "icon": "💕",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\United_Heart.png"
+    },
+    "LIVE Ranking Crown": {
+      "name": "Corona ranking LIVE",
+      "icon": "👑",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\LIVE_Ranking_Crown_2.png"
+    },
+    "Kicker Challenge": {
+      "name": "Desafío pateador",
+      "icon": "⚽",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Kicker_Challenge.png"
+    },
+    "Starlight Compass": {
+      "name": "Brújula estelar",
+      "icon": "🧭",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Hi! Rosie!": {
+      "name": "Hola Rosie",
+      "icon": "👋",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hi_Rosie.png"
+    },
+    "Go Hamster": {
+      "name": "Vamos hámster",
+      "icon": "🐹",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Go_Hamster.png"
+    },
+    "Pawfect": {
+      "name": "Pawfect",
+      "icon": "🐾",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pawfect.png"
+    },
+    "Shield Gift": {
+      "name": "Regalo escudo",
+      "icon": "🛡️",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Bat Headwear": {
+      "name": "Sombrero murciélago",
+      "icon": "🦇",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bat_Headwear.png"
+    },
+    "Budding Heart": {
+      "name": "Corazón floreciente",
+      "icon": "💗",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Budding_Heart.png"
+    },
+    "Feather Mask": {
+      "name": "Máscara de plumas",
+      "icon": "🎭",
+      "coins": 300,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Feather_Mask.png"
+    },
+    "Tambourine": {
+      "name": "Pandereta",
+      "icon": "🪘",
+      "coins": 300,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Air Dancer": {
+      "name": "Bailarín de aire",
+      "icon": "💃",
+      "coins": 300,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Air_Dancer.png"
+    },
+    "Backing Monkey": {
+      "name": "Mono de apoyo",
+      "icon": "🐵",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Backing_Monkey.png"
+    },
+    "Become Kitten": {
+      "name": "Convertirse en gatito",
+      "icon": "🐱",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Become_Kitten.png"
+    },
+    "Marked with Love": {
+      "name": "Marcado con amor",
+      "icon": "💖",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Marked_with_Love.png"
+    },
+    "Vinyl Flip": {
+      "name": "Vinilo flip",
+      "icon": "💿",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Vinyl_Flip.png"
+    },
+    "Juicy Cap": {
+      "name": "Gorra jugosa",
+      "icon": "🧢",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Juicy_Cap.png"
+    },
+    "Batwing Hat": {
+      "name": "Sombrero ala de murciélago",
+      "icon": "🦇",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Batwing_Hat.png"
+    },
+    "Mystic Drink": {
+      "name": "Bebida mística",
+      "icon": "🍷",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Mystic_Drink.png"
+    },
+    "Forever Rosa": {
+      "name": "Rosa eterna",
+      "icon": "🌹",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Forever_Rosa.png"
+    },
+    "Magic Rhythm": {
+      "name": "Ritmo mágico",
+      "icon": "🎵",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Magic_Rhythm.png"
+    },
+    "Relaxed Goose": {
+      "name": "Ganso relajado",
+      "icon": "🦆",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Relaxed_Goose.png"
+    },
+    "Tom's Hug": {
+      "name": "Abrazo de Tom",
+      "icon": "🤗",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Toms_Hug.png"
+    },
+    "Rosie the Rose Bear": {
+      "name": "Rosie el oso rosa",
+      "icon": "🧸",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Jollie the Joy Bear": {
+      "name": "Jollie el oso alegre",
+      "icon": "🧸",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Rocky the Rock Bear": {
+      "name": "Rocky el oso roca",
+      "icon": "🧸",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Sage the Smart Bear": {
+      "name": "Sage el oso sabio",
+      "icon": "🧸",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Sage's Slash": {
+      "name": "Ataque de Sage",
+      "icon": "⚔️",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sages_Slash.png"
+    },
+    "Let butterfly dance": {
+      "name": "Danza de mariposas",
+      "icon": "🦋",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Kitten Kneading": {
+      "name": "Gatito amasando",
+      "icon": "🐱",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Kitten_Kneading.png"
+    },
+    "Shoot the Apple": {
+      "name": "Dispara a la manzana",
+      "icon": "🍎",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Shoot_the_Apple.png"
+    },
+    "Alien Buddy": {
+      "name": "Amigo alien",
+      "icon": "👽",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Alien_Buddy.png"
+    },
+    "Otter Kiss": {
+      "name": "Beso de nutria",
+      "icon": "🦦",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Otter_Kiss.png"
+    },
+    "You Are Loved": {
+      "name": "Eres amado",
+      "icon": "💗",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\You_Are_Loved.png"
+    },
+    "Rosie's Concert": {
+      "name": "Concierto de Rosie",
+      "icon": "🎤",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rosies_Concert.png"
+    },
+    "Boiling Cauldron": {
+      "name": "Caldero hirviendo",
+      "icon": "🔮",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Crystal Dreams": {
+      "name": "Sueños de cristal",
+      "icon": "💎",
+      "coins": 400,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Crystal_Dreams.png"
+    },
+    "Wishing Cake": {
+      "name": "Pastel de deseos",
+      "icon": "🎂",
+      "coins": 400,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Wishing_Cake.png"
+    },
+    "Mic Champ": {
+      "name": "Campeón del micrófono",
+      "icon": "🎤",
+      "coins": 400,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Mic_Champ.png"
+    },
+    "Bounce Speakers": {
+      "name": "Altavoces rebotadores",
+      "icon": "🔊",
+      "coins": 400,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bounce_Speakers.png"
+    },
+    "Beating Heart": {
+      "name": "Corazón latiendo",
+      "icon": "💓",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Beating_Heart.png"
+    },
+    "Encore Clap": {
+      "name": "Aplauso bis",
+      "icon": "👏",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Encore_Clap.png"
+    },
+    "Terminator Face": {
+      "name": "Cara Terminator",
+      "icon": "🤖",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Terminator_Face.png"
+    },
+    "Pirate's Treasure": {
+      "name": "Tesoro pirata",
+      "icon": "💰",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pirates_Treasure.png"
+    },
+    "Candy Loot": {
+      "name": "Botín de dulces",
+      "icon": "🍬",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Candy_Loot.png"
+    },
+    "Fairy Mask": {
+      "name": "Máscara de hada",
+      "icon": "🧚",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Powerful Mind": {
+      "name": "Mente poderosa",
+      "icon": "🧠",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Powerful_Mind.png"
+    },
+    "Hat of Joy": {
+      "name": "Sombrero de alegría",
+      "icon": "🎩",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hat_of_Joy.png"
+    },
+    "Halloween Fun Hat": {
+      "name": "Sombrero Halloween",
+      "icon": "🎃",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Halloween_Fun_Hat.png"
+    },
+    "Coral": {
+      "name": "Coral",
+      "icon": "🪸",
+      "coins": 499,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Coral.png"
+    },
+    "Panda Hug": {
+      "name": "Abrazo de panda",
+      "icon": "🐼",
+      "coins": 499,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Panda_Hug.png"
+    },
+    "Hands Up": {
+      "name": "Manos arriba",
+      "icon": "🙌",
+      "coins": 499,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hands_Up.png"
+    },
+    "Money Gun": {
+      "name": "Pistola de dinero",
+      "icon": "💸",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Money_Gun.png"
+    },
+    "You're Amazing": {
+      "name": "Eres increíble 2",
+      "icon": "🌟",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "VR Goggles": {
+      "name": "Gafas VR",
+      "icon": "🥽",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\VR_Goggles.png"
+    },
+    "DJ Glasses": {
+      "name": "Gafas DJ",
+      "icon": "🕶️",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\DJ_Glasses.png"
+    },
+    "Couch Potato": {
+      "name": "Papa de sofá",
+      "icon": "🥔",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Couch_Potato.png"
+    },
+    "Manifesting": {
+      "name": "Manifestando",
+      "icon": "✨",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Manifesting.png"
+    },
+    "Lion's Mane": {
+      "name": "Melena de león",
+      "icon": "🦁",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Dragon Crown": {
+      "name": "Corona de dragón",
+      "icon": "🐉",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Dragon_Crown.png"
+    },
+    "Star Map Polaris": {
+      "name": "Mapa estelar Polaris",
+      "icon": "🗺️",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Star_Map_Polaris.png"
+    },
+    "XXXL Flowers": {
+      "name": "Flores XXXL",
+      "icon": "🌺",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\XXXL_Flowers.png"
+    },
+    "Racing Helmet": {
+      "name": "Casco de carreras",
+      "icon": "🏎️",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Racing_Helmet.png"
+    },
+    "Prince": {
+      "name": "Príncipe",
+      "icon": "🤴",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Prince.png"
+    },
+    "Bunny Crown": {
+      "name": "Corona de conejo",
+      "icon": "🐰",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bunny_Crown.png"
+    },
+    "Magic Prop": {
+      "name": "Accesorio mágico",
+      "icon": "🎩",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Magic_Prop.png"
+    },
+    "Roses": {
+      "name": "Rosas",
+      "icon": "🌹",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Roses.png"
+    },
+    "Cheeky Boo": {
+      "name": "Boo travieso",
+      "icon": "👻",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Gem Gun": {
+      "name": "Pistola de gemas",
+      "icon": "💎",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Gem_Gun.png"
+    },
+    "Birds": {
+      "name": "Pájaros",
+      "icon": "🐦",
+      "coins": 600,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Join Butterflies": {
+      "name": "Únete a las mariposas",
+      "icon": "🦋",
+      "coins": 600,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Join_Butterflies.png"
+    },
+    "Piñata": {
+      "name": "Piñata",
+      "icon": "🪅",
+      "coins": 699,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Swan": {
+      "name": "Cisne",
+      "icon": "🦢",
+      "coins": 699,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Swan.png"
+    },
+    "Colorful Wings": {
+      "name": "Alas coloridas",
+      "icon": "🦋",
+      "coins": 700,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Colorful_Wings.png"
+    },
+    "The Van Cat": {
+      "name": "El gato Van",
+      "icon": "🐱",
+      "coins": 799,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\The_Van_Cat.png"
+    },
+    "Train": {
+      "name": "Tren",
+      "icon": "🚂",
+      "coins": 899,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Train.png"
+    },
+    "LOVE U": {
+      "name": "TE AMO",
+      "icon": "💕",
+      "coins": 899,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\LOVE_U.png"
+    },
+    "Medium Fandom": {
+      "name": "Fandom medio",
+      "icon": "⭐",
+      "coins": 900,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Superstar": {
+      "name": "Superestrella",
+      "icon": "🌟",
+      "coins": 900,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Travel with You": {
+      "name": "Viajar contigo",
+      "icon": "✈️",
+      "coins": 999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Travel_with_You.png"
+    },
+    "Lucky Airdrop Box": {
+      "name": "Caja aérea de suerte",
+      "icon": "📦",
+      "coins": 999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Lucky_Airdrop_Box.png"
+    },
+    "Carnival Music": {
+      "name": "Música de carnaval",
+      "icon": "🎪",
+      "coins": 999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Grand show": {
+      "name": "Gran espectáculo",
+      "icon": "🎭",
+      "coins": 999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Grand_show.png"
+    },
+    "Trending Figure": {
+      "name": "Figura trending",
+      "icon": "📈",
+      "coins": 999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Trending_Figure.png"
+    },
+    "Watermelon Love": {
+      "name": "Amor sandía",
+      "icon": "🍉",
+      "coins": 1000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Watermelon_Love.png"
+    },
+    "Blooming Ribbons": {
+      "name": "Cintas florecientes",
+      "icon": "🎀",
+      "coins": 1000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Blooming_Ribbons.png"
+    },
+    "Galaxy": {
+      "name": "Galaxia",
+      "icon": "🌌",
+      "coins": 1000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Galaxy.png"
+    },
+    "Fairy Wings": {
+      "name": "Alas de hada",
+      "icon": "🧚",
+      "coins": 1000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fairy_Wings.png"
+    },
+    "Flamingo Groove": {
+      "name": "Ritmo flamenco",
+      "icon": "🦩",
+      "coins": 1000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Flamingo_Groove.png"
+    },
+    "Shiny air balloon": {
+      "name": "Globo brillante",
+      "icon": "🎈",
+      "coins": 1000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Shiny_air_balloon.png"
+    },
+    "Sparkle Dance": {
+      "name": "Baile brillante",
+      "icon": "✨",
+      "coins": 1000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sparkle_Dance.png"
+    },
+    "Fireworks": {
+      "name": "Fuegos artificiales 2",
+      "icon": "🎆",
+      "coins": 1088,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fireworks.png"
+    },
+    "Magic Role": {
+      "name": "Rol mágico",
+      "icon": "🔮",
+      "coins": 1088,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Magic_Role.png"
+    },
+    "Umbrella of Love": {
+      "name": "Paraguas de amor",
+      "icon": "☂️",
+      "coins": 1200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Umbrella_of_Love.png"
+    },
+    "Vibrant Stage": {
+      "name": "Escenario vibrante",
+      "icon": "🎤",
+      "coins": 1400,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Vibrant_Stage.png"
+    },
+    "Diamond Crown": {
+      "name": "Corona de diamante",
+      "icon": "👑",
+      "coins": 1499,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Chasing the Dream": {
+      "name": "Persiguiendo el sueño",
+      "icon": "🌠",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Chasing_the_Dream.png"
+    },
+    "Lover's Lock": {
+      "name": "Candado de amantes",
+      "icon": "🔒",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Greeting Card": {
+      "name": "Tarjeta de felicitación",
+      "icon": "💌",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Greeting_Card.png"
+    },
+    "Future Encounter": {
+      "name": "Encuentro futuro",
+      "icon": "🔮",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Future_Encounter.png"
+    },
+    "Under Control": {
+      "name": "Bajo control",
+      "icon": "🎮",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Under_Control.png"
+    },
+    "Time Warp": {
+      "name": "Distorsión temporal",
+      "icon": "⏰",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Time_Warp.png"
+    },
+    "Racing Debut": {
+      "name": "Debut de carreras",
+      "icon": "🏎️",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Racing_Debut.png"
+    },
+    "Merry Go Boo": {
+      "name": "Carrusel Boo",
+      "icon": "🎠",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Twirl & Treat": {
+      "name": "Gira y trata",
+      "icon": "🍬",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Blooming Heart": {
+      "name": "Corazón floreciente 2",
+      "icon": "💗",
+      "coins": 1599,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Blooming_Heart.png"
+    },
+    "Here We Go": {
+      "name": "Aquí vamos",
+      "icon": "🚀",
+      "coins": 1799,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Here_We_Go.png"
+    },
+    "Love Drop": {
+      "name": "Gota de amor",
+      "icon": "💧",
+      "coins": 1800,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_Drop.png"
+    },
+    "Fox Legend": {
+      "name": "Leyenda del zorro",
+      "icon": "🦊",
+      "coins": 1800,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fox_Legend.png"
+    },
+    "Star of Red Carpet": {
+      "name": "Estrella alfombra roja",
+      "icon": "⭐",
+      "coins": 1999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Star_of_Red_Carpet.png"
+    },
+    "Cooper Flies Home": {
+      "name": "Cooper vuela a casa",
+      "icon": "🦅",
+      "coins": 1999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cooper_Flies_Home.png"
+    },
+    "Mystery Firework": {
+      "name": "Fuego misterioso",
+      "icon": "🎆",
+      "coins": 1999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Mystery_Firework.png"
+    },
+    "Whale Diving": {
+      "name": "Ballena buceando",
+      "icon": "🐋",
+      "coins": 2150,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Whale_Diving.png"
+    },
+    "Blow Rosie Kisses": {
+      "name": "Besos de Rosie",
+      "icon": "💋",
+      "coins": 2199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Blow_Rosie_Kisses.png"
+    },
+    "Jollie's Heartland": {
+      "name": "Tierra de Jollie",
+      "icon": "❤️",
+      "coins": 2199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Jollies_Heartland.png"
+    },
+    "Rocky's Punch": {
+      "name": "Golpe de Rocky",
+      "icon": "👊",
+      "coins": 2199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rockys_Punch.png"
+    },
+    "Sage's Coinbot": {
+      "name": "Robot de Sage",
+      "icon": "🤖",
+      "coins": 2199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sages_Coinbot.png"
+    },
+    "Animal Band": {
+      "name": "Banda animal",
+      "icon": "🎵",
+      "coins": 2500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Animal_Band.png"
+    },
+    "Motorcycle": {
+      "name": "Motocicleta",
+      "icon": "🏍️",
+      "coins": 2988,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Motorcycle.png"
+    },
+    "Pink Dream": {
+      "name": "Sueño rosa",
+      "icon": "💗",
+      "coins": 2988,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pink_Dream.png"
+    },
+    "Rhythmic Bear": {
+      "name": "Oso rítmico",
+      "icon": "🧸",
+      "coins": 2999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rhythmic_Bear.png"
+    },
+    "Level-up Spotlight": {
+      "name": "Foco de nivel",
+      "icon": "💡",
+      "coins": 2999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Level-up_Spotlight.png"
+    },
+    "Meteor Shower": {
+      "name": "Lluvia de meteoros",
+      "icon": "☄️",
+      "coins": 3000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Meteor_Shower.png"
+    },
+    "Gift Box": {
+      "name": "Caja de regalo 2",
+      "icon": "🎁",
+      "coins": 3999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Candy Party": {
+      "name": "Fiesta de dulces",
+      "icon": "🍬",
+      "coins": 3999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Firelight Beast": {
+      "name": "Bestia de fuego",
+      "icon": "🔥",
+      "coins": 4000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Magic World": {
+      "name": "Mundo mágico",
+      "icon": "🔮",
+      "coins": 4088,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Magic_World.png"
+    },
+    "Your Concert": {
+      "name": "Tu concierto",
+      "icon": "🎤",
+      "coins": 4500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Your_Concert.png"
+    },
+    "Private Jet": {
+      "name": "Jet privado",
+      "icon": "✈️",
+      "coins": 4888,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Private_Jet.png"
+    },
+    "Leon the Kitten": {
+      "name": "Leon el gatito",
+      "icon": "🐱",
+      "coins": 4888,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Leon_the_Kitten.png"
+    },
+    "Fiery Dragon": {
+      "name": "Dragón ardiente",
+      "icon": "🐉",
+      "coins": 4888,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fiery_Dragon.png"
+    },
+    "Signature Jet": {
+      "name": "Jet firma",
+      "icon": "✈️",
+      "coins": 4888,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Signature_Jet.png"
+    },
+    "Sage's Venture": {
+      "name": "Aventura de Sage",
+      "icon": "🚀",
+      "coins": 4999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Unicorn Fantasy": {
+      "name": "Fantasía unicornio",
+      "icon": "🦄",
+      "coins": 5000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Unicorn_Fantasy.png"
+    },
+    "Ellie the Elephant": {
+      "name": "Ellie el elefante",
+      "icon": "🐘",
+      "coins": 5000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Ellie_the_Elephant.png"
+    },
+    "Flying Jets": {
+      "name": "Jets voladores",
+      "icon": "✈️",
+      "coins": 5000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Flying_Jets.png"
+    },
+    "Diamond Gun": {
+      "name": "Pistola de diamante",
+      "icon": "💎",
+      "coins": 5000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Diamond_Gun_2.png"
+    },
+    "Devoted Heart": {
+      "name": "Corazón devoto",
+      "icon": "💕",
+      "coins": 5999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Devoted_Heart.png"
+    },
+    "Future City": {
+      "name": "Ciudad futura",
+      "icon": "🌆",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Future_City.png"
+    },
+    "Sam in New City": {
+      "name": "Sam en nueva ciudad",
+      "icon": "🏙️",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sam_in_New_City.png"
+    },
+    "Work Hard Play Hard": {
+      "name": "Trabaja duro juega duro",
+      "icon": "💼",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Strong Finish": {
+      "name": "Final fuerte",
+      "icon": "🏁",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Strong_Finish.png"
+    },
+    "Peek-a-Boo": {
+      "name": "Peek-a-Boo",
+      "icon": "👻",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Boo Crew": {
+      "name": "Equipo Boo",
+      "icon": "👻",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Lili the Leopard": {
+      "name": "Lili el leopardo",
+      "icon": "🐆",
+      "coins": 6599,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Lili_the_Leopard.png"
+    },
+    "Celebration Time": {
+      "name": "Hora de celebración",
+      "icon": "🎉",
+      "coins": 6999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Celebration_Time.png"
+    },
+    "Happy Party": {
+      "name": "Fiesta feliz",
+      "icon": "🎊",
+      "coins": 6999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Happy_Party.png"
+    },
+    "Sports Car": {
+      "name": "Auto deportivo",
+      "icon": "🏎️",
+      "coins": 7000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sports_Car.png"
+    },
+    "Star Throne": {
+      "name": "Trono estelar",
+      "icon": "👑",
+      "coins": 7999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Star_Throne_2.png"
+    },
+    "Diamond Shield": {
+      "name": "Escudo de diamante",
+      "icon": "🛡️",
+      "coins": 7999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Rainforest": {
+      "name": "Selva tropical",
+      "icon": "🌳",
+      "coins": 8800,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Leon and Lili": {
+      "name": "Leon y Lili",
+      "icon": "🐱",
+      "coins": 9699,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Leon_and_Lili.png"
+    },
+    "Earth": {
+      "name": "Tierra",
+      "icon": "🌍",
+      "coins": 9999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Interstellar": {
+      "name": "Interestelar",
+      "icon": "🌌",
+      "coins": 10000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Interstellar.png"
+    },
+    "Sunset Speedway": {
+      "name": "Autopista al atardecer",
+      "icon": "🏎️",
+      "coins": 10000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sunset_Speedway.png"
+    },
+    "Falcon": {
+      "name": "Halcón",
+      "icon": "🦅",
+      "coins": 10999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Falcon.png"
+    },
+    "Red Lightning": {
+      "name": "Relámpago rojo",
+      "icon": "⚡",
+      "coins": 12000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Red_Lightning.png"
+    },
+    "Ritmos Latinos": {
+      "name": "Ritmos Latinos",
+      "icon": "💃",
+      "coins": 12000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Ice Queen": {
+      "name": "Reina de hielo",
+      "icon": "❄️",
+      "coins": 12000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Level-up Spectacle": {
+      "name": "Espectáculo de nivel",
+      "icon": "🎭",
+      "coins": 12999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Level-up_Spectacle.png"
+    },
+    "Scythe of Justice": {
+      "name": "Guadaña de justicia",
+      "icon": "⚔️",
+      "coins": 14999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Interstellar Trek": {
+      "name": "Viaje interestelar",
+      "icon": "🚀",
+      "coins": 14999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Interstellar_Trek.png"
+    },
+    "Storm Blade": {
+      "name": "Espada de tormenta",
+      "icon": "⚡",
+      "coins": 14999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Crystal Heart": {
+      "name": "Corazón de cristal",
+      "icon": "💎",
+      "coins": 14999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Crystal_Heart.png"
+    },
+    "Rosa Nebula": {
+      "name": "Nebulosa rosa",
+      "icon": "🌸",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rosa_Nebula.png"
+    },
+    "Future Journey": {
+      "name": "Viaje futuro",
+      "icon": "🚀",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Future_Journey.png"
+    },
+    "Party On&On": {
+      "name": "Fiesta sin fin",
+      "icon": "🎉",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Party_On&On.png"
+    },
+    "Boo Town": {
+      "name": "Ciudad Boo",
+      "icon": "👻",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Spookville": {
+      "name": "Pueblo escalofriante",
+      "icon": "🎃",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "White Tiger": {
+      "name": "Tigre blanco",
+      "icon": "🐅",
+      "coins": 15999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Amusement Park": {
+      "name": "Parque de diversiones",
+      "icon": "🎢",
+      "coins": 17000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Amusement_Park.png"
+    },
+    "Fly Love": {
+      "name": "Amor volador",
+      "icon": "💕",
+      "coins": 19999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fly_Love.png"
+    },
+    "Castle Fantasy": {
+      "name": "Fantasía de castillo",
+      "icon": "🏰",
+      "coins": 20000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Castle_Fantasy_2.png"
+    },
+    "TikTok Shuttle": {
+      "name": "Transporte TikTok",
+      "icon": "🚀",
+      "coins": 20000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok_Shuttle.png"
+    },
+    "Premium Shuttle": {
+      "name": "Transporte premium",
+      "icon": "🚀",
+      "coins": 20000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Premium_Shuttle.png"
+    },
+    "Level Ship": {
+      "name": "Nave de nivel 2",
+      "icon": "🚀",
+      "coins": 21000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Level_Ship_2.png"
+    },
+    "Infinite Heart": {
+      "name": "Corazón infinito",
+      "icon": "💗",
+      "coins": 23999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Infinite_Heart.png"
+    },
+    "Dinosaur": {
+      "name": "Dinosaurio",
+      "icon": "🦖",
+      "coins": 25999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Gate of Trial": {
+      "name": "Puerta de prueba",
+      "icon": "🚪",
+      "coins": 25999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Phoenix": {
+      "name": "Fénix",
+      "icon": "🔥",
+      "coins": 25999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Phoenix.png"
+    },
+    "Adam's Dream": {
+      "name": "Sueño de Adam",
+      "icon": "💭",
+      "coins": 25999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Greatsword Temple": {
+      "name": "Templo gran espada",
+      "icon": "⚔️",
+      "coins": 25999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Dragon Flame": {
+      "name": "Llama de dragón",
+      "icon": "🐉",
+      "coins": 26999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Dragon_Flame.png"
+    },
+    "Lion": {
+      "name": "León",
+      "icon": "🦁",
+      "coins": 29999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Lion.png"
+    },
+    "Gorilla": {
+      "name": "Gorila",
+      "icon": "🦍",
+      "coins": 30000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Gorilla.png"
+    },
+    "Leon and Lion": {
+      "name": "Leon y León",
+      "icon": "🦁",
+      "coins": 34000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Leon_and_Lion.png"
+    },
+    "Zeus": {
+      "name": "Zeus",
+      "icon": "⚡",
+      "coins": 34000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Zeus.png"
+    },
+    "TikTok Universe+": {
+      "name": "TikTok Universe+",
+      "icon": "🌌",
+      "coins": 34999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok_Universe+.png"
+    },
+    "TikTok Stars": {
+      "name": "TikTok Stars",
+      "icon": "⭐",
+      "coins": 39999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok_Stars.png"
+    },
+    "Thunder Falcon": {
+      "name": "Halcón trueno",
+      "icon": "⚡",
+      "coins": 39999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Thunder_Falcon.png"
+    },
+    "Fire Phoenix": {
+      "name": "Fénix de fuego",
+      "icon": "🔥",
+      "coins": 41999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fire_Phoenix.png"
+    },
+    "popo": {
+      "name": "popo",
+      "icon": "🎁",
+      "coins": 999999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png",
+      "disabled": true
+    },
+    "Advancing_Planet": {
+      "name": "Advancing Planet",
+      "icon": "",
+      "coins": 3999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Advancing_Planet.png",
+      "disabled": false
+    },
+    "Alpaca": {
+      "name": "Alpaca",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Alpaca.png",
+      "disabled": false
+    },
+    "Astrobear": {
+      "name": "Astrobear",
+      "icon": "",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Astrobear.png",
+      "disabled": false
+    },
+    "Baby_Chicks": {
+      "name": "Baby Chicks",
+      "icon": "",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Baby_Chicks.png",
+      "disabled": false
+    },
+    "Balloons_2": {
+      "name": "Balloons",
+      "icon": "",
+      "coins": 200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Balloons_2.png",
+      "disabled": false
+    },
+    "Basket_of_Spring": {
+      "name": "Basket of Spring",
+      "icon": "",
+      "coins": 499,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Basket_of_Spring.png",
+      "disabled": false
+    },
+    "Batting_Cutie": {
+      "name": "Batting Cutie",
+      "icon": "",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Batting_Cutie.png",
+      "disabled": false
+    },
+    "Beach_Day": {
+      "name": "Beach Day",
+      "icon": "",
+      "coins": 2999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Beach_Day.png",
+      "disabled": false
+    },
+    "Beach_Maracas": {
+      "name": "Beach Maracas",
+      "icon": "",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Beach_Maracas.png",
+      "disabled": false
+    },
+    "Blossom_Fairy": {
+      "name": "Blossom Fairy",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Blossom_Fairy.png",
+      "disabled": false
+    },
+    "Bravo": {
+      "name": "Bravo!",
+      "icon": "",
+      "coins": 15,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bravo.png",
+      "disabled": false
+    },
+    "Bubbly_Kiss": {
+      "name": "Bubbly Kiss",
+      "icon": "",
+      "coins": 530,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bubbly_Kiss.png",
+      "disabled": false
+    },
+    "By_the_Glaziers": {
+      "name": "By the Glaziers",
+      "icon": "",
+      "coins": 2380,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\By_the_Glaziers.png",
+      "disabled": false
+    },
+    "Candy_Bouquet_2": {
+      "name": "Candy Bouquet",
+      "icon": "",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Candy_Bouquet_2.png",
+      "disabled": false
+    },
+    "Candy_Puffs": {
+      "name": "Candy Puffs",
+      "icon": "",
+      "coins": 1030,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Candy_Puffs.png",
+      "disabled": false
+    },
+    "Captured_Vocals": {
+      "name": "Captured Vocals",
+      "icon": "",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Captured_Vocals.png",
+      "disabled": false
+    },
+    "Castle_Fantasy_2": {
+      "name": "Castle Fantasy",
+      "icon": "",
+      "coins": 20000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Castle_Fantasy_2.png",
+      "disabled": false
+    },
+    "Celebration_Hat": {
+      "name": "Celebration Hat",
+      "icon": "",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Celebration_Hat.png",
+      "disabled": false
+    },
+    "Charmer_Bow": {
+      "name": "Charmer Bow",
+      "icon": "",
+      "coins": 99,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Charmer_Bow.png",
+      "disabled": false
+    },
+    "Chick_Stampede": {
+      "name": "Chick Stampede",
+      "icon": "",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Chick_Stampede.png",
+      "disabled": false
+    },
+    "Chocolate": {
+      "name": "Chocolate",
+      "icon": "",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Chocolate.png",
+      "disabled": false
+    },
+    "City_Pop": {
+      "name": "City Pop",
+      "icon": "",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\City_Pop.png",
+      "disabled": false
+    },
+    "Confetti_Bear": {
+      "name": "Confetti Bear",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Confetti_Bear.png",
+      "disabled": false
+    },
+    "Congratulations": {
+      "name": "Congratulations",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Congratulations.png",
+      "disabled": false
+    },
+    "Cozy_Xmas_Set": {
+      "name": "Cozy Xmas Set",
+      "icon": "",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cozy_Xmas_Set.png",
+      "disabled": false
+    },
+    "Creeper": {
+      "name": "Creeper",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Creeper.png",
+      "disabled": false
+    },
+    "Crystal_Ball": {
+      "name": "Crystal Ball",
+      "icon": "",
+      "coins": 1700,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Crystal_Ball.png",
+      "disabled": false
+    },
+    "Cub_on_Clouds": {
+      "name": "Cub on Clouds",
+      "icon": "",
+      "coins": 5888,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cub_on_Clouds.png",
+      "disabled": false
+    },
+    "Cupid_Koala": {
+      "name": "Cupid Koala",
+      "icon": "",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cupid_Koala.png",
+      "disabled": false
+    },
+    "Cyber_Roar": {
+      "name": "Cyber Roar",
+      "icon": "",
+      "coins": 25999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Cyber_Roar.png",
+      "disabled": false
+    },
+    "Diamond_Gun_2": {
+      "name": "Diamond Gun",
+      "icon": "",
+      "coins": 5000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Diamond_Gun_2.png",
+      "disabled": false
+    },
+    "Doll_New_Year_Greeting": {
+      "name": "Doll New Year Greeting",
+      "icon": "",
+      "coins": 1999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Doll_New_Year_Greeting.png",
+      "disabled": false
+    },
+    "Dreamy_Strings": {
+      "name": "Dreamy Strings",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Dreamy_Strings.png",
+      "disabled": false
+    },
+    "Dream_Big": {
+      "name": "Dream Big",
+      "icon": "",
+      "coins": 3350,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Dream_Big.png",
+      "disabled": false
+    },
+    "Duit_Raya": {
+      "name": "Duit Raya",
+      "icon": "",
+      "coins": 5,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Duit_Raya.png",
+      "disabled": false
+    },
+    "EID_Gift_Box": {
+      "name": "EID Gift Box",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\EID_Gift_Box.png",
+      "disabled": false
+    },
+    "Fairy_Locket": {
+      "name": "Fairy Locket",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fairy_Locket.png",
+      "disabled": false
+    },
+    "Fluffy_Buddies": {
+      "name": "Fluffy Buddies",
+      "icon": "",
+      "coins": 5388,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fluffy_Buddies.png",
+      "disabled": false
+    },
+    "Freestyle": {
+      "name": "Freestyle",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Freestyle.png",
+      "disabled": false
+    },
+    "Fully_Bloomed_Sakura": {
+      "name": "Fully Bloomed Sakura",
+      "icon": "",
+      "coins": 599,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Fully_Bloomed_Sakura.png",
+      "disabled": false
+    },
+    "Gingerbread_Man": {
+      "name": "Gingerbread Man",
+      "icon": "",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Gingerbread_Man.png",
+      "disabled": false
+    },
+    "Golden_Gallop": {
+      "name": "Golden Gallop",
+      "icon": "",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Golden_Gallop.png",
+      "disabled": false
+    },
+    "Go_Home": {
+      "name": "Go Home",
+      "icon": "",
+      "coins": 3999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Go_Home.png",
+      "disabled": false
+    },
+    "Heart_2": {
+      "name": "Heart",
+      "icon": "",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Heart_2.png",
+      "disabled": false
+    },
+    "Heart_Guitar": {
+      "name": "Heart Guitar",
+      "icon": "",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Heart_Guitar.png",
+      "disabled": false
+    },
+    "Heart_Hood": {
+      "name": "Heart Hood",
+      "icon": "",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Heart_Hood.png",
+      "disabled": false
+    },
+    "Hip-Hop_Hen": {
+      "name": "Hip-Hop Hen",
+      "icon": "",
+      "coins": 3200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hip-Hop_Hen.png",
+      "disabled": false
+    },
+    "Hi_Rosie": {
+      "name": "Hi! Rosie!",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Hi_Rosie.png",
+      "disabled": false
+    },
+    "Ice_Cream_Mic": {
+      "name": "Ice Cream Mic",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Ice_Cream_Mic.png",
+      "disabled": false
+    },
+    "Invincible_Hammer": {
+      "name": "Invincible Hammer",
+      "icon": "",
+      "coins": 14999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Invincible_Hammer.png",
+      "disabled": false
+    },
+    "I_LOVE_PE": {
+      "name": "I LOVE PE",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\I_LOVE_PE.png",
+      "disabled": false
+    },
+    "Joker_Ball": {
+      "name": "Joker Ball",
+      "icon": "",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Joker_Ball.png",
+      "disabled": false
+    },
+    "Jollies_Heartland": {
+      "name": "Jollie's Heartland",
+      "icon": "",
+      "coins": 2199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Jollies_Heartland.png",
+      "disabled": false
+    },
+    "Jollie_the_Joy_Bean": {
+      "name": "Jollie the Joy Bean",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Jollie_the_Joy_Bean.png",
+      "disabled": false
+    },
+    "Joy_Floats": {
+      "name": "Joy Floats",
+      "icon": "",
+      "coins": 1030,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Joy_Floats.png",
+      "disabled": false
+    },
+    "Judy_Pose": {
+      "name": "Judy Pose",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Judy_Pose.png",
+      "disabled": false
+    },
+    "Julius_the_Champion": {
+      "name": "Julius the Champion",
+      "icon": "",
+      "coins": 43999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Julius_the_Champion.png",
+      "disabled": false
+    },
+    "League_Ball": {
+      "name": "League Ball",
+      "icon": "",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\League_Ball.png",
+      "disabled": false
+    },
+    "League_Countdown": {
+      "name": "League Countdown",
+      "icon": "",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\League_Countdown.png",
+      "disabled": false
+    },
+    "League_Fandom": {
+      "name": "League Fandom",
+      "icon": "",
+      "coins": 5000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\League_Fandom.png",
+      "disabled": false
+    },
+    "League_Trophy": {
+      "name": "League Trophy",
+      "icon": "",
+      "coins": 599,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\League_Trophy.png",
+      "disabled": false
+    },
+    "Legend_Marcellus": {
+      "name": "Legend Marcellus",
+      "icon": "",
+      "coins": 42999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Legend_Marcellus.png",
+      "disabled": false
+    },
+    "Leopard": {
+      "name": "Leopard",
+      "icon": "",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Leopard.png",
+      "disabled": false
+    },
+    "Let_butterfly_dances": {
+      "name": "Let butterfly dances",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Let_butterfly_dances.png",
+      "disabled": false
+    },
+    "Level_Ship_2": {
+      "name": "Level Ship",
+      "icon": "",
+      "coins": 21000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Level_Ship_2.png",
+      "disabled": false
+    },
+    "LIVE_Ranking_Crown_2": {
+      "name": "LIVE Ranking Crown",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\LIVE_Ranking_Crown_2.png",
+      "disabled": false
+    },
+    "Look_Up": {
+      "name": "Look Up",
+      "icon": "",
+      "coins": 3350,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Look_Up.png",
+      "disabled": false
+    },
+    "Love_Call": {
+      "name": "Love Call",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_Call.png",
+      "disabled": false
+    },
+    "Love_Flight": {
+      "name": "Love Flight",
+      "icon": "",
+      "coins": 800,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_Flight.png",
+      "disabled": false
+    },
+    "Love_Glasses": {
+      "name": "Love Glasses",
+      "icon": "",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_Glasses.png",
+      "disabled": false
+    },
+    "Love_You (1)": {
+      "name": "Love You",
+      "icon": "",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Love_You (1).png",
+      "disabled": false
+    },
+    "Lucky_Pony": {
+      "name": "Lucky Pony",
+      "icon": "",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Lucky_Pony.png",
+      "disabled": false
+    },
+    "Majestic_Hearts": {
+      "name": "Majestic Hearts",
+      "icon": "",
+      "coins": 7238,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Majestic_Hearts.png",
+      "disabled": false
+    },
+    "Melodic_birds": {
+      "name": "Melodic birds",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Melodic_birds.png",
+      "disabled": false
+    },
+    "Melody_Glasses": {
+      "name": "Melody Glasses",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Melody_Glasses.png",
+      "disabled": false
+    },
+    "Music_Conductor": {
+      "name": "Music Conductor",
+      "icon": "",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Music_Conductor.png",
+      "disabled": false
+    },
+    "Music_Mate": {
+      "name": "Music Mate",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Music_Mate.png",
+      "disabled": false
+    },
+    "Mystery_Box": {
+      "name": "Mystery Box",
+      "icon": "",
+      "coins": 500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Mystery_Box.png",
+      "disabled": false
+    },
+    "Mystery_Stalker": {
+      "name": "Mystery Stalker",
+      "icon": "",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Mystery_Stalker.png",
+      "disabled": false
+    },
+    "Name_shoutout": {
+      "name": "Name shoutout",
+      "icon": "",
+      "coins": 5,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Name_shoutout.png",
+      "disabled": false
+    },
+    "Ocelot_Chase": {
+      "name": "Ocelot Chase",
+      "icon": "",
+      "coins": 2999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Ocelot_Chase.png",
+      "disabled": false
+    },
+    "Oldies": {
+      "name": "Oldies",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Oldies.png",
+      "disabled": false
+    },
+    "Overreact": {
+      "name": "Overreact",
+      "icon": "",
+      "coins": 5,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Overreact.png",
+      "disabled": false
+    },
+    "Panda_Snap": {
+      "name": "Panda Snap",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Panda_Snap.png",
+      "disabled": false
+    },
+    "Paris": {
+      "name": "Paris",
+      "icon": "",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Paris.png",
+      "disabled": false
+    },
+    "Party_Blossom": {
+      "name": "Party Blossom",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Party_Blossom.png",
+      "disabled": false
+    },
+    "Party_Bus": {
+      "name": "Party Bus",
+      "icon": "",
+      "coins": 2999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Party_Bus.png",
+      "disabled": false
+    },
+    "Party_Laser": {
+      "name": "Party Laser",
+      "icon": "",
+      "coins": 1300,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Party_Laser.png",
+      "disabled": false
+    },
+    "Party_Pony": {
+      "name": "Party Pony",
+      "icon": "",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Party_Pony.png",
+      "disabled": false
+    },
+    "Paw_Call": {
+      "name": "Paw Call",
+      "icon": "",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Paw_Call.png",
+      "disabled": false
+    },
+    "Pegasus": {
+      "name": "Pegasus",
+      "icon": "",
+      "coins": 42999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pegasus.png",
+      "disabled": false
+    },
+    "Penguin_Snowpal": {
+      "name": "Penguin Snowpal",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Penguin_Snowpal.png",
+      "disabled": false
+    },
+    "Pirates_Treasure": {
+      "name": "Pirate's Treasure",
+      "icon": "",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pirates_Treasure.png",
+      "disabled": false
+    },
+    "PK_star": {
+      "name": "PK star",
+      "icon": "",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\PK_star.png",
+      "disabled": false
+    },
+    "Pony_Lantern": {
+      "name": "Pony Lantern",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pony_Lantern.png",
+      "disabled": false
+    },
+    "Pop": {
+      "name": "Pop",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Pop.png",
+      "disabled": false
+    },
+    "Potato_Transformation": {
+      "name": "Potato Transformation",
+      "icon": "",
+      "coins": 150,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Potato_Transformation.png",
+      "disabled": false
+    },
+    "Puyo_Shuffle": {
+      "name": "Puyo Shuffle!",
+      "icon": "",
+      "coins": 999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Puyo_Shuffle.png",
+      "disabled": false
+    },
+    "Raving_Snail": {
+      "name": "Raving Snail",
+      "icon": "",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Raving_Snail.png",
+      "disabled": false
+    },
+    "Raya_Gift_Card": {
+      "name": "Raya Gift Card",
+      "icon": "",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Raya_Gift_Card.png",
+      "disabled": false
+    },
+    "Reindeer_Milk": {
+      "name": "Reindeer Milk",
+      "icon": "",
+      "coins": 400,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Reindeer_Milk.png",
+      "disabled": false
+    },
+    "Ring_Of_Honor-Cube": {
+      "name": "Ring Of Honor-Cube",
+      "icon": "",
+      "coins": 2999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Ring_Of_Honor-Cube.png",
+      "disabled": false
+    },
+    "Rising_Key": {
+      "name": "Rising Key",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rising_Key.png",
+      "disabled": false
+    },
+    "Rocking_Shroom": {
+      "name": "Rocking Shroom",
+      "icon": "",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rocking_Shroom.png",
+      "disabled": false
+    },
+    "Rockys_Punch": {
+      "name": "Rocky's Punch",
+      "icon": "",
+      "coins": 2199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rockys_Punch.png",
+      "disabled": false
+    },
+    "Rocky_the_Rock_Bean": {
+      "name": "Rocky the Rock Bean",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rocky_the_Rock_Bean.png",
+      "disabled": false
+    },
+    "Rose_Bear_2": {
+      "name": "Rose Bear",
+      "icon": "",
+      "coins": 214,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_Bear_2.png",
+      "disabled": false
+    },
+    "Rose_black_white": {
+      "name": "Rose black white",
+      "icon": "",
+      "coins": 0,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_black_white.png"
+    },
+    "Rose_Hand_2": {
+      "name": "Rose Hand",
+      "icon": "",
+      "coins": 199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_Hand_2.png",
+      "disabled": false
+    },
+    "Rose_Soundwave": {
+      "name": "Rose Soundwave",
+      "icon": "",
+      "coins": 499,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose_Soundwave.png",
+      "disabled": false
+    },
+    "Rosies_Concert": {
+      "name": "Rosie's Concert",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rosies_Concert.png",
+      "disabled": false
+    },
+    "Rosie_the_Rose_Bean": {
+      "name": "Rosie the Rose Bean",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rosie_the_Rose_Bean.png",
+      "disabled": false
+    },
+    "Sages_Coinbot": {
+      "name": "Sage's Coinbot",
+      "icon": "",
+      "coins": 2199,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sages_Coinbot.png",
+      "disabled": false
+    },
+    "Sages_Slash": {
+      "name": "Sage's Slash",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sages_Slash.png",
+      "disabled": false
+    },
+    "Sage_the_Smart_Bean": {
+      "name": "Sage the Smart Bean",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sage_the_Smart_Bean.png",
+      "disabled": false
+    },
+    "Samfaring_Tom": {
+      "name": "Samfaring Tom",
+      "icon": "",
+      "coins": 2850,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Samfaring_Tom.png",
+      "disabled": false
+    },
+    "Santa_Cocoa": {
+      "name": "Santa Cocoa",
+      "icon": "",
+      "coins": 149,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Santa_Cocoa.png",
+      "disabled": false
+    },
+    "Santa_Owl_Surprise": {
+      "name": "Santa Owl Surprise",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Santa_Owl_Surprise.png",
+      "disabled": false
+    },
+    "Shine_Bright": {
+      "name": "Shine Bright",
+      "icon": "",
+      "coins": 4088,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Shine_Bright.png",
+      "disabled": false
+    },
+    "Singing_Sax": {
+      "name": "Singing Sax",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Singing_Sax.png",
+      "disabled": false
+    },
+    "Sky_Drift": {
+      "name": "Sky Drift",
+      "icon": "",
+      "coins": 2000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sky_Drift.png",
+      "disabled": false
+    },
+    "Slow_motion": {
+      "name": "Slow motion",
+      "icon": "",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Slow_motion.png",
+      "disabled": false
+    },
+    "Sneaky_Jockey": {
+      "name": "Sneaky Jockey",
+      "icon": "",
+      "coins": 15000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sneaky_Jockey.png",
+      "disabled": false
+    },
+    "Snow_Bloom": {
+      "name": "Snow Bloom",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Snow_Bloom.png",
+      "disabled": false
+    },
+    "Song_of_Harvest": {
+      "name": "Song of Harvest",
+      "icon": "",
+      "coins": 150,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Song_of_Harvest.png",
+      "disabled": false
+    },
+    "So_Cute": {
+      "name": "So Cute",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\So_Cute.png",
+      "disabled": false
+    },
+    "Space_Jet": {
+      "name": "Space Jet",
+      "icon": "",
+      "coins": 9000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Space_Jet.png",
+      "disabled": false
+    },
+    "Space_Love": {
+      "name": "Space Love",
+      "icon": "",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Space_Love.png",
+      "disabled": false
+    },
+    "Sparkle_Pony": {
+      "name": "Sparkle Pony",
+      "icon": "",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sparkle_Pony.png",
+      "disabled": false
+    },
+    "Spring_Bouquet": {
+      "name": "Spring Bouquet",
+      "icon": "",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Spring_Bouquet.png",
+      "disabled": false
+    },
+    "Spring_Sprout": {
+      "name": "Spring Sprout",
+      "icon": "",
+      "coins": 299,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Spring_Sprout.png",
+      "disabled": false
+    },
+    "Star_Throne_2": {
+      "name": "Star Throne",
+      "icon": "",
+      "coins": 7999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Star_Throne_2.png",
+      "disabled": false
+    },
+    "Style_Me_Up": {
+      "name": "Style Me Up",
+      "icon": "",
+      "coins": 10,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Style_Me_Up.png",
+      "disabled": false
+    },
+    "Sugar_Whiskers": {
+      "name": "Sugar Whiskers",
+      "icon": "",
+      "coins": 4918,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sugar_Whiskers.png",
+      "disabled": false
+    },
+    "Superwoman": {
+      "name": "Superwoman",
+      "icon": "",
+      "coins": 450,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Superwoman.png",
+      "disabled": false
+    },
+    "Surfing_Penguin": {
+      "name": "Surfing Penguin",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Surfing_Penguin.png",
+      "disabled": false
+    },
+    "Surprise_Baby_Mob": {
+      "name": "Surprise Baby Mob",
+      "icon": "",
+      "coins": 2999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Surprise_Baby_Mob.png",
+      "disabled": false
+    },
+    "Sweet_Flutter": {
+      "name": "Sweet Flutter",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Sweet_Flutter.png",
+      "disabled": false
+    },
+    "Tidecaller_Trident": {
+      "name": "Tidecaller Trident",
+      "icon": "",
+      "coins": 14999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Tidecaller_Trident.png",
+      "disabled": false
+    },
+    "Tiger_Lift": {
+      "name": "Tiger Lift",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Tiger_Lift.png",
+      "disabled": false
+    },
+    "TikTok (2)": {
+      "name": "TikTok",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok (2).png",
+      "disabled": false
+    },
+    "TikTok_Universe": {
+      "name": "TikTok Universe",
+      "icon": "",
+      "coins": 44999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok_Universe.png",
+      "disabled": false
+    },
+    "TikTok_Universe_2": {
+      "name": "TikTok Universe",
+      "icon": "",
+      "coins": 44999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TikTok_Universe_2.png",
+      "disabled": false
+    },
+    "Toms_Hug": {
+      "name": "Tom's Hug",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Toms_Hug.png",
+      "disabled": false
+    },
+    "Treasured_Voice": {
+      "name": "Treasured Voice",
+      "icon": "",
+      "coins": 249,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Treasured_Voice.png",
+      "disabled": false
+    },
+    "Undersea_Kingdom": {
+      "name": "Undersea Kingdom",
+      "icon": "",
+      "coins": 25999,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Undersea_Kingdom.png",
+      "disabled": false
+    },
+    "UniCORN": {
+      "name": "UniCORN",
+      "icon": "",
+      "coins": 5500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\UniCORN.png",
+      "disabled": false
+    },
+    "Valiant_Odyssey": {
+      "name": "Valiant Odyssey",
+      "icon": "",
+      "coins": 5888,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Valiant_Odyssey.png",
+      "disabled": false
+    },
+    "Viking_Hammer": {
+      "name": "Viking Hammer",
+      "icon": "",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Viking_Hammer.png",
+      "disabled": false
+    },
+    "Vintage_flight": {
+      "name": "Vintage flight",
+      "icon": "",
+      "coins": 349,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Vintage_flight.png",
+      "disabled": false
+    },
+    "Wave_Lights": {
+      "name": "Wave Lights",
+      "icon": "",
+      "coins": 2200,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Wave_Lights.png",
+      "disabled": false
+    },
+    "Wild_Mic": {
+      "name": "Wild Mic",
+      "icon": "",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Wild_Mic.png",
+      "disabled": false
+    },
+    "Wink_wink": {
+      "name": "Wink wink",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Wink_wink.png",
+      "disabled": false
+    },
+    "Wolf": {
+      "name": "Wolf",
+      "icon": "",
+      "coins": 5500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Wolf.png",
+      "disabled": false
+    },
+    "Work_Hard_Play_Harder": {
+      "name": "Work Hard Play Harder",
+      "icon": "",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Work_Hard_Play_Harder.png",
+      "disabled": false
+    },
+    "Xmas_Tree_Hat": {
+      "name": "Xmas Tree Hat",
+      "icon": "",
+      "coins": 449,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Xmas_Tree_Hat.png",
+      "disabled": false
+    },
+    "Youre_awesome": {
+      "name": "You're awesome",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Youre_awesome.png",
+      "disabled": false
+    },
+    "Youre_So_Fly": {
+      "name": "You're So Fly",
+      "icon": "",
+      "coins": 1500,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Youre_So_Fly.png",
+      "disabled": false
+    },
+    "Zombie_Swarm": {
+      "name": "Zombie Swarm",
+      "icon": "",
+      "coins": 6000,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Zombie_Swarm.png",
+      "disabled": false
+    },
+    "placeholder": {
+      "name": "Placeholder",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Placeholder.png",
+      "disabled": true
+    },
+    "Rose": {
+      "name": "Rose",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Rose.png",
+      "disabled": false
+    },
+    "Match Star": {
+      "name": "Match Star",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Match_Star.png",
+      "disabled": false
+    },
+    "TGIF": {
+      "name": "TGIF",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\TGIF.png",
+      "disabled": false
+    },
+    "Bufferfly Dances": {
+      "name": "Bufferfly Dances",
+      "icon": "",
+      "coins": 399,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Bufferfly_Dances.png",
+      "disabled": false
+    },
+    "Popular Vote": {
+      "name": "Popular Vote",
+      "icon": "",
+      "coins": 1,
+      "icon_path": "C:\\Users\\User\\Desktop\\MARU PRO\\LiveChaosEngine\\LiveChaosEngine_Refactored\\data\\donaciones\\Popular_Vote.png",
+      "disabled": false
+    }
+  }
+}

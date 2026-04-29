@@ -1,0 +1,17 @@
+{
+  "ezeror": {
+    "name": "ezeror",
+    "wordsearch_wins": 1,
+    "wordbomb_wins": 0
+  },
+  "boni0175": {
+    "name": "boni0175",
+    "wordsearch_wins": 1,
+    "wordbomb_wins": 0
+  },
+  "gottina": {
+    "name": "gottina",
+    "wordsearch_wins": 0,
+    "wordbomb_wins": 2
+  }
+}

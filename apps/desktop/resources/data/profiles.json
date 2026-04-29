@@ -1,0 +1,78 @@
+{
+  "profile_sounds": {
+    "valheim": {
+      "library": [],
+      "follow": "",
+      "share": "",
+      "superfan": ""
+    },
+    "minecraft": {
+      "gifts": {
+        "GG": "C:/Users/User/Downloads/veg.mp3"
+      },
+      "share": "C:/Users/User/Downloads/veg.mp3",
+      "follow": "",
+      "superfan": ""
+    },
+    "terraria": {
+      "gifts": {
+        "Rose": "C:/Users/User/Downloads/veg.mp3"
+      },
+      "follow": "",
+      "share": "",
+      "superfan": "",
+      "library": [
+        "C:/Users/User/Downloads/veg.mp3"
+      ]
+    },
+    "repo": {
+      "follow": "",
+      "share": "",
+      "superfan": "",
+      "library": [
+        "C:/Users/User/Downloads/veg.mp3"
+      ],
+      "gifts": {
+        "Rose": "C:/Users/User/Downloads/veg.mp3"
+      }
+    },
+    "ss": {},
+    "terra_miods": {},
+    "te": {},
+    "7_days_to_die": {},
+    "ror2": {},
+    "hytale": {}
+  },
+  "profile_voices": {
+    "valheim": {
+      "soykoru": "en_male_pirate",
+      "gottina": "kr_003",
+      "naty_.hernandez_": "en_us_stitch",
+      "boni0175": "en_male_grinch",
+      "ange_g_": "en_male_narration",
+      "son_black777": "br_003",
+      "soy_gonter_23": "zh_male_rap",
+      "vickyy99": "de_001",
+      "fersita.duff": "br_004"
+    },
+    "minecraft": {},
+    "terraria": {
+      "gottina": "kr_003",
+      "naty_.hernandez_": "en_us_stitch"
+    },
+    "repo": {
+      "soykoru": "kr_004"
+    },
+    "ss": {},
+    "terra_miods": {},
+    "te": {},
+    "7_days_to_die": {},
+    "ror2": {},
+    "hytale": {}
+  },
+  "global_voices": {
+    "gottina": "kr_003",
+    "naty_.hernandez_": "en_us_stitch",
+    "boni0175": "en_male_grinch"
+  }
+}

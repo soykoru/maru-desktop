@@ -1,0 +1,1711 @@
+{
+  "users": {
+    "gottina": {
+      "registered": true,
+      "registered_at": "2026-01-24T12:51:24.255430",
+      "display_name": "gottina",
+      "racha": {
+        "dias": 546,
+        "ultimo": "2026-04-28",
+        "record": 546
+      },
+      "casado_con": "soykoru",
+      "casado_desde": "2026-01-24T15:03:46.197210",
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 2,
+        "duelos_perdidos": 6,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 1,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 1,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 1,
+        "veces_rival": 0,
+        "pizzas_recibidos": 1,
+        "pizzas_dados": 1,
+        "cafes_recibidos": 1
+      },
+      "mejor_amigo": "naty_.hernandez_",
+      "mejor_amigo_desde": "2026-01-24T16:03:40.847274",
+      "racha_automatica": {
+        "activa": true,
+        "dias_restantes": 25,
+        "dias_totales": 40,
+        "fecha_inicio": "2026-04-13T21:12:34.294797"
+      }
+    },
+    "boni0175": {
+      "registered": true,
+      "registered_at": "2026-01-24T12:51:30.005386",
+      "display_name": "boni0175",
+      "racha": {
+        "dias": 3,
+        "ultimo": "2026-02-08",
+        "record": 6
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [
+        "soy_gonter_23"
+      ],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 1,
+        "duelos_perdidos": 1,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 1,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 1,
+        "interacciones_rechazadas": 2,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "pizzas_recibidos": 1,
+        "pizzas_dados": 1
+      },
+      "mejor_amigo": "chayitochayitoch",
+      "mejor_amigo_desde": "2026-01-25T19:36:09.159047",
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "cristian_rivasxd": {
+      "registered": true,
+      "registered_at": "2026-01-24T12:51:36.707688",
+      "display_name": "cristian_rivasxd",
+      "racha": {
+        "dias": 686,
+        "ultimo": "2026-04-28",
+        "record": 686
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 20,
+        "duelos_perdidos": 23,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 4,
+        "interacciones_rechazadas": 1,
+        "rechazos_recibidos": 0,
+        "veces_rival": 1,
+        "pizzas_dados": 1,
+        "saludos_recibidos": 1,
+        "cafes_dados": 2,
+        "regalos_recibidos": 1,
+        "saludos_dados": 1,
+        "pizzas_recibidos": 1,
+        "cafes_recibidos": 1
+      },
+      "mejor_amigo": "areeelym17",
+      "mejor_amigo_desde": "2026-01-24T16:05:18.214859",
+      "racha_automatica": {
+        "activa": true,
+        "dias_restantes": 18,
+        "dias_totales": 30,
+        "fecha_inicio": "2026-04-17T21:56:21.965516"
+      }
+    },
+    "p1": {
+      "registered": true,
+      "registered_at": "2026-01-24T13:05:02.726736",
+      "display_name": "p1",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "soy_gonter_23": {
+      "registered": true,
+      "registered_at": "2026-01-24T13:06:36.188522",
+      "display_name": "soy_gonter_23",
+      "racha": {
+        "dias": 1,
+        "ultimo": "2026-02-21",
+        "record": 22
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [
+        "boni0175"
+      ],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 5,
+        "duelos_perdidos": 3,
+        "duelos_empatados": 0,
+        "besos_dados": 1,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 2,
+        "interacciones_rechazadas": 1,
+        "rechazos_recibidos": 1,
+        "veces_rival": 0,
+        "pizzas_dados": 1
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "ange_g_": {
+      "registered": true,
+      "registered_at": "2026-01-24T13:06:44.433303",
+      "display_name": "ange_g_",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "areeelym17": {
+      "registered": true,
+      "registered_at": "2026-01-24T13:06:46.164070",
+      "display_name": "areeelym17",
+      "racha": {
+        "dias": 526,
+        "ultimo": "2026-04-28",
+        "record": 526
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 2,
+        "duelos_perdidos": 1,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 1,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "cafes_recibidos": 1,
+        "regalos_dados": 1
+      },
+      "mejor_amigo": "cristian_rivasxd",
+      "mejor_amigo_desde": "2026-01-24T16:05:18.214859",
+      "racha_automatica": {
+        "activa": true,
+        "dias_restantes": 16,
+        "dias_totales": 30,
+        "fecha_inicio": "2026-04-14T22:11:37.075039"
+      }
+    },
+    "darklight_ofk": {
+      "registered": true,
+      "registered_at": "2026-01-24T13:06:49.443385",
+      "display_name": "darklight_ofk",
+      "racha": {
+        "dias": 1,
+        "ultimo": "2026-04-26",
+        "record": 14
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 7,
+        "duelos_perdidos": 3,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 1,
+        "veces_rival": 0,
+        "cafes_recibidos": 1
+      },
+      "mejor_amigo": "labrinn00",
+      "mejor_amigo_desde": "2026-01-26T16:03:59.744618",
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "ferdinand_0710": {
+      "registered": true,
+      "registered_at": "2026-01-24T13:10:38.992958",
+      "display_name": "ferdinand_0710",
+      "racha": {
+        "dias": 1,
+        "ultimo": "2026-04-27",
+        "record": 3
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "ivankirito17": {
+      "registered": true,
+      "registered_at": "2026-01-24T14:41:56.239381",
+      "display_name": "ivankirito17",
+      "racha": {
+        "dias": 2,
+        "ultimo": "2026-02-08",
+        "record": 2
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "natalyy_95": {
+      "registered": true,
+      "registered_at": "2026-01-24T14:43:55.869290",
+      "display_name": "natalyy_95",
+      "racha": {
+        "dias": 4,
+        "ultimo": "2026-02-08",
+        "record": 4
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 1,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "pizzas_recibidos": 1
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "nanachandg": {
+      "registered": true,
+      "registered_at": "2026-01-24T14:53:29.303722",
+      "display_name": "nanachandg",
+      "racha": {
+        "dias": 77,
+        "ultimo": "2026-04-28",
+        "record": 77
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 1,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 1,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 1,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "pizzas_dados": 1
+      },
+      "racha_automatica": {
+        "activa": true,
+        "dias_restantes": 12,
+        "dias_totales": 30,
+        "fecha_inicio": "2026-04-10T22:47:31.748878"
+      }
+    },
+    "soykoru": {
+      "registered": true,
+      "registered_at": "2026-01-24T15:02:54.582569",
+      "display_name": "soykoru",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": "gottina",
+      "casado_desde": "2026-01-24T15:03:46.197210",
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 2,
+        "duelos_perdidos": 2,
+        "duelos_empatados": 0,
+        "besos_dados": 1,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 3,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 1,
+        "veces_rival": 0,
+        "pizzas_dados": 1,
+        "saludos_dados": 1,
+        "pizzas_recibidos": 1
+      },
+      "mejor_amigo": null,
+      "mejor_amigo_desde": null,
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "jonathanrios3396": {
+      "registered": true,
+      "registered_at": "2026-01-24T15:51:41.404417",
+      "display_name": "jonathanrios3396",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 3,
+        "duelos_perdidos": 2,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "naty_.hernandez_": {
+      "registered": true,
+      "registered_at": "2026-01-24T16:00:53.116133",
+      "display_name": "naty_.hernandez_",
+      "racha": {
+        "dias": 1,
+        "ultimo": "2026-02-11",
+        "record": 2
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "saludos_recibidos": 1
+      },
+      "mejor_amigo": "gottina",
+      "mejor_amigo_desde": "2026-01-24T16:03:40.847274",
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "fersita.duff": {
+      "registered": true,
+      "registered_at": "2026-01-24T21:25:31.782934",
+      "display_name": "fersita.duff",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 1,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "vydixi": {
+      "registered": true,
+      "registered_at": "2026-01-24T23:12:21.280625",
+      "display_name": "vydixi",
+      "racha": {
+        "dias": 3,
+        "ultimo": "2026-03-31",
+        "record": 3
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 3,
+        "duelos_perdidos": 3,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "rexflores.reian": {
+      "registered": true,
+      "registered_at": "2026-01-24T23:16:59.340804",
+      "display_name": "rexflores.reian",
+      "racha": {
+        "dias": 1,
+        "ultimo": "2026-03-15",
+        "record": 17
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 5,
+        "duelos_perdidos": 8,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "cafes_recibidos": 1
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "chayitochayitoch": {
+      "registered": true,
+      "registered_at": "2026-01-25T19:32:40.094846",
+      "display_name": "chayitochayitoch",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "mejor_amigo": "boni0175",
+      "mejor_amigo_desde": "2026-01-25T19:36:09.159047",
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "labrinn00": {
+      "registered": true,
+      "registered_at": "2026-01-26T16:00:21.431335",
+      "display_name": "labrinn00",
+      "racha": {
+        "dias": 1,
+        "ultimo": "2026-03-05",
+        "record": 16
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 7,
+        "duelos_perdidos": 5,
+        "duelos_empatados": 1,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "pizzas_recibidos": 2
+      },
+      "mejor_amigo": "darklight_ofk",
+      "mejor_amigo_desde": "2026-01-26T16:03:59.744618",
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "ezeror": {
+      "registered": true,
+      "registered_at": "2026-01-26T16:59:11.777370",
+      "display_name": "ezeror",
+      "racha": {
+        "dias": 19,
+        "ultimo": "2026-04-27",
+        "record": 19
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "thekrampuz24": {
+      "registered": true,
+      "registered_at": "2026-01-26T21:06:31.405872",
+      "display_name": "thekrampuz24",
+      "racha": {
+        "dias": 85,
+        "ultimo": "2026-04-28",
+        "record": 85
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 4,
+        "duelos_perdidos": 4,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 5,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0,
+        "pizzas_dados": 2,
+        "cafes_dados": 3
+      },
+      "racha_automatica": {
+        "activa": true,
+        "dias_restantes": 16,
+        "dias_totales": 30,
+        "fecha_inicio": "2026-04-14T22:11:27.497834"
+      }
+    },
+    "liam_aleman": {
+      "registered": true,
+      "registered_at": "2026-01-26T21:06:53.801386",
+      "display_name": "liam_aleman",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "testuser": {
+      "registered": true,
+      "registered_at": "2026-03-16T17:18:01.803034",
+      "display_name": "testuser",
+      "racha": {
+        "dias": 2,
+        "ultimo": "2026-02-08",
+        "record": 2
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "testuser123": {
+      "registered": true,
+      "registered_at": "2026-01-26T22:52:36.406107",
+      "display_name": "testuser123",
+      "racha": {
+        "dias": 2,
+        "ultimo": "2026-02-08",
+        "record": 2
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "gamerpro99": {
+      "registered": false,
+      "registered_at": null,
+      "display_name": "gamerpro99",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "sxdq_xd": {
+      "registered": true,
+      "registered_at": "2026-01-28T23:32:24.723802",
+      "display_name": "sxdq_xd",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "juanjose3639": {
+      "registered": true,
+      "registered_at": "2026-02-04T16:05:19.326459",
+      "display_name": "juanjose3639",
+      "racha": {
+        "dias": 1,
+        "ultimo": "2026-04-17",
+        "record": 5
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 1,
+        "duelos_perdidos": 1,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      }
+    },
+    "anglreb0": {
+      "registered": true,
+      "registered_at": "2026-02-10T17:53:20.846967",
+      "display_name": "anglreb0",
+      "racha": {
+        "dias": 584,
+        "ultimo": "2026-04-28",
+        "record": 584
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      },
+      "racha_automatica": {
+        "activa": true,
+        "dias_restantes": 19,
+        "dias_totales": 30,
+        "fecha_inicio": "2026-04-17T21:56:42.401903"
+      }
+    },
+    "honnie_008": {
+      "registered": true,
+      "registered_at": "2026-03-15T19:08:02.491880",
+      "display_name": "honnie_008",
+      "racha": {
+        "dias": 35,
+        "ultimo": "2026-04-27",
+        "record": 35
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "user7480290493135": {
+      "registered": true,
+      "registered_at": "2026-03-16T20:28:02.025445",
+      "display_name": "user7480290493135",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "soy_hinat": {
+      "registered": true,
+      "registered_at": "2026-03-16T20:29:24.563151",
+      "display_name": "soy_hinat",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "bianchipapita": {
+      "registered": true,
+      "registered_at": "2026-03-16T22:44:08.895526",
+      "display_name": "bianchipapita",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "army...jiminista...ot7": {
+      "registered": true,
+      "registered_at": "2026-03-17T22:44:08.576079",
+      "display_name": "army...jiminista...ot7",
+      "racha": {
+        "dias": 12,
+        "ultimo": "2026-04-27",
+        "record": 12
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "son_black777": {
+      "registered": true,
+      "registered_at": "2026-03-20T21:29:27.415205",
+      "display_name": "son_black777",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "kimberlalal": {
+      "registered": true,
+      "registered_at": "2026-03-20T21:34:52.352106",
+      "display_name": "kimberlalal",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "criscampo0108120": {
+      "registered": true,
+      "registered_at": "2026-03-29T17:12:56.628812",
+      "display_name": "criscampo0108120",
+      "racha": {
+        "dias": 2,
+        "ultimo": "2026-04-27",
+        "record": 6
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "vickyy99": {
+      "registered": true,
+      "registered_at": "2026-03-29T23:17:52.751950",
+      "display_name": "vickyy99",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "dilanroberts585": {
+      "registered": true,
+      "registered_at": "2026-04-03T23:00:11.914719",
+      "display_name": "dilanroberts585",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "miguel.villan33": {
+      "registered": true,
+      "registered_at": "2026-04-07T20:26:13.509734",
+      "display_name": "miguel.villan33",
+      "racha": {
+        "dias": 2,
+        "ultimo": "2026-04-27",
+        "record": 2
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "cherr_yyn": {
+      "registered": true,
+      "registered_at": "2026-04-19T23:12:21.307259",
+      "display_name": "cherr_yyn",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "alejandrogama593": {
+      "registered": true,
+      "registered_at": "2026-04-23T00:00:21.996158",
+      "display_name": "alejandrogama593",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejor_amigo": null,
+      "mejor_amigo_desde": null,
+      "rival": null,
+      "rival_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "crakercito": {
+      "registered": true,
+      "registered_at": "2026-04-26T22:04:05.339761",
+      "display_name": "crakercito",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejor_amigo": null,
+      "mejor_amigo_desde": null,
+      "rival": null,
+      "rival_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    },
+    "xiaooconderechos": {
+      "registered": true,
+      "registered_at": "2026-04-27T00:12:30.436502",
+      "display_name": "xiaooconderechos",
+      "racha": {
+        "dias": 0,
+        "ultimo": null,
+        "record": 0
+      },
+      "racha_automatica": {
+        "activa": false,
+        "dias_restantes": 0,
+        "dias_totales": 0,
+        "fecha_inicio": null
+      },
+      "casado_con": null,
+      "casado_desde": null,
+      "novios_con": null,
+      "novios_desde": null,
+      "mejor_amigo": null,
+      "mejor_amigo_desde": null,
+      "rival": null,
+      "rival_desde": null,
+      "mejores_amigos": [],
+      "rivales": [],
+      "stats": {
+        "duelos_ganados": 0,
+        "duelos_perdidos": 0,
+        "duelos_empatados": 0,
+        "besos_dados": 0,
+        "besos_recibidos": 0,
+        "abrazos_dados": 0,
+        "abrazos_recibidos": 0,
+        "interacciones_aceptadas": 0,
+        "interacciones_rechazadas": 0,
+        "rechazos_recibidos": 0,
+        "veces_rival": 0
+      }
+    }
+  },
+  "config": {
+    "enabled": true,
+    "require_register": true,
+    "cooldown_seconds": 10,
+    "timeout_seconds": 90,
+    "volume": 30,
+    "voice": "",
+    "enabled_commands": [
+      "morder",
+      "aceptar",
+      "play",
+      "bailar",
+      "ia",
+      "beso",
+      "perfil",
+      "rechazar",
+      "novios",
+      "ranking",
+      "dado",
+      "cola",
+      "mejoresamigos",
+      "flor",
+      "saludo",
+      "playfan",
+      "rival",
+      "top",
+      "skip",
+      "regalo",
+      "terminar",
+      "tarot",
+      "caricia",
+      "batalla",
+      "divorciar",
+      "palmada",
+      "likes",
+      "racha",
+      "pelea",
+      "duelo",
+      "decision",
+      "paz",
+      "cafe",
+      "pizza",
+      "register",
+      "casarse",
+      "amistad",
+      "patada",
+      "pause",
+      "cachetada",
+      "golpe",
+      "mesa",
+      "abrazo"
+    ],
+    "known_commands": [
+      "morder",
+      "aceptar",
+      "play",
+      "bailar",
+      "ia",
+      "beso",
+      "perfil",
+      "rechazar",
+      "novios",
+      "saludo",
+      "dado",
+      "ranking",
+      "mejoresamigos",
+      "flor",
+      "cola",
+      "playfan",
+      "rival",
+      "top",
+      "skip",
+      "regalo",
+      "terminar",
+      "tarot",
+      "caricia",
+      "batalla",
+      "divorciar",
+      "palmada",
+      "likes",
+      "decision",
+      "duelo",
+      "pelea",
+      "racha",
+      "paz",
+      "cafe",
+      "pizza",
+      "register",
+      "casarse",
+      "patada",
+      "amistad",
+      "pause",
+      "cachetada",
+      "golpe",
+      "mesa",
+      "abrazo"
+    ]
+  },
+  "stats": {
+    "total_duelos": 68,
+    "total_interacciones": 30,
+    "total_matrimonios": 3,
+    "total_divorcios": 2,
+    "total_noviazgos": 0,
+    "total_rupturas": 0,
+    "total_amistades": 7
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "id": "87db23fc",
+      "name": "Sin nombre",
+      "enabled": true,
+      "trigger_type": "like",
+      "trigger_value": "1",
+      "action_type": "spawn",
+      "action_value": "🐰 Conejo",
+      "amount": 1,
+      "cooldown": 0,
+      "tts_enabled": false,
+      "tts_message": "",
+      "tts_voice": "en_us_002",
+      "commands": "",
+      "allowed_users": [],
+      "actions": [
+        {
+          "action_type": "entities",
+          "action_type_name": "🐉 Entidades/Mobs",
+          "action_value": "🐰 Conejo",
+          "amount": 1,
+          "commands": ""
+        }
+      ]
+    }
+  ]
+}
