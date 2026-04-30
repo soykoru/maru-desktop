@@ -18,6 +18,7 @@
  */
 
 import { app, BrowserWindow, shell } from 'electron';
+import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { SidecarManager } from './sidecar.js';
@@ -34,6 +35,54 @@ import {
 } from './image-protocol.js';
 import { installTray, hookWindowToTray, destroyTray } from './tray.js';
 import { installNotifications } from './notifications.js';
+
+// CRÍTICO #1 — Single instance lock. Sin esto, abrir el .exe dos veces (o
+// el auto-updater corriendo el nuevo antes de que muera el viejo) crea
+// DOS Electron mains, cada uno con su SidecarManager. Los dos sidecars
+// escriben a los MISMOS JSONs en %APPDATA%/MARU Live/data/* y se pisan
+// → "datos desaparecidos" reales (race condition de overwrite).
+//
+// Bug confirmado en producción 2026-04-29: 3 sidecar.exe + 13 MARU Live.exe
+// procesos simultáneos, sidecar.log mostrando "=== MARU BOOT ===" cada
+// 17s con dos pids diferentes 1s aparte → el user perdió voces, reglas,
+// fortunas, juegos.
+//
+// requestSingleInstanceLock() debe llamarse ANTES de cualquier `app.on`.
+const _singleInstanceLock = app.requestSingleInstanceLock();
+if (!_singleInstanceLock) {
+  // Otra instancia ya tiene el lock — salir inmediatamente sin tocar
+  // archivos. Si en algún momento queremos abrir nueva ventana cuando
+  // el user clickea el icono de nuevo, el "second-instance" handler
+  // hace foco en la mainWindow existente.
+  console.log('[main] another MARU instance is already running; quitting');
+  app.exit(0);
+}
+app.on('second-instance', () => {
+  // Devolverle el foco al usuario sin spawnear nada nuevo.
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
+// CRÍTICO #2 — Matar sidecars zombie que hayan quedado de instancias
+// anteriores que no shutdown limpio (auto-update, app crash, force-kill
+// del task manager). Sin esto, al boot el nuevo sidecar pelearía por
+// el puerto 8770 y/o por write locks de los JSONs con uno viejo.
+function killOrphanSidecars(): void {
+  if (process.platform !== 'win32') return;
+  try {
+    // /F: force, /T: tree, /IM: image name. Si no hay procesos coincidentes
+    // taskkill devuelve 128 — lo ignoramos.
+    spawnSync('taskkill', ['/F', '/T', '/IM', 'sidecar.exe'], {
+      windowsHide: true,
+      timeout: 3000,
+    });
+  } catch {
+    /* sin orphans, ok */
+  }
+}
+killOrphanSidecars();
 
 // CRÍTICO: registrar privilegios del scheme `maru://` ANTES de app.ready.
 // Si esto se llama después, Electron lanza error y el protocolo no funciona.

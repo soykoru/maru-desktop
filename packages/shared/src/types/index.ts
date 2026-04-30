@@ -714,21 +714,30 @@ export type LogCategory = (typeof LOG_CATEGORIES)[number];
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'WARN' | 'ERROR' | 'CRITICAL';
 
 /**
- * Grupos visuales para los filter pills.
- * El sidecar emite categorías granulares; la UI las agrupa.
+ * Grupos visuales para los filter pills — granular, 1 grupo por tipo de
+ * evento. El sidecar emite categorías y la UI mapea 1:1 (con 2 excepciones:
+ * chat = comment+command, audio = music+tts+sound, errores = error+warn).
  *
- * Diseño: cada grupo es coherente — nada de "like" en social cuando es
- * un evento del live, ni "tiktok" en sistema cuando son eventos del live.
+ * Diseño: el user pidió expandir los filtros para que regalos, follows,
+ * likes, etc. tengan SU PROPIO toggle separado en vez de venir agrupados
+ * en "eventos".
  */
 export type LogGroup =
-  | 'chat' // comment + command (texto que escribe el viewer)
+  | 'comments' // comment (chat libre)
+  | 'commands' // command (! prefix) — separado de comments
   | 'gifts' // gift entrante
   | 'emotes' // emotes/stickers del live
-  | 'eventos' // follow / share / like / subscribe
-  | 'rules' // reglas ejecutadas (rule, action)
+  | 'follows' // nuevos seguidores
+  | 'likes' // likes contados
+  | 'shares' // compartidos del live
+  | 'subs' // subscribers del live
+  | 'rules' // reglas matched (rule)
+  | 'actions' // acciones ejecutadas en el juego (action)
   | 'social' // sistema social interno (duelos, rachas, ranking)
-  | 'audio' // música + tts + sonidos
-  | 'sistema' // system / tiktok-conexión / profile / ia
+  | 'music' // spotify (play, skip, cola)
+  | 'ia' // respuestas/queries IA
+  | 'audio' // tts + sonidos
+  | 'sistema' // system / tiktok-conexión / profile
   | 'errores'; // error + warn
 
 export interface LogEntry {

@@ -32,12 +32,19 @@ function scheduleFlush() {
 const MAX_BUFFER = 500;
 
 const ALL_GROUPS: LogGroup[] = [
-  'chat',
+  'comments',
+  'commands',
   'gifts',
   'emotes',
-  'eventos',
+  'follows',
+  'likes',
+  'shares',
+  'subs',
   'rules',
+  'actions',
   'social',
+  'music',
+  'ia',
   'audio',
   'sistema',
   'errores',

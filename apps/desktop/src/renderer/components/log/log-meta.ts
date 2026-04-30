@@ -32,12 +32,19 @@ export const CATEGORY_META: Record<
 };
 
 export const LOG_GROUPS: { id: LogGroup; label: string; emoji: string }[] = [
-  { id: 'chat', label: 'Chat', emoji: '💬' },
-  { id: 'gifts', label: 'Gifts', emoji: '🎁' },
+  { id: 'comments', label: 'Comentarios', emoji: '💬' },
+  { id: 'commands', label: 'Comandos', emoji: '⌨️' },
+  { id: 'gifts', label: 'Regalos', emoji: '🎁' },
   { id: 'emotes', label: 'Emotes', emoji: '🎨' },
-  { id: 'eventos', label: 'Eventos', emoji: '⚡' },
+  { id: 'follows', label: 'Follows', emoji: '➕' },
+  { id: 'likes', label: 'Likes', emoji: '❤️' },
+  { id: 'shares', label: 'Shares', emoji: '📤' },
+  { id: 'subs', label: 'Subs', emoji: '⭐' },
   { id: 'rules', label: 'Reglas', emoji: '📋' },
+  { id: 'actions', label: 'Acciones', emoji: '🎯' },
   { id: 'social', label: 'Social', emoji: '🤝' },
+  { id: 'music', label: 'Música', emoji: '🎶' },
+  { id: 'ia', label: 'IA', emoji: '🤖' },
   { id: 'audio', label: 'Audio', emoji: '🔊' },
   { id: 'sistema', label: 'Sistema', emoji: '⚙️' },
   { id: 'errores', label: 'Errores', emoji: '⚠' },

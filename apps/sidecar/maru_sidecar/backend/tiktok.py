@@ -484,6 +484,15 @@ class TikTokService:
             _DIRECT = None  # tipo: ignore[assignment]
 
         def _connect(signal: Any, handler: Any) -> None:
+            # Idempotente: si re-wire del mismo worker (reconexión rápida,
+            # race), desconectamos primero el handler antes de re-añadirlo.
+            # Sin esto, un solo CommentEvent disparaba el TTS 2x si el worker
+            # quedó con 2 slots conectados al mismo signal.
+            try:
+                signal.disconnect(handler)
+            except (TypeError, RuntimeError):
+                # No estaba conectado todavía — caso normal en primer wire.
+                pass
             if _DIRECT is not None:
                 signal.connect(handler, _DIRECT)
             else:

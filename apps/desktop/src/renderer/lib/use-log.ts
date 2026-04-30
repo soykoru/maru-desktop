@@ -11,23 +11,23 @@ import { rpcCall } from './rpc.js';
 import { useAppStore } from './store/index.js';
 
 const GROUP_TO_CATEGORIES: Record<LogGroup, LogCategory[]> = {
-  // texto que escribe el viewer (comentarios libres + comandos !cmd)
-  chat: ['comment', 'command'],
-  // donaciones que llegan al live
+  // 1:1 granular — el user pidió que cada tipo de evento tenga su propio
+  // toggle (gifts separado de likes, follows, shares, etc.).
+  comments: ['comment'],
+  commands: ['command'],
   gifts: ['gift'],
-  // emotes / stickers que mandan en chat
   emotes: ['emote'],
-  // eventos del live: follow / share / like / subscribe (super fan)
-  eventos: ['follow', 'share', 'like', 'subscribe'],
-  // reglas que se dispararon y enviaron acción al juego
-  rules: ['rule', 'action'],
-  // sistema social interno: duelos, rachas, ranking, !golpe, etc.
+  follows: ['follow'],
+  likes: ['like'],
+  shares: ['share'],
+  subs: ['subscribe'],
+  rules: ['rule'],
+  actions: ['action'],
   social: ['social'],
-  // música + TTS + sonidos por evento
-  audio: ['music', 'tts', 'sound'],
-  // sistema: arranque, conexión TikTok, profile, IA
-  sistema: ['system', 'tiktok', 'profile', 'ia'],
-  // errores y warnings
+  music: ['music'],
+  ia: ['ia'],
+  audio: ['tts', 'sound'],
+  sistema: ['system', 'tiktok', 'profile'],
   errores: ['error', 'warn'],
 };
 

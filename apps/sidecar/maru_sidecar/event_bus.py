@@ -71,9 +71,19 @@ class EventBus:
     ) -> None:
         """Registrar callback in-process para `name`. Se ejecuta en el loop
         antes de encolar al stream WS — fan-out interno (rule dispatcher,
-        métricas, etc.) sin robarle eventos al consumidor del stream."""
+        métricas, etc.) sin robarle eventos al consumidor del stream.
+
+        IDEMPOTENTE: si el MISMO callback (por identidad) ya está en la
+        lista para el mismo evento, no se vuelve a registrar. Sin esto,
+        un install() llamado 2x (race de inicialización, reconexión, hot-
+        reload) creaba listeners duplicados y los TTS de comandos se
+        leían 2 veces.
+        """
         with self._listeners_lock:
-            self._listeners.setdefault(name, []).append(callback)
+            lst = self._listeners.setdefault(name, [])
+            if callback in lst:
+                return
+            lst.append(callback)
 
     def _enqueue(self, evt: BusEvent) -> None:
         # Fan-out a listeners in-process (en el loop del sidecar).

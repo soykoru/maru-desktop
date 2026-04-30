@@ -71,14 +71,17 @@ export function LogPanel(): ReactNode {
     }
   }
 
-  // Counts por grupo (para los pills) — alineado con GROUP_TO_CATEGORIES.
+  // Counts por grupo (para los pills) — granular, 1:1 con LogGroup.
+  // Mapping de category → group espejado en useLog (filter logic).
   const groupCounts = useMemo(() => {
     const out: Record<string, number> = {};
     for (const e of log.entries) {
       switch (e.category) {
         case 'comment':
+          out.comments = (out.comments ?? 0) + 1;
+          break;
         case 'command':
-          out.chat = (out.chat ?? 0) + 1;
+          out.commands = (out.commands ?? 0) + 1;
           break;
         case 'gift':
           out.gifts = (out.gifts ?? 0) + 1;
@@ -87,19 +90,32 @@ export function LogPanel(): ReactNode {
           out.emotes = (out.emotes ?? 0) + 1;
           break;
         case 'follow':
-        case 'share':
+          out.follows = (out.follows ?? 0) + 1;
+          break;
         case 'like':
+          out.likes = (out.likes ?? 0) + 1;
+          break;
+        case 'share':
+          out.shares = (out.shares ?? 0) + 1;
+          break;
         case 'subscribe':
-          out.eventos = (out.eventos ?? 0) + 1;
+          out.subs = (out.subs ?? 0) + 1;
           break;
         case 'rule':
-        case 'action':
           out.rules = (out.rules ?? 0) + 1;
+          break;
+        case 'action':
+          out.actions = (out.actions ?? 0) + 1;
           break;
         case 'social':
           out.social = (out.social ?? 0) + 1;
           break;
         case 'music':
+          out.music = (out.music ?? 0) + 1;
+          break;
+        case 'ia':
+          out.ia = (out.ia ?? 0) + 1;
+          break;
         case 'tts':
         case 'sound':
           out.audio = (out.audio ?? 0) + 1;
@@ -138,12 +154,19 @@ export function LogPanel(): ReactNode {
               // Aplica el set objetivo: vacío = desactivar TODOS,
               // lleno = activar todos. Toggle individual donde difiere.
               for (const grp of [
-                'chat',
+                'comments',
+                'commands',
                 'gifts',
                 'emotes',
-                'eventos',
+                'follows',
+                'likes',
+                'shares',
+                'subs',
                 'rules',
+                'actions',
                 'social',
+                'music',
+                'ia',
                 'audio',
                 'sistema',
                 'errores',
