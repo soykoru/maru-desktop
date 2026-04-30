@@ -280,6 +280,9 @@ export interface SpotifyAccount {
   /** Display name de Spotify (cuando está logueado). */
   displayName: string;
   isCurrent: boolean;
+  /** False si es la cuenta actualmente conectada pero NO está persistida
+   * en spotify_accounts.json — UI muestra botón "💾 Guardar". */
+  saved?: boolean;
 }
 
 export interface SpotifyDevice {

@@ -397,17 +397,41 @@ class SpotifyService:
         # nada se persiste sin feedback.
         accounts = _read_accounts()
         c = self._client
-        current_id = getattr(c, "client_id", "") if c is not None else ""
+        current_id = (
+            str(getattr(c, "client_id", "") or "") if c is not None else ""
+        )
+        is_connected = bool(getattr(c, "is_connected", False)) if c is not None else False
+
         out: list[dict[str, Any]] = []
+        seen_ids: set[str] = set()
         for a in accounts:
             if not isinstance(a, dict):
                 continue
             cid = str(a.get("client_id") or "")
             name = str(a.get("name") or cid or "?")
+            seen_ids.add(cid)
             out.append({
                 "name": name,
                 "displayName": name,
-                "isCurrent": bool(current_id) and cid == current_id,
+                "isCurrent": is_connected and bool(current_id) and cid == current_id,
+                "saved": True,
+            })
+
+        # Si hay un client conectado pero su client_id NO está en el archivo
+        # de cuentas guardadas (caso reportado: user conectó con creds frescas
+        # y nunca clickeó Guardar), igual lo mostramos arriba con `saved=false`
+        # para que la UI ofrezca un botón "💾 Guardar esta" sin tener que
+        # adivinar qué cuenta es.
+        if is_connected and current_id and current_id not in seen_ids:
+            account_name = (
+                str(getattr(c, "account_name", "") or "").strip()
+                or f"Spotify {current_id[-6:]}"
+            )
+            out.insert(0, {
+                "name": account_name,
+                "displayName": account_name + " (sin guardar)",
+                "isCurrent": True,
+                "saved": False,
             })
         return {"accounts": out}
 
@@ -552,12 +576,14 @@ class SpotifyService:
                 ok, msg = bool(res[0]), str(res[1])
                 if ok:
                     self._persist_credentials(client_id, client_secret)
+                    self._auto_save_connected_account(c)
                     # Wire SpotifyClient en el SocialSystem para que `!play`
                     # encuentre `self.spotify` no-None y anuncie por TTS.
                     self._notify_social()
                 return {"ok": ok, "message": msg}
             if bool(res):
                 self._persist_credentials(client_id, client_secret)
+                self._auto_save_connected_account(c)
                 self._notify_social()
             return {"ok": bool(res)}
         except Exception as exc:
@@ -575,6 +601,44 @@ class SpotifyService:
             self._config["client_secret"] = client_secret
             self._config["enabled"] = True
             self._write_config()
+
+    def _auto_save_connected_account(self, c: Any) -> None:
+        """Auto-añade la cuenta recién conectada a `spotify_accounts.json`
+        usando su display name de Spotify. Sin esto, el user veía
+        "🟢 Conectado" arriba pero la lista de cuentas guardadas estaba
+        vacía y no podía cambiar entre cuentas. Idempotente: si ya existe
+        por client_id, solo actualiza el nombre/secret."""
+        try:
+            cid = str(getattr(c, "client_id", "") or "")
+            csec = str(getattr(c, "client_secret", "") or "")
+            name = str(getattr(c, "account_name", "") or "").strip()
+            if not cid or not csec:
+                return
+            if not name:
+                # Fallback: usar últimos 6 caracteres del client_id como tag.
+                name = f"Spotify {cid[-6:]}"
+            with self._lock:
+                accounts = _read_accounts()
+                updated = False
+                for acc in accounts:
+                    if acc.get("client_id") == cid:
+                        acc["name"] = name
+                        acc["client_secret"] = csec
+                        updated = True
+                        break
+                if not updated:
+                    accounts.append({
+                        "name": name,
+                        "client_id": cid,
+                        "client_secret": csec,
+                    })
+                _write_accounts(accounts)
+            log.info(
+                "spotify._auto_save: '%s' (total=%d, updated=%s)",
+                name, len(accounts), updated,
+            )
+        except Exception:
+            log.exception("spotify._auto_save fallo")
 
     def disconnect(self, _params: dict[str, Any]) -> dict[str, Any]:
         c = self._client  # no forzar init si no estaba.

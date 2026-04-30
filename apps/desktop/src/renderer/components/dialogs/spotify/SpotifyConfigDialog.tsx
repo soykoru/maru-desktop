@@ -112,6 +112,38 @@ export function SpotifyConfigDialog() {
     }
   }
 
+  async function handleQuickSave(suggestedName: string) {
+    // Quick-save de la cuenta conectada actual con su display name de
+    // Spotify. El backend usa _auto_save_connected_account internamente
+    // pero también respeta el nombre que el user indique.
+    try {
+      await sp.accountSave(suggestedName);
+      flash(`✓ Cuenta "${suggestedName}" guardada.`);
+    } catch (ex) {
+      flash(ex instanceof Error ? ex.message : String(ex), false);
+    }
+  }
+
+  async function handleConnectAnother() {
+    // Desconecta la cuenta actual + limpia el form de credenciales para
+    // que el user pueda pegar otras de una app distinta de Spotify
+    // Dashboard. La cuenta vieja queda guardada en la lista para poder
+    // volver con un click.
+    setBusy(true);
+    try {
+      await sp.disconnect();
+      setClientId('');
+      setClientSecret('');
+      flash(
+        'Desconectado. Pegá las credenciales de otra cuenta arriba y conectá.',
+      );
+    } catch (ex) {
+      flash(ex instanceof Error ? ex.message : String(ex), false);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleAddPriorityUser() {
     if (!newPriorityUser.trim()) return;
     try {
@@ -346,17 +378,18 @@ export function SpotifyConfigDialog() {
               <p className="text-xs text-fg-subtle">
                 No hay cuentas guardadas todavía.
                 <br />
-                Conectate con tus credenciales arriba y guardalas con un nombre
-                para cambiar rápido entre cuentas.
+                Conectate con tus credenciales arriba — la cuenta queda
+                guardada automáticamente con tu nombre de Spotify.
               </p>
             </div>
           ) : (
             <ul className="divide-y divide-border rounded-lg border border-border bg-bg-base/30 overflow-hidden">
               {sp.accounts.map((a) => {
                 const isCurrent = a.isCurrent;
+                const isUnsaved = a.saved === false;
                 return (
                   <li
-                    key={a.name}
+                    key={a.name + (isUnsaved ? '-unsaved' : '')}
                     className={
                       'flex items-center justify-between gap-2 px-3 py-2 ' +
                       (isCurrent ? 'bg-success/[0.06]' : 'hover:bg-fg/5')
@@ -375,60 +408,78 @@ export function SpotifyConfigDialog() {
                       {isCurrent && (
                         <Badge variant="success">activa</Badge>
                       )}
+                      {isUnsaved && (
+                        <Badge variant="warning">sin guardar</Badge>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedAccount(a.name);
-                          void (async () => {
-                            try {
-                              await sp.accountLoad(a.name);
-                              flash(`✓ Cargada cuenta "${a.name}".`);
-                            } catch (ex) {
-                              flash(
-                                ex instanceof Error
-                                  ? ex.message
-                                  : String(ex),
-                                false,
-                              );
-                            }
-                          })();
-                        }}
-                        disabled={busy || isCurrent}
-                        title={isCurrent ? 'Ya está activa' : 'Cargar esta cuenta'}
-                      >
-                        Cargar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (!confirm(`¿Eliminar la cuenta "${a.name}"?`))
-                            return;
-                          void (async () => {
-                            try {
-                              await sp.accountDelete(a.name);
-                              flash(`Cuenta "${a.name}" eliminada.`);
-                            } catch (ex) {
-                              flash(
-                                ex instanceof Error
-                                  ? ex.message
-                                  : String(ex),
-                                false,
-                              );
-                            }
-                          })();
-                        }}
-                        disabled={busy}
-                        title="Eliminar cuenta"
-                        className="!text-danger hover:!bg-danger/10"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      {isUnsaved ? (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          onClick={() => void handleQuickSave(a.name)}
+                          disabled={busy}
+                          title="Guardar esta cuenta para volver después"
+                        >
+                          💾 Guardar
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAccount(a.name);
+                            void (async () => {
+                              try {
+                                await sp.accountLoad(a.name);
+                                flash(`✓ Cargada cuenta "${a.name}".`);
+                              } catch (ex) {
+                                flash(
+                                  ex instanceof Error
+                                    ? ex.message
+                                    : String(ex),
+                                  false,
+                                );
+                              }
+                            })();
+                          }}
+                          disabled={busy || isCurrent}
+                          title={isCurrent ? 'Ya está activa' : 'Cargar esta cuenta'}
+                        >
+                          Cargar
+                        </Button>
+                      )}
+                      {!isUnsaved && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (!confirm(`¿Eliminar la cuenta "${a.name}"?`))
+                              return;
+                            void (async () => {
+                              try {
+                                await sp.accountDelete(a.name);
+                                flash(`Cuenta "${a.name}" eliminada.`);
+                              } catch (ex) {
+                                flash(
+                                  ex instanceof Error
+                                    ? ex.message
+                                    : String(ex),
+                                  false,
+                                );
+                              }
+                            })();
+                          }}
+                          disabled={busy}
+                          title="Eliminar cuenta"
+                          className="!text-danger hover:!bg-danger/10"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </li>
                 );
@@ -436,36 +487,20 @@ export function SpotifyConfigDialog() {
             </ul>
           )}
 
-          {/* Guardar la cuenta conectada */}
-          <div className="flex gap-2 pt-1">
-            <Input
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              placeholder={
-                sp.status.connected
-                  ? 'Nombre para guardar la cuenta actual...'
-                  : 'Conectate primero arriba para poder guardar'
-              }
-              disabled={busy || !sp.status.connected}
-            />
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => void handleSaveAccount()}
-              disabled={busy || !accountName.trim() || !sp.status.connected}
-            >
-              <Plus className="h-3 w-3" />
-              Guardar
-            </Button>
-          </div>
-
-          {/* Refresh button — útil después de añadir desde otro lado */}
-          <div className="flex items-center justify-between text-[11px] text-fg-subtle">
-            <span>
-              Para añadir otra cuenta: poné nuevas credenciales arriba,
-              conectá, luego guardá con un nombre distinto.
-            </span>
+          {/* Acciones: conectar otra + guardar custom + refresh */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            {sp.status.connected && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void handleConnectAnother()}
+                disabled={busy}
+                title="Desconectar y pegar credenciales de otra cuenta"
+              >
+                🔌 Conectar otra cuenta
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"
@@ -473,11 +508,39 @@ export function SpotifyConfigDialog() {
               onClick={() => void sp.refreshAccounts()}
               disabled={busy}
               title="Refrescar lista"
-              className="!h-6 !px-2"
             >
               <RefreshCw className="h-3 w-3" />
+              Refrescar
             </Button>
           </div>
+
+          {/* Guardar la cuenta conectada con nombre custom (opcional) */}
+          {sp.status.connected && (
+            <div className="flex gap-2 pt-1">
+              <Input
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="Renombrar cuenta actual (opcional)..."
+                disabled={busy}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void handleSaveAccount()}
+                disabled={busy || !accountName.trim()}
+              >
+                <Plus className="h-3 w-3" />
+                Guardar
+              </Button>
+            </div>
+          )}
+
+          <p className="text-[11px] text-fg-subtle">
+            Las cuentas se guardan automáticamente al conectar. Para añadir
+            otra: clickeá <strong>🔌 Conectar otra cuenta</strong>, pegá las
+            nuevas credenciales arriba y conectá.
+          </p>
         </fieldset>
 
         {/* Devices */}
