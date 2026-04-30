@@ -249,6 +249,14 @@ class SocialService:
         self._tts = tts
         self._spotify_svc: Any = None
         self._logs: Any = None
+        # Dedupe del callback de TTS — el SocialSystem original a veces
+        # invoca tts_speak 2 veces para un mismo evento (ejemplo `!racha`
+        # que resultaba duplicado) por callbacks duplicados, hilos en
+        # paralelo, o callbacks heredados. Si llega la MISMA `text` dentro
+        # de 1s, se ignora la segunda. No afecta narraciones legítimas
+        # consecutivas (suelen variar el texto: `Racha de @x continúa
+        # ...` vs `🔥 Racha @x: 5 días`).
+        self._last_tts_call: tuple[float, str] = (0.0, "")
 
     def attach_logs(self, logs: Any) -> None:
         """Cablea LogsService para que `SocialSystem.log()` (la que el core
@@ -399,6 +407,16 @@ class SocialService:
                 voice = sv
         if not text.strip():
             return
+        # Dedupe por (texto[:120], 1s). Cubre el caso `!racha` reportado
+        # por el user donde el TTS sonaba 2 veces (mientras `!play` no).
+        # 1s es ventana segura: las narraciones del SocialSystem nunca
+        # repiten texto exacto en <1s para eventos distintos.
+        now = time.time()
+        last_ts, last_text = self._last_tts_call
+        text_key = text[:120]
+        if last_text == text_key and (now - last_ts) < 1.0:
+            return
+        self._last_tts_call = (now, text_key)
         try:
             params: dict[str, Any] = {"text": text, "channel": "social"}
             if voice:

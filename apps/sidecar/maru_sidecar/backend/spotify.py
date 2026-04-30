@@ -54,6 +54,36 @@ def _config_path() -> Path:
     return DATA_DIR / "spotify.json"
 
 
+def _accounts_path() -> Path:
+    """Lista de cuentas guardadas. La persistimos NOSOTROS bajo
+    `data/spotify_accounts.json` (atomic write, errores explícitos) en
+    vez de delegar al `SpotifyClient.save_accounts_list` original que
+    swallowea excepciones silencioso → el user clickeaba Guardar y nada
+    se persistía sin feedback visible."""
+    return DATA_DIR / "spotify_accounts.json"
+
+
+def _read_accounts() -> list[dict[str, Any]]:
+    p = _accounts_path()
+    if not p.exists():
+        return []
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    return raw if isinstance(raw, list) else []
+
+
+def _write_accounts(accounts: list[dict[str, Any]]) -> None:
+    p = _accounts_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(".json.tmp")
+    tmp.write_text(
+        json.dumps(accounts, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    tmp.replace(p)
+
+
 def _coerce_config(raw: Any) -> dict[str, Any]:
     if not isinstance(raw, dict):
         return {**DEFAULT_CONFIG, "priority_users": {}}
@@ -266,13 +296,28 @@ class SpotifyService:
         for r in raw or []:
             if not isinstance(r, dict):
                 continue
+            # SpotifyClient guarda los entries como
+            #   {"user": <str>, "track": {"uri","name","artist","id",...},
+            #    "priority": <bool>, "added_at": <ts>}
+            # El mapper anterior buscaba `r.get("name")` directo → siempre
+            # None → la UI mostraba "--" en cada fila de la cola.
+            track = r.get("track") if isinstance(r.get("track"), dict) else {}
+            name = track.get("name") or r.get("name") or r.get("trackName") or ""
+            artist = track.get("artist") or r.get("artist") or ""
+            track_id = (
+                track.get("id")
+                or track.get("trackId")
+                or r.get("track_id")
+                or r.get("trackId")
+                or ""
+            )
             items.append(
                 {
-                    "trackName": str(r.get("name") or r.get("trackName") or ""),
-                    "artist": str(r.get("artist") or ""),
+                    "trackName": str(name),
+                    "artist": str(artist),
                     "requestedBy": str(r.get("user") or r.get("requested_by") or "?"),
                     "isPriority": bool(r.get("priority", False)),
-                    "trackId": str(r.get("track_id") or r.get("trackId") or ""),
+                    "trackId": str(track_id),
                 }
             )
         return {"items": items, "total": len(items)}
@@ -344,65 +389,80 @@ class SpotifyService:
         return type(c) if c is not None else None
 
     def accounts_list(self, _params: dict[str, Any]) -> dict[str, Any]:
-        cls = self._client_class()
-        if cls is None or not hasattr(cls, "load_saved_accounts"):
-            return {"accounts": []}
-        try:
-            raw = cls.load_saved_accounts() or []
-        except Exception:
-            return {"accounts": []}
-        # Detectar cuál es la "actual" comparando client_id con el conectado.
+        # Persistencia propia (atomic write en data/spotify_accounts.json).
+        # Antes delegábamos a SpotifyClient.load_saved_accounts() que lee
+        # de un path estático calculado a tiempo de import del core ANTES
+        # de patchear core.paths → posible mismatch. Además
+        # save_accounts_list silenciaba IOError → user clickea Guardar y
+        # nada se persiste sin feedback.
+        accounts = _read_accounts()
         c = self._client
         current_id = getattr(c, "client_id", "") if c is not None else ""
         out: list[dict[str, Any]] = []
-        for a in raw:
-            if isinstance(a, dict):
-                cid = str(a.get("client_id") or "")
-                name = str(a.get("name") or cid or "?")
-                out.append({
-                    "name": name,
-                    "displayName": name,
-                    "isCurrent": bool(current_id) and cid == current_id,
-                })
+        for a in accounts:
+            if not isinstance(a, dict):
+                continue
+            cid = str(a.get("client_id") or "")
+            name = str(a.get("name") or cid or "?")
+            out.append({
+                "name": name,
+                "displayName": name,
+                "isCurrent": bool(current_id) and cid == current_id,
+            })
         return {"accounts": out}
 
     def accounts_save(self, params: dict[str, Any]) -> dict[str, Any]:
         c = self._ensure_client()
-        if c is None:
-            return {"ok": False, "message": "spotify no disponible"}
         name = params.get("name")
         if not isinstance(name, str) or not name.strip():
             raise ValueError("name requerido")
-        cid = str(getattr(c, "client_id", "") or "")
-        csec = str(getattr(c, "client_secret", "") or "")
+        # Obtener credenciales actuales — preferir las del client conectado,
+        # caer al config persistido si no hay cliente.
+        cid = str(getattr(c, "client_id", "") or "") if c is not None else ""
+        csec = str(getattr(c, "client_secret", "") or "") if c is not None else ""
+        if not cid or not csec:
+            cid = str(self._config.get("client_id") or "")
+            csec = str(self._config.get("client_secret") or "")
         if not cid or not csec:
             return {
                 "ok": False,
                 "message": "primero conectá Spotify para tener credenciales",
             }
         try:
-            cls = type(c)
-            ok = bool(cls.save_account(name.strip(), cid, csec))
-            return {"ok": ok}
+            with self._lock:
+                accounts = _read_accounts()
+                # Update si ya existe por client_id, sino append.
+                updated = False
+                for acc in accounts:
+                    if acc.get("client_id") == cid:
+                        acc["name"] = name.strip()
+                        acc["client_secret"] = csec
+                        updated = True
+                        break
+                if not updated:
+                    accounts.append({
+                        "name": name.strip(),
+                        "client_id": cid,
+                        "client_secret": csec,
+                    })
+                _write_accounts(accounts)
+            log.info("spotify.accounts_save: '%s' guardada (total=%d)", name.strip(), len(accounts))
+            return {"ok": True}
         except Exception as exc:
-            log.exception("spotify.accounts_save")
+            log.exception("spotify.accounts_save fallo")
             return {"ok": False, "message": str(exc)}
 
     def accounts_load(self, params: dict[str, Any]) -> dict[str, Any]:
-        """Cambiar a una cuenta guardada → switch_account(client_id, client_secret).
-        Persistimos las credenciales en `spotify.json` y notificamos al
-        SocialSystem para que `social._sys.spotify` apunte a la cuenta nueva."""
+        """Cambiar a una cuenta guardada — usa switch_account(cid, csec).
+        Persistimos las credenciales nuevas en spotify.json y notificamos
+        al SocialSystem para que social._sys.spotify apunte a la nueva."""
         c = self._ensure_client()
         if c is None:
             return {"ok": False, "message": "spotify no disponible"}
         name = params.get("name")
         if not isinstance(name, str) or not name.strip():
             raise ValueError("name requerido")
-        cls = type(c)
-        try:
-            accounts = cls.load_saved_accounts() if hasattr(cls, "load_saved_accounts") else []
-        except Exception:
-            accounts = []
+        accounts = _read_accounts()
         target = next(
             (a for a in accounts if isinstance(a, dict) and a.get("name") == name.strip()),
             None,
@@ -416,45 +476,41 @@ class SpotifyService:
         try:
             if hasattr(c, "switch_account"):
                 c.switch_account(cid, csec)
+            elif hasattr(c, "configure"):
+                c.configure(client_id=cid, client_secret=csec)
             else:
-                # Fallback manual: setear creds + try_auto_connect.
-                if hasattr(c, "configure"):
-                    c.configure(client_id=cid, client_secret=csec)
-                else:
-                    c.client_id = cid
-                    c.client_secret = csec
-                if hasattr(c, "try_auto_connect"):
+                c.client_id = cid
+                c.client_secret = csec
+            if hasattr(c, "try_auto_connect"):
+                try:
                     c.try_auto_connect()
+                except Exception:
+                    pass
             self._persist_credentials(cid, csec)
             self._notify_social()
+            log.info("spotify.accounts_load: cuenta '%s' activada", name.strip())
             return {"ok": True}
         except Exception as exc:
-            log.exception("spotify.accounts_load")
+            log.exception("spotify.accounts_load fallo")
             return {"ok": False, "message": str(exc)}
 
     def accounts_delete(self, params: dict[str, Any]) -> dict[str, Any]:
-        cls = self._client_class()
-        if cls is None or not hasattr(cls, "delete_account"):
-            return {"ok": False}
         name = params.get("name")
         if not isinstance(name, str) or not name.strip():
             raise ValueError("name requerido")
-        # Nuestro RPC recibe el `name`, pero el método real toma `client_id`.
-        # Buscamos el client_id por el nombre en la lista persistida.
         try:
-            accounts = cls.load_saved_accounts() if hasattr(cls, "load_saved_accounts") else []
-        except Exception:
-            accounts = []
-        target = next(
-            (a for a in accounts if isinstance(a, dict) and a.get("name") == name.strip()),
-            None,
-        )
-        if target is None:
-            return {"ok": True, "removed": False}
-        try:
-            ok = bool(cls.delete_account(str(target.get("client_id") or "")))
-            return {"ok": True, "removed": ok}
+            with self._lock:
+                accounts = _read_accounts()
+                before = len(accounts)
+                accounts = [
+                    a for a in accounts
+                    if isinstance(a, dict) and a.get("name") != name.strip()
+                ]
+                _write_accounts(accounts)
+            log.info("spotify.accounts_delete: '%s' (removed=%d)", name.strip(), before - len(accounts))
+            return {"ok": True, "removed": before > len(accounts)}
         except Exception as exc:
+            log.exception("spotify.accounts_delete fallo")
             return {"ok": False, "message": str(exc)}
 
     # ── RPC: connect / disconnect / credentials ──────────────────────────
