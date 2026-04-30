@@ -78,6 +78,15 @@ export class AutoUpdater {
       return;
     }
 
+    // CRÍTICO al boot: limpiar cache stale del updater. Si una versión
+    // previa quedó con un .exe cacheado de SU PROPIA versión (bug raíz
+    // de v1.0.10 sin guard isVersionGreater), el banner mostraba
+    // "vX.Y.Z lista" para la versión actual y al "reiniciar" instalaba
+    // la misma → bucle infinito. Limpiar el cache al boot rompe ese
+    // ciclo en versiones futuras: cualquier .exe cacheado que no
+    // coincida con la versión que se va a descargar se borra.
+    this.cleanStaleUpdateCache();
+
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
     autoUpdater.allowPrerelease = false;

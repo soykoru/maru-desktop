@@ -45,14 +45,27 @@ MAX_BUFFER = 500
 
 
 _CATEGORY_RULES: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"\bgift\b|🎁|\bdonacion|\bregalo", re.IGNORECASE), "gift"),
-    (re.compile(r"\bfollow(er)?\b|seguidor|➕\s?follow", re.IGNORECASE), "follow"),
-    (re.compile(r"\bshare\b|compartir|📤", re.IGNORECASE), "share"),
-    (re.compile(r"\blike\b|❤️|likes:", re.IGNORECASE), "like"),
-    (re.compile(r"\bcomentario|\bcomment\b|💬", re.IGNORECASE), "comment"),
-    (re.compile(r"\bcommand\b|comando|!\w+", re.IGNORECASE), "command"),
+    # ORDEN IMPORTANTE: el primer match gana. Los más específicos arriba.
+    # Comment (💬) PRIMERO porque su rank prefix puede contener
+    # "[follower]", "[follow]", "[member]" etc. que harían matchear las
+    # reglas de abajo. Los emoji al inicio del message son discriminantes
+    # claros del tipo de evento.
+    (re.compile(r"^💬"), "comment"),
+    (re.compile(r"^🎨"), "emote"),
+    (re.compile(r"^🎁|nueva donaci|donaci.n reactivada"), "gift"),
+    (re.compile(r"^➕\s|nuevo seguidor"), "follow"),
+    (re.compile(r"^📤|comparti.* el live"), "share"),
+    (re.compile(r"^❤️|^❤"), "like"),
+    (re.compile(r"^⌨️|^!"), "command"),
+    (re.compile(r"^🐉|^📦|^⚡|spawn |give_item|trigger_event"), "action"),
+    # Reglas más amplias después, solo aplican si los emoji-prefix no.
+    (re.compile(r"\bgift\b|\bdonacion|\bregalo", re.IGNORECASE), "gift"),
+    (re.compile(r"^[+➕]?\s*nuevo follow|seguidor", re.IGNORECASE), "follow"),
+    (re.compile(r"\bshare\b|compartir", re.IGNORECASE), "share"),
+    (re.compile(r"\blike\b|likes:", re.IGNORECASE), "like"),
+    (re.compile(r"\bcomentario|\bcomment\b", re.IGNORECASE), "comment"),
+    (re.compile(r"\bcommand\b|comando", re.IGNORECASE), "command"),
     (re.compile(r"\brule\b|regla|trigger.*action", re.IGNORECASE), "rule"),
-    (re.compile(r"\bspawn\b|give_item|trigger_event", re.IGNORECASE), "action"),
     (re.compile(r"\bsocial\b|duelo|matrimonio|noviazgo", re.IGNORECASE), "social"),
     (re.compile(r"\bspotify|playfan|música|musica", re.IGNORECASE), "music"),
     (re.compile(r"\bia\b|claude|groq|gemini|openai", re.IGNORECASE), "ia"),
