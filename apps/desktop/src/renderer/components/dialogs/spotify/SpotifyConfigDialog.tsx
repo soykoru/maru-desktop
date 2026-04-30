@@ -112,26 +112,6 @@ export function SpotifyConfigDialog() {
     }
   }
 
-  async function handleLoadAccount() {
-    if (!selectedAccount) return;
-    try {
-      await sp.accountLoad(selectedAccount);
-      flash(`✓ Cargada cuenta "${selectedAccount}".`);
-    } catch (ex) {
-      flash(ex instanceof Error ? ex.message : String(ex), false);
-    }
-  }
-
-  async function handleDeleteAccount() {
-    if (!selectedAccount) return;
-    try {
-      await sp.accountDelete(selectedAccount);
-      flash('Cuenta eliminada.');
-    } catch (ex) {
-      flash(ex instanceof Error ? ex.message : String(ex), false);
-    }
-  }
-
   async function handleAddPriorityUser() {
     if (!newPriorityUser.trim()) return;
     try {
@@ -355,51 +335,117 @@ export function SpotifyConfigDialog() {
           </div>
         </fieldset>
 
-        {/* Cuentas guardadas */}
+        {/* Cuentas guardadas — lista visible con cargar/borrar por item */}
         <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
           <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-            📂 Cuentas guardadas
+            📂 Cuentas guardadas ({sp.accounts.length})
           </legend>
-          <div className="flex gap-2">
-            <Select
-              value={selectedAccount}
-              onChange={(e) => setSelectedAccount(e.target.value)}
-              disabled={busy}
-              className="flex-1"
-            >
-              <option value="">— Seleccionar cuenta —</option>
-              {sp.accounts.map((a) => (
-                <option key={a.name} value={a.name}>
-                  {a.isCurrent ? '🟢 ' : ''}
-                  {a.displayName}
-                </option>
-              ))}
-            </Select>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => void handleLoadAccount()}
-              disabled={busy || !selectedAccount}
-            >
-              Cargar
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => void handleDeleteAccount()}
-              disabled={busy || !selectedAccount}
-              title="Eliminar cuenta"
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-          <div className="flex gap-2">
+
+          {sp.accounts.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-bg-base/30 px-3 py-4 text-center">
+              <p className="text-xs text-fg-subtle">
+                No hay cuentas guardadas todavía.
+                <br />
+                Conectate con tus credenciales arriba y guardalas con un nombre
+                para cambiar rápido entre cuentas.
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border rounded-lg border border-border bg-bg-base/30 overflow-hidden">
+              {sp.accounts.map((a) => {
+                const isCurrent = a.isCurrent;
+                return (
+                  <li
+                    key={a.name}
+                    className={
+                      'flex items-center justify-between gap-2 px-3 py-2 ' +
+                      (isCurrent ? 'bg-success/[0.06]' : 'hover:bg-fg/5')
+                    }
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="shrink-0 text-sm">
+                        {isCurrent ? '🟢' : '⚪'}
+                      </span>
+                      <span
+                        className="truncate text-sm font-medium"
+                        title={a.displayName}
+                      >
+                        {a.displayName}
+                      </span>
+                      {isCurrent && (
+                        <Badge variant="success">activa</Badge>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedAccount(a.name);
+                          void (async () => {
+                            try {
+                              await sp.accountLoad(a.name);
+                              flash(`✓ Cargada cuenta "${a.name}".`);
+                            } catch (ex) {
+                              flash(
+                                ex instanceof Error
+                                  ? ex.message
+                                  : String(ex),
+                                false,
+                              );
+                            }
+                          })();
+                        }}
+                        disabled={busy || isCurrent}
+                        title={isCurrent ? 'Ya está activa' : 'Cargar esta cuenta'}
+                      >
+                        Cargar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (!confirm(`¿Eliminar la cuenta "${a.name}"?`))
+                            return;
+                          void (async () => {
+                            try {
+                              await sp.accountDelete(a.name);
+                              flash(`Cuenta "${a.name}" eliminada.`);
+                            } catch (ex) {
+                              flash(
+                                ex instanceof Error
+                                  ? ex.message
+                                  : String(ex),
+                                false,
+                              );
+                            }
+                          })();
+                        }}
+                        disabled={busy}
+                        title="Eliminar cuenta"
+                        className="!text-danger hover:!bg-danger/10"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {/* Guardar la cuenta conectada */}
+          <div className="flex gap-2 pt-1">
             <Input
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
-              placeholder="Nombre para guardar la cuenta actual..."
+              placeholder={
+                sp.status.connected
+                  ? 'Nombre para guardar la cuenta actual...'
+                  : 'Conectate primero arriba para poder guardar'
+              }
               disabled={busy || !sp.status.connected}
             />
             <Button
@@ -409,12 +455,29 @@ export function SpotifyConfigDialog() {
               onClick={() => void handleSaveAccount()}
               disabled={busy || !accountName.trim() || !sp.status.connected}
             >
-              💾 Guardar actual
+              <Plus className="h-3 w-3" />
+              Guardar
             </Button>
           </div>
-          <p className="text-[11px] text-fg-subtle">
-            Guardá varias cuentas con nombres distintos para cambiar rápido.
-          </p>
+
+          {/* Refresh button — útil después de añadir desde otro lado */}
+          <div className="flex items-center justify-between text-[11px] text-fg-subtle">
+            <span>
+              Para añadir otra cuenta: poné nuevas credenciales arriba,
+              conectá, luego guardá con un nombre distinto.
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => void sp.refreshAccounts()}
+              disabled={busy}
+              title="Refrescar lista"
+              className="!h-6 !px-2"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </Button>
+          </div>
         </fieldset>
 
         {/* Devices */}

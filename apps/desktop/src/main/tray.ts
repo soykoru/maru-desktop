@@ -79,9 +79,16 @@ export function installTray(getWindow: () => BrowserWindow | null): void {
 }
 
 /**
- * Cablea minimize → hide-to-tray. Esconde la ventana en lugar de minimizar
- * si el tray está activo. El close (X) también esconde, salvo en macOS o
- * si el user fuerza quit desde el menú.
+ * Cablea close → hide-to-tray. El close (X) esconde al tray en lugar de
+ * cerrar la app, salvo en macOS o si el user fuerza quit desde el menú.
+ *
+ * REMOVIDO el hook `'minimize'` con preventDefault + hide(): en Win32 el
+ * evento `'minimize'` se dispara DESPUÉS de que la ventana ya entró en
+ * estado minimizado. Llamar `e.preventDefault()` no lo deshace, y hacer
+ * `win.hide()` encima crea estado "minimized + hidden" que se queda
+ * pegado: el taskbar ya no puede restaurarla y el usuario reporta
+ * "se peta el programa". El minimize nativo (botón `─`) ahora minimiza
+ * normal a la barra de tareas, sin freeze.
  */
 export function hookWindowToTray(win: BrowserWindow): void {
   if (!trayInstance) return;
@@ -90,14 +97,6 @@ export function hookWindowToTray(win: BrowserWindow): void {
   app.on('before-quit', () => {
     forcedQuit = true;
   });
-
-  // Cast: en algunas versiones de @types/electron el listener de 'minimize'
-  // se tipa sin Event, pero en runtime sí recibe uno con preventDefault().
-  win.on('minimize', ((e: Electron.Event) => {
-    if (process.platform === 'darwin') return; // mac usa dock, no tray
-    e.preventDefault();
-    win.hide();
-  }) as () => void);
 
   win.on('close', (e) => {
     if (forcedQuit || process.platform === 'darwin') return;
