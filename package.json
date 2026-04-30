@@ -30,9 +30,9 @@
     "test:sidecar": "pnpm --filter @maru/sidecar test",
     "quickcheck": "node scripts/quickcheck.mjs",
     "smoke": "node scripts/smoke-exe.mjs",
-    "smoke:full": "pnpm build:sidecar && pnpm --filter @maru/desktop pack && node scripts/smoke-exe.mjs",
+    "smoke:full": "pnpm build:sidecar && pnpm --filter @maru/desktop package:exe && node scripts/smoke-exe.mjs",
     "release": "node scripts/release.mjs",
-    "release:safe": "pnpm smoke:full && pnpm --filter @maru/desktop release"
+    "release:safe": "pnpm smoke:full && pnpm --filter @maru/desktop release:exe"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
