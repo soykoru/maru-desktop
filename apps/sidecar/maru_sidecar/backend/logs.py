@@ -347,11 +347,17 @@ class LogsService:
             message, level
         )
         now_ms = int(time.time() * 1000)
-        # Clave de dedupe: ignorar entries idénticas dentro de 500ms.
+        # Clave de dedupe: ignorar entries idénticas dentro de 2000ms.
+        # Ampliada de 500ms a 2000ms porque logs del worker via signals
+        # PyQt+DirectConnection pueden llegar 2 veces si los slots se
+        # conectaron 2x por race de reconexión. 2s cubre ese caso sin
+        # perder eventos legítimamente repetidos por el user (ej. spam).
+        # Para messages CON @user en ellos, dedupe ignora ts y solo
+        # mira message+source+level (lo verdaderamente importante).
         dedupe_key = f"{level.upper()}::{source}::{message[:200]}"
         with self._lock:
             last_ts = self._recent_keys.get(dedupe_key)
-            if last_ts is not None and now_ms - last_ts < 500:
+            if last_ts is not None and now_ms - last_ts < 2000:
                 # Skip — duplicate dentro de la ventana.
                 return {"id": "", "ts": now_ms, "deduped": True}
             self._recent_keys[dedupe_key] = now_ms

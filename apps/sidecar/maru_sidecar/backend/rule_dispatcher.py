@@ -192,6 +192,32 @@ class RuleDispatcher:
         engine = self._get_engine()
         if engine is None:
             return
+
+        # Master switch — si gamesEnabled es false en config.json, NO
+        # ejecutamos las acciones contra los juegos. Solo loguear que se
+        # bloqueó la ejecución para que el user vea las reglas que
+        # hubieran disparado pero quedaron suprimidas.
+        if not self._read_games_enabled():
+            try:
+                bus = get_event_bus()
+                user = str(evt_data.get("user") or "?")
+                import time as _t
+                bus.publish(
+                    "log:entry",
+                    {
+                        "id": f"ms-{int(_t.time() * 1000)}",
+                        "ts": int(_t.time() * 1000),
+                        "level": "INFO",
+                        "source": "rules",
+                        "category": "rule",
+                        "message": f"🔴 Juegos OFF · {evt_type} de @{user} (no se envió al juego)",
+                        "meta": {"masterSwitch": False, "trigger": evt_type, "user": user},
+                    },
+                )
+            except Exception:
+                pass
+            return
+
         try:
             engine.ensure_profile(game_id)
         except Exception:
@@ -345,6 +371,24 @@ class RuleDispatcher:
         return {"ok": ok, "messages": messages}
 
     # ── Helpers ──────────────────────────────────────────────────────────
+
+    def _read_games_enabled(self) -> bool:
+        """Lee `gamesEnabled` del config.json. Default: true. Cache TTL 1.5s
+        igual que activeGame para no pegarle al disco en cada evento."""
+        path = DATA_DIR / "config.json"
+        if not path.exists():
+            return True
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                v = data.get("gamesEnabled")
+                # Default true si no existe la key — comportamiento previo.
+                if v is None:
+                    return True
+                return bool(v)
+        except (json.JSONDecodeError, OSError):
+            pass
+        return True
 
     def _read_active_game(self) -> str | None:
         """Lee `activeGame` o `current_game` desde `data/config.json` con

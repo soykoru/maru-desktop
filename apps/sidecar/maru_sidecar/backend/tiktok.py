@@ -731,7 +731,11 @@ class TikTokService:
                         line,
                         level="INFO",
                         source="tiktok",
-                        category="chat",
+                        # Category: comment (no "chat" — chat NO existe
+                        # en VALID_CATEGORIES → caía a detect_category
+                        # que con [follower] en el rank prefix matcheaba
+                        # como "follow" y mostraba mal en el panel).
+                        category="comment",
                     )
             except Exception:
                 log.exception("comment enriched log fallo")

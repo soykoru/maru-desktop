@@ -91,6 +91,26 @@ export function Sidebar(): ReactNode {
     );
   }
 
+  // ── Master switch: ON = enviar acciones a juegos, OFF = solo loguear.
+  const [gamesEnabled, setGamesEnabled] = useState(true);
+  useEffect(() => {
+    void rpcCall('settings.get', {})
+      .then((r) => {
+        const cfg = (r as { config?: { gamesEnabled?: boolean } }).config;
+        if (cfg && typeof cfg.gamesEnabled === 'boolean') {
+          setGamesEnabled(cfg.gamesEnabled);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+  function toggleGamesEnabled() {
+    const next = !gamesEnabled;
+    setGamesEnabled(next);
+    void rpcCall('settings.set', { patch: { gamesEnabled: next } }).catch(
+      () => undefined,
+    );
+  }
+
   // ── Probar juego (test connection) ────────────────────────────────────
   const [gameTest, setGameTest] = useState<{
     state: 'idle' | 'testing' | 'ok' | 'error';
@@ -385,6 +405,28 @@ export function Sidebar(): ReactNode {
 
       {/* ── 🎮 Perfil de Juego ─────────────────────────────────────── */}
       <GroupBox title="🎮 Perfil de Juego" density="md">
+        {/* Master switch — ON envía acciones al juego, OFF solo loguea
+            en el panel para evitar inundar de errores HTTP cuando el
+            juego no está abierto. Las reglas siguen disparando, pero el
+            HTTP/RCON queda suprimido. */}
+        <button
+          type="button"
+          onClick={toggleGamesEnabled}
+          className={[
+            'mb-2 w-full rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors',
+            gamesEnabled
+              ? 'border-success/60 bg-success/10 text-success hover:bg-success/15'
+              : 'border-danger/60 bg-danger/10 text-danger hover:bg-danger/15',
+          ].join(' ')}
+          title={
+            gamesEnabled
+              ? 'Las acciones de las reglas SE envían al juego. Click para desactivar.'
+              : 'Las reglas disparan pero NO se envían al juego (modo seguro). Click para activar.'
+          }
+        >
+          {gamesEnabled ? '🟢 Juegos ACTIVOS' : '🔴 Juegos DESACTIVADOS'}
+        </button>
+
         <select
           className="maru-input w-full text-sm"
           value={selectedGameId ?? ''}
