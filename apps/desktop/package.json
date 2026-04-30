@@ -1,6 +1,6 @@
 {
   "name": "@maru/desktop",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "private": true,
   "license": "UNLICENSED",
   "description": "MARU Live Desktop — Electron + React",
@@ -16,8 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rimraf dist out release .turbo *.tsbuildinfo",
-    "package:exe": "rimraf out && cross-env NODE_ENV=production electron-vite build && electron-builder --win --x64 --publish never",
-    "release:exe": "rimraf out && cross-env NODE_ENV=production electron-vite build && electron-builder --win --x64 --publish always"
+    "package:exe": "pnpm --filter @maru/sidecar build && rimraf out && cross-env NODE_ENV=production electron-vite build && electron-builder --win --x64 --publish never",
+    "release:exe": "pnpm --filter @maru/sidecar build && rimraf out && cross-env NODE_ENV=production electron-vite build && electron-builder --win --x64 --publish always"
   },
   "dependencies": {
     "@maru/shared": "workspace:*",

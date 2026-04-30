@@ -15,6 +15,13 @@ import { maybeNotifyPushEvent } from './notifications.js';
 import { clearImageCache } from './image-protocol.js';
 
 let activeClient: RpcClient | null = null;
+// Listeners actualmente conectados — los retenemos para poder
+// removerlos en `attachRpcClient` antes de re-adjuntar. Sin esto,
+// llamar `attachRpcClient` dos veces (caso real: una vez antes del boot
+// del sidecar para bufferizar RPCs tempranos, otra vez después para
+// re-asociar la window) DUPLICABA cada push event en el renderer →
+// cada `log:entry`, `tiktok:event`, etc. llegaba 2x al store.
+let attachedListeners: Array<{ event: string; fn: (...args: unknown[]) => void }> = [];
 
 const FORWARDED_PUSH_EVENTS = [
   'sidecar:log',
@@ -36,11 +43,27 @@ const FORWARDED_PUSH_EVENTS = [
 ] as const;
 
 export function attachRpcClient(client: RpcClient, win: BrowserWindow | null): void {
+  // Remover listeners previos del cliente (si quedó del attach anterior).
+  // EventEmitter.on agrega siempre — sin esta limpieza el segundo
+  // attachRpcClient duplicaba cada push event al renderer.
+  if (activeClient) {
+    for (const { event, fn } of attachedListeners) {
+      activeClient.off(event, fn);
+    }
+  }
+  attachedListeners = [];
+
   activeClient = client;
-  client.on('connected', () => win?.webContents.send('rpc:connected'));
-  client.on('disconnected', () => win?.webContents.send('rpc:disconnected'));
+
+  const connectedFn = () => win?.webContents.send('rpc:connected');
+  const disconnectedFn = () => win?.webContents.send('rpc:disconnected');
+  client.on('connected', connectedFn);
+  client.on('disconnected', disconnectedFn);
+  attachedListeners.push({ event: 'connected', fn: connectedFn });
+  attachedListeners.push({ event: 'disconnected', fn: disconnectedFn });
+
   for (const evt of FORWARDED_PUSH_EVENTS) {
-    client.on(evt as never, (payload: unknown) => {
+    const fn = (payload: unknown) => {
       // Cuando se descarga un gift/emote nuevo, invalidar el LRU cache
       // del image-protocol. Sin esto, si el LRU tenía cacheado el path
       // como null/404 (por intento previo cuando el archivo no existía),
@@ -51,11 +74,19 @@ export function attachRpcClient(client: RpcClient, win: BrowserWindow | null): v
       win?.webContents.send(evt, payload);
       // OS notifications cuando ventana está minimizada/sin foco.
       maybeNotifyPushEvent(evt, payload, win);
-    });
+    };
+    client.on(evt as never, fn as never);
+    attachedListeners.push({ event: evt, fn: fn as (...args: unknown[]) => void });
   }
 }
 
 export function detachRpcClient(): void {
+  if (activeClient) {
+    for (const { event, fn } of attachedListeners) {
+      activeClient.off(event, fn);
+    }
+  }
+  attachedListeners = [];
   activeClient = null;
 }
 
