@@ -347,20 +347,29 @@ class LogsService:
             message, level
         )
         now_ms = int(time.time() * 1000)
-        # Clave de dedupe: ignorar entries idénticas dentro de 2000ms.
-        # Ampliada de 500ms a 2000ms porque logs del worker via signals
-        # PyQt+DirectConnection pueden llegar 2 veces si los slots se
-        # conectaron 2x por race de reconexión. 2s cubre ese caso sin
-        # perder eventos legítimamente repetidos por el user (ej. spam).
-        # Para messages CON @user en ellos, dedupe ignora ts y solo
-        # mira message+source+level (lo verdaderamente importante).
-        dedupe_key = f"{level.upper()}::{source}::{message[:200]}"
+        # Doble dedupe para cubrir dos clases de duplicados:
+        #   1. (level, source, message) en ventana 2s — caso típico de
+        #      handler conectado 2x via signal PyQt o reentry.
+        #   2. (level, message) en ventana 200ms — caso del SocialSystem
+        #      donde el callback emite `_logs.publish(source="social")`
+        #      Y ALSO `log.info(text)` que llega via LogsBridgeHandler con
+        #      source="maru_sidecar.backend.social". Mismo mensaje, dos
+        #      sources, milisegundos de diferencia → la 1ª clave no lo
+        #      detecta. La 2ª (más estricta en tiempo, más amplia en clave)
+        #      sí.
+        narrow_key = f"{level.upper()}::{source}::{message[:200]}"
+        broad_key = f"{level.upper()}::{message[:200]}"
         with self._lock:
-            last_ts = self._recent_keys.get(dedupe_key)
-            if last_ts is not None and now_ms - last_ts < 2000:
-                # Skip — duplicate dentro de la ventana.
+            last_narrow = self._recent_keys.get(narrow_key)
+            if last_narrow is not None and now_ms - last_narrow < 2000:
                 return {"id": "", "ts": now_ms, "deduped": True}
-            self._recent_keys[dedupe_key] = now_ms
+            last_broad = self._recent_keys.get(broad_key)
+            if last_broad is not None and now_ms - last_broad < 200:
+                # Mismo mensaje desde otra source en <200ms — duplicado
+                # casi seguro.
+                return {"id": "", "ts": now_ms, "deduped": True}
+            self._recent_keys[narrow_key] = now_ms
+            self._recent_keys[broad_key] = now_ms
             # Garbage collect del dict si crece (>500 keys).
             if len(self._recent_keys) > 500:
                 cutoff = now_ms - 5000

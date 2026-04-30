@@ -135,6 +135,11 @@ def build_default_registry() -> MethodRegistry:
     # RuleDispatcher: cablea tiktok:event → RuleEngine real → game.{spawn,
     # give_item, trigger_event}. Sin esto, las reglas nunca llegan al juego.
     rule_dispatcher = RuleDispatcher(games_svc)
+    # Pasamos LogsService al dispatcher para que las publicaciones de
+    # `✅ regla → acción · @user` pasen por dedupe + buffer (antes iban
+    # directo a bus.publish, sin dedupe → 30 lineas idénticas cuando
+    # múltiples reglas matcheaban el mismo trigger).
+    rule_dispatcher.attach_logs(logs_svc)
     rules_svc.attach_dispatcher(rule_dispatcher)
     reg.rule_dispatcher = rule_dispatcher  # type: ignore[attr-defined]
     # Exponemos social_svc para que __main__.py pueda agendar los timers

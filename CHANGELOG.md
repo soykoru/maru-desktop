@@ -1,5 +1,94 @@
 # Changelog — maru-desktop
 
+## 1.0.17 — 2026-04-29 · 🎨 Log profesional + fixes de duplicados restantes + Spotify charmap
+
+### Panel de log redesignado
+
+`apps/desktop/src/renderer/components/log/LogEntryRow.tsx` reescrito:
+- Stripe vertical 2px a la izquierda con color por categoría (azul=chat,
+  amarillo=gift, verde=follow/social, rojo=like/error, accent=rule/action,
+  etc.). De un vistazo se ve qué tipo de evento es.
+- Tinte de fondo sutil para categorías "fuertes" (gift, error, warn,
+  rule/action). Las entradas de regalos ahora destacan sin gritar.
+- Badge `ERR`/`WRN`/`DBG` solo cuando aplica (INFO no muestra badge,
+  reduce ruido visual).
+- `@username` resaltado en color accent + bold.
+- Chips para prefijos de rangos `[mod]`, `[member L3]`, `[G5]` etc.
+  (en vez de quedar como texto plano del mensaje).
+- Hover suave con micro-incremento de opacidad en timestamp.
+
+### Fix: racha y otros eventos sociales aparecían 2 veces
+
+Con el listener leak resuelto en v1.0.16 quedaba un duplicado más:
+`SocialSystem._cmd_racha → log("📢 RACHA TTS resultado")` pasaba por
+**dos** rutas hacia el panel:
+1. `_logs.publish(source="social")` (el callback explícito).
+2. `log.info(text)` → root logger → `LogsBridgeHandler` → publica con
+   `source="maru_sidecar.backend.social"`.
+
+Como el dedupe usa `(level, source, message)` y los `source` difieren,
+los DOS pasaban. Fix:
+- `apps/sidecar/maru_sidecar/backend/social.py:_log_callback` ya no
+  llama a `log.info(text)`.
+- Adicionalmente, `LogsService.publish` ahora dedupea con **dos
+  ventanas**: la estricta `(level, source, message)` en 2s y una más
+  amplia `(level, message)` en 200ms para atrapar este patrón en
+  cualquier otro componente que tenga la misma estructura.
+
+### Fix: reglas que disparan 30 lineas idénticas
+
+`RuleDispatcher._dispatch_sync` publicaba `log:entry` directo al
+EventBus (saltando dedupe + buffer). Cuando 15 reglas matcheaban un
+mismo `like` event con misma acción `max_stamina`, salían 15 lineas
+idénticas en el panel.
+
+Fix: `RuleDispatcher.attach_logs(logs_svc)` y publicaciones via
+`self._logs.publish(...)` → ahora pasan por dedupe (mismo mensaje en
+<2s se colapsa) y aparecen en el buffer hidratable.
+
+### Fix: error `'charmap' codec can't encode character '\U0001f3b5'`
+
+`apps/sidecar/maru_sidecar/__main__.py` ahora reconfigura `sys.stdout`
+y `sys.stderr` a UTF-8 al booear (antes de cualquier import que pueda
+escribir). En Windows con `cp1252` por default, el primer emoji 🎵 que
+imprimía spotipy/SocialSystem reventaba el StreamHandler. Combinado
+con `PYTHONIOENCODING=utf-8` que ya pasa el spawn de Electron, garantiza
+0 errores de encoding aunque el entorno del usuario sea cp1252.
+
+## 1.0.16 — 2026-04-29 · 🩹 Fix raíz: logs duplicados (listener leak)
+
+### Bug eliminado: cada entry del panel aparecía 2 veces
+
+`bootSidecar()` en `apps/desktop/src/main/index.ts` llamaba
+`attachRpcClient(rpc, mainWindow)` **dos veces** (una antes y otra
+después del boot del sidecar). Cada call hacía `client.on(evt, ...)`
+sobre el mismo `RpcClient` (EventEmitter de Node) sin remover los
+listeners anteriores → cada `log:entry`, `tiktok:event`, `gifts:updated`,
+etc. se forwardeaba **2 veces** al renderer → cada entry aparecía 2x en
+el panel del log.
+
+### Fix aplicado en `apps/desktop/src/main/ipc.ts`
+
+- `attachRpcClient` ahora retiene refs a los listeners agregados (array
+  `attachedListeners: {event, fn}[]`).
+- Antes de re-attachar, recorre el array y llama `activeClient.off(event, fn)`
+  para remover cada listener viejo.
+- `detachRpcClient` también limpia los listeners para evitar leak en
+  shutdown.
+
+### Por qué la dedupe del backend no lo cubría
+
+`LogsService.publish()` tiene una ventana de dedupe de 2 segundos por
+`(level, source, message)`. **No podía** prevenir este duplicado: la
+duplicación ocurría DESPUÉS del backend, en el forwarding IPC de
+main → renderer. Cada entry duplicada era una IPC message distinta —
+no una republicación del backend.
+
+### Verificación post-build
+
+- `attachRpcClient` minificado en bundle: `function q(n,e){if(P)for(const{event:r,fn:i}of k)P.off(r,i);k=[],P=n;...}` ✓
+- `app.asar` contiene `"version": "1.0.16"` ✓
+
 ## 1.0.0 — 2026-04-28 · 🎉 G14 release final (TikTok + Spotify + integración)
 
 ### Cierre del Plan G — MARU Desktop v1.0.0 listo para uso

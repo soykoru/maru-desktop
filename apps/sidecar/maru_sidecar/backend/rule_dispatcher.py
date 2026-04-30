@@ -77,6 +77,12 @@ class RuleDispatcher:
         # vez al cambiar de juego, así que un cache de 1.5s es seguro.
         self._active_game_cache: tuple[float, str | None] = (0.0, None)
         self._active_game_ttl = 1.5
+        # LogsService — opcional. Si está, las publicaciones pasan por
+        # dedupe + buffer en vez de ir directo al bus.
+        self._logs: Any | None = None
+
+    def attach_logs(self, logs: Any) -> None:
+        self._logs = logs
 
     # ── Setup ────────────────────────────────────────────────────────────
 
@@ -199,21 +205,34 @@ class RuleDispatcher:
         # hubieran disparado pero quedaron suprimidas.
         if not self._read_games_enabled():
             try:
-                bus = get_event_bus()
                 user = str(evt_data.get("user") or "?")
-                import time as _t
-                bus.publish(
-                    "log:entry",
-                    {
-                        "id": f"ms-{int(_t.time() * 1000)}",
-                        "ts": int(_t.time() * 1000),
-                        "level": "INFO",
-                        "source": "rules",
-                        "category": "rule",
-                        "message": f"🔴 Juegos OFF · {evt_type} de @{user} (no se envió al juego)",
-                        "meta": {"masterSwitch": False, "trigger": evt_type, "user": user},
-                    },
-                )
+                msg = f"🔴 Juegos OFF · {evt_type} de @{user} (no se envió al juego)"
+                if self._logs is not None:
+                    # Pasa por dedupe → si llegan 30 likes seguidos del
+                    # mismo user con master switch off, solo se loguea 1
+                    # cada 2s (la dedupe de LogsService).
+                    self._logs.publish(
+                        msg,
+                        level="INFO",
+                        source="rules",
+                        category="rule",
+                        meta={"masterSwitch": False, "trigger": evt_type, "user": user},
+                    )
+                else:
+                    bus = get_event_bus()
+                    import time as _t
+                    bus.publish(
+                        "log:entry",
+                        {
+                            "id": f"ms-{int(_t.time() * 1000)}",
+                            "ts": int(_t.time() * 1000),
+                            "level": "INFO",
+                            "source": "rules",
+                            "category": "rule",
+                            "message": msg,
+                            "meta": {"masterSwitch": False, "trigger": evt_type, "user": user},
+                        },
+                    )
             except Exception:
                 pass
             return
@@ -254,9 +273,11 @@ class RuleDispatcher:
                 )
             except Exception:
                 log.exception("no pude publicar rules:executed")
-            # Log entry para el panel UI — UNA sola fuente de verdad
-            # ahora vive en el sidecar (antes el event-wire del frontend
-            # generaba un sintético adicional que duplicaba cada entry).
+            # Log entry para el panel UI — vía LogsService.publish para
+            # que pase por el dedupe (mismo mensaje en <2s se colapsa).
+            # Antes iba directo a bus.publish y cuando 15 reglas matchean
+            # un mismo `like` event con misma acción, salían 15 lineas
+            # idénticas en el panel sin filtro posible.
             try:
                 ok = bool(res.get("success"))
                 rule_name = str(res.get("rule") or "?")
@@ -265,24 +286,35 @@ class RuleDispatcher:
                 user = str(evt_data.get("user") or "")
                 user_tag = f" · @{user}" if user else ""
                 ranks_tag = f" ({user_ranks})" if user_ranks else ""
-                bus.publish(
-                    "log:entry",
-                    {
-                        "id": f"rx-{int(__import__('time').time() * 1000)}-{rule_name[:6]}",
-                        "ts": int(__import__('time').time() * 1000),
-                        "level": "INFO" if ok else "ERROR",
-                        "source": "rules",
-                        "category": "rule",
-                        "message": f"{'✅' if ok else '❌'} {rule_name} ({action_}) → {message}{user_tag}{ranks_tag}",
-                        "meta": {
-                            "rule": rule_name,
-                            "gameId": game_id,
-                            "trigger": evt_type,
-                            "user": user,
-                            "success": ok,
+                full_msg = f"{'✅' if ok else '❌'} {rule_name} ({action_}) → {message}{user_tag}{ranks_tag}"
+                meta_obj = {
+                    "rule": rule_name,
+                    "gameId": game_id,
+                    "trigger": evt_type,
+                    "user": user,
+                    "success": ok,
+                }
+                if self._logs is not None:
+                    self._logs.publish(
+                        full_msg,
+                        level="INFO" if ok else "ERROR",
+                        source="rules",
+                        category="rule",
+                        meta=meta_obj,
+                    )
+                else:
+                    bus.publish(
+                        "log:entry",
+                        {
+                            "id": f"rx-{int(__import__('time').time() * 1000)}-{rule_name[:6]}",
+                            "ts": int(__import__('time').time() * 1000),
+                            "level": "INFO" if ok else "ERROR",
+                            "source": "rules",
+                            "category": "rule",
+                            "message": full_msg,
+                            "meta": meta_obj,
                         },
-                    },
-                )
+                    )
             except Exception:
                 log.exception("no pude publicar log:entry de rules")
 

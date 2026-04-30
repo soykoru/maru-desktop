@@ -302,7 +302,16 @@ class SocialService:
     def _log_callback(self, *args: Any, **_kwargs: Any) -> None:
         """Reemplaza `log_callback=log.info` para reenviar al LogsService
         (panel del frontend). Sin esto, `🎵 !play por @user` solo aparecía
-        en el stderr de Python y nunca en la UI."""
+        en el stderr de Python y nunca en la UI.
+
+        IMPORTANTE: NO llamar `log.info(text)` después de `_logs.publish`.
+        El root logger tiene LogsBridgeHandler que también llama a
+        `_logs.publish` con source="maru_sidecar.backend.social", lo que
+        produce un segundo entry con MISMA message+level pero distinto
+        source → la dedupe (clave level+source+message) NO los junta y
+        cada evento `📢 RACHA TTS resultado` aparece 2 veces en el panel.
+        Si en el futuro hace falta el log al archivo, usar un logger
+        dedicado que no propague al root."""
         try:
             text = str(args[0]) if args else ""
         except Exception:
@@ -319,8 +328,6 @@ class SocialService:
                 self._logs.publish(text, level="INFO", source="social", category=cat)
             except Exception:
                 pass
-        # Mantener log Python para debug.
-        log.info(text)
 
     def _patch_music_speak(self) -> None:
         """Sobreescribe `SocialSystem._music_speak` para usar la ruta TTS

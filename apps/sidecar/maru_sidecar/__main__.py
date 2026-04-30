@@ -15,6 +15,21 @@ import asyncio
 import signal
 import sys
 
+# Forzar UTF-8 en stdout/stderr ANTES de cualquier import que pueda escribir
+# (logger, spotipy, etc.). En Windows, cuando el sidecar.exe corre vía
+# Electron spawn, Python detecta `cp1252` (charmap) por defecto y CUALQUIER
+# emoji en log.info/print revienta con
+# `'charmap' codec can't encode character '\U0001f3b5'` (la 🎵 de Spotify
+# es la más visible, pero afecta a TODOS los emojis del proyecto).
+# `reconfigure` está disponible desde Python 3.7. errors="replace" garantiza
+# que un caracter raro nunca tira el proceso.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+except (AttributeError, OSError):
+    # Streams no reconfigurables (p.ej. capturados por testrunner): seguir.
+    pass
+
 from .backend.bootstrap import run_bootstrap_if_needed
 from .event_bus import bind_event_bus
 from .logger import configure as configure_logger
