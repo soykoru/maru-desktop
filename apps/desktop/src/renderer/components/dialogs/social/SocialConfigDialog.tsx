@@ -87,6 +87,7 @@ export function SocialConfigDialog() {
       onClose={() => !busy && closeModal()}
       size="xl"
       bodyFlush
+      unsavedChanges={dirty}
       title="💬 Sistema Social"
       description="Configurá comandos, usuarios, racha automática, taps y estadísticas globales."
     >
@@ -195,10 +196,11 @@ export function SocialConfigDialog() {
             Cerrar
           </Button>
           <Button
-            variant="primary"
+            variant={dirty ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => void handleSave()}
             disabled={busy || !dirty}
+            className={dirty ? '!bg-warning hover:!bg-warning/90 !text-bg' : ''}
           >
             <Save className="h-3.5 w-3.5" />
             Guardar Configuración

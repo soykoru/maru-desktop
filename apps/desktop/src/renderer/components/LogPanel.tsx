@@ -102,10 +102,8 @@ export function LogPanel(): ReactNode {
           out.subs = (out.subs ?? 0) + 1;
           break;
         case 'rule':
-          out.rules = (out.rules ?? 0) + 1;
-          break;
         case 'action':
-          out.actions = (out.actions ?? 0) + 1;
+          out.rules = (out.rules ?? 0) + 1;
           break;
         case 'social':
           out.social = (out.social ?? 0) + 1;
@@ -163,7 +161,6 @@ export function LogPanel(): ReactNode {
                 'shares',
                 'subs',
                 'rules',
-                'actions',
                 'social',
                 'music',
                 'ia',

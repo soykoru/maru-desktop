@@ -32,6 +32,7 @@ from __future__ import annotations
 import asyncio
 import re
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
@@ -80,6 +81,33 @@ class ChatDispatcher:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._installed = False
         self._lock = threading.Lock()
+        # Dedupe a nivel comando para cortar el doble-disparo del core:
+        # `core/tiktok_client.py` emite DOS eventos por cada `!cmd` del live
+        #   1) `comment` con el texto completo (`!racha`)
+        #   2) `command` con el cmd parseado (`{"command": "racha"}`)
+        # Sin dedupe, ChatDispatcher procesa AMBOS y cada comando social
+        # (`!racha`, `!suerte`, `!ia`, etc.) ejecuta el handler 2 veces:
+        # narración TTS + lógica del SocialSystem se duplican.
+        # `!play` parecía ser inmune porque el cooldown interno de
+        # `_cmd_music` silenciaba la 2ª ejecución; los demás comandos no
+        # tienen cooldown propio. Comments LIBRES (sin `!`) tampoco
+        # duplican porque solo se emite `comment`.
+        # Ventana 2.5s: cubre el lapso entre el primer y segundo emit
+        # (típicamente <50ms) con margen amplio para no descartar dos
+        # comandos legítimos del mismo user (rate-limit típico TikTok
+        # es 2-3s entre comments del mismo user).
+        self._recent_cmds: dict[str, float] = {}
+        self._recent_cmds_lock = threading.Lock()
+        # Dedupe específica para fortuna disparada por GIFT. Cuando un
+        # gift hace streak (`repeat_count=N`), el core emite N events
+        # `gift` consecutivos → sin esto, leeríamos N fortunas. La
+        # semántica esperada es 1 fortuna por user por evento de regalo
+        # (la siguiente requiere otro regalo no inmediato).
+        # Ventana 30s: cubre streaks típicos de un solo regalo ofrecido
+        # múltiples veces con un toque + permite que el mismo user pida
+        # otra fortuna con un nuevo gift después.
+        self._recent_fortunes: dict[str, float] = {}
+        self._recent_fortunes_lock = threading.Lock()
 
     def attach_logs(self, logs: Any) -> None:
         self._logs = logs
@@ -172,6 +200,27 @@ class ChatDispatcher:
         # Texto libre → TTS chat (si habilitado en config del engine).
         self._speak_chat(text, user)
 
+    def _is_duplicate_cmd(self, user: str, cmd: str, args: str) -> bool:
+        """Atomic check + set para dedupear `(user, cmd, args)` en 2.5s.
+
+        Devuelve True si es duplicado (= el caller debe SALTAR el handler).
+        Hace garbage collection del dict si crece (>200 entries) para
+        evitar leak en streams largos.
+        """
+        key = f"{user.lower()}::{cmd.lower()}::{args.lower()[:60]}"
+        now = time.time()
+        with self._recent_cmds_lock:
+            last = self._recent_cmds.get(key)
+            if last is not None and (now - last) < 2.5:
+                return True
+            self._recent_cmds[key] = now
+            if len(self._recent_cmds) > 200:
+                cutoff = now - 10.0
+                self._recent_cmds = {
+                    k: v for k, v in self._recent_cmds.items() if v >= cutoff
+                }
+        return False
+
     def _handle_command(
         self,
         user: str,
@@ -180,6 +229,11 @@ class ChatDispatcher:
         data: dict[str, Any],
         raw_text: str | None = None,
     ) -> None:
+        # Cortar doble-disparo del core (comment + command emit para el
+        # mismo `!cmd`). Si ya procesamos este (user, cmd, args) en los
+        # últimos 2.5s, salimos.
+        if self._is_duplicate_cmd(user, cmd, args):
+            return
         full_text = raw_text or (f"!{cmd} {args}".strip())
 
         # IA y fortuna NO viven en SocialSystem — los routea el dispatcher.
@@ -298,6 +352,26 @@ class ChatDispatcher:
     def _read_fortune(self, user: str) -> None:
         if self._fortunes is None:
             return
+        # Dedupe per-user (30s) — atrapa el caso real reportado: una
+        # donación que matchea con `fortunes.config.gift_id` dispara la
+        # fortuna 2 veces (porque el core puede emitir múltiples events
+        # `gift` por un solo streak / repeat_count, o por
+        # races en el WS handler). Sin importar cuántos events lleguen
+        # del MISMO user en 30s, la fortuna se lee una sola vez.
+        # Si el username viene vacío o es "?" usamos un slot global
+        # para no perder la dedupe (caso del simulator sin user real).
+        key = (user or "").strip().lower() or "__anon__"
+        now = time.time()
+        with self._recent_fortunes_lock:
+            last = self._recent_fortunes.get(key)
+            if last is not None and (now - last) < 30.0:
+                return
+            self._recent_fortunes[key] = now
+            if len(self._recent_fortunes) > 200:
+                cutoff = now - 120.0
+                self._recent_fortunes = {
+                    k: v for k, v in self._recent_fortunes.items() if v >= cutoff
+                }
         try:
             res = self._fortunes.read({"name": user})
             text = str(res.get("text") or "").strip()

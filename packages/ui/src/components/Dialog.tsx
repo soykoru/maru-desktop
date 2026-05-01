@@ -18,7 +18,24 @@ interface Props {
    * necesitan altura fija (e.g. GiftsDialog 750px).
    */
   bodyFlush?: boolean;
+  /**
+   * Si true, hay cambios sin guardar — al click-afuera/Escape/X
+   * pedimos confirmación antes de cerrar (window.confirm). Usalo
+   * cuando el dialog tiene un draft local que se perdería con
+   * `onClose`. Default: false (compat — cierre directo).
+   */
+  unsavedChanges?: boolean;
+  /**
+   * Si true, el click sobre el backdrop NO cierra el dialog. Útil para
+   * formularios que el user solo debe cerrar con un botón explícito
+   * (Save / Cancel). Default: false.
+   */
+  dismissOnBackdrop?: boolean;
 }
+
+const DEFAULT_DISMISS_BACKDROP = true;
+const UNSAVED_CONFIRM_MSG =
+  'Tenés cambios sin guardar. ¿Cerrar igual y perderlos?';
 
 export function Dialog({
   open,
@@ -29,17 +46,40 @@ export function Dialog({
   footer,
   children,
   bodyFlush = false,
+  unsavedChanges = false,
+  dismissOnBackdrop,
 }: Props) {
+  // Si hay cambios sin guardar, NUNCA cerrar por click-afuera (ni con
+  // confirm) — el riesgo de pérdida accidental es muy alto. Forzamos
+  // que el user use Cancel/Save explícito o la X / Escape (con
+  // confirmación). Compat: si `dismissOnBackdrop` se pasa explícito,
+  // se respeta.
+  const allowBackdropDismiss = dismissOnBackdrop ?? (
+    unsavedChanges ? false : DEFAULT_DISMISS_BACKDROP
+  );
+
+  function attemptClose() {
+    if (unsavedChanges) {
+      const ok = window.confirm(UNSAVED_CONFIRM_MSG);
+      if (!ok) return;
+    }
+    onClose();
+  }
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      attemptClose();
+    };
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, unsavedChanges, onClose]);
 
   if (!open) return null;
 
@@ -54,7 +94,9 @@ export function Dialog({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-6 animate-fade-in"
-      onClick={onClose}
+      onClick={() => {
+        if (allowBackdropDismiss) attemptClose();
+      }}
     >
       <div className="absolute inset-0 bg-bg-overlay/70 backdrop-blur-sm" />
       <div
@@ -73,7 +115,7 @@ export function Dialog({
             <h2 className="text-base font-semibold tracking-tight text-fg">{title}</h2>
             {description && <p className="mt-1 text-xs text-fg-muted">{description}</p>}
           </div>
-          <IconButton aria-label="Cerrar" variant="ghost" size="sm" onClick={onClose}>
+          <IconButton aria-label="Cerrar" variant="ghost" size="sm" onClick={attemptClose}>
             <X className="h-4 w-4" />
           </IconButton>
         </header>

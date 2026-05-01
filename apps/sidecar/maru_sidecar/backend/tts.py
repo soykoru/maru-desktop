@@ -245,6 +245,16 @@ class TtsService:
         self._lock = threading.Lock()
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self._doc: dict[str, Any] = self._read_doc()
+        # Dedupe defensiva a nivel TTS — atrapa cualquier llamada
+        # paralela con (channel, text-prefijo) idénticos en <1.5s.
+        # Cubre paths que pasaron por debajo de las dedupes de
+        # `chat_dispatcher` y `social._tts_callback` (futuros emisores,
+        # `_music_speak` directo, RPC manual, etc.).
+        # Ventana 1.5s — igual a la dedupe del SocialSystem para
+        # mantener simetría. Las narraciones distintas casi nunca
+        # comparten los primeros 120 chars.
+        self._last_speak: dict[str, float] = {}
+        self._last_speak_lock = threading.Lock()
 
     # ── Persistencia ─────────────────────────────────────────────────────
 
@@ -451,6 +461,23 @@ class TtsService:
         text = str(params.get("text") or "").strip()
         channel = str(params.get("channel") or "chat").lower()
         user = params.get("user")
+        # Dedupe defensiva: si llega `(channel, text[:120])` idéntico
+        # en <1.5s, devolvemos OK silencioso. Garantiza que el bot NO
+        # hable lo mismo dos veces en esa ventana, sea cual sea el
+        # camino que llamó.
+        if text:
+            dedupe_key = f"{channel}::{text[:120]}"
+            now = time.time()
+            with self._last_speak_lock:
+                last = self._last_speak.get(dedupe_key)
+                if last is not None and (now - last) < 1.5:
+                    return {"ok": True, "deduped": True}
+                self._last_speak[dedupe_key] = now
+                if len(self._last_speak) > 400:
+                    cutoff = now - 10.0
+                    self._last_speak = {
+                        k: v for k, v in self._last_speak.items() if v >= cutoff
+                    }
         # Fallback por canal: si el caller no pasa `voice`, cada canal usa
         # SU voz configurada (paridad MARU `_social_speak` y `_social_fortune_speak`).
         # Antes todo el mundo caía a `default_voice` y la voz social/fortune

@@ -21,8 +21,10 @@ const GROUP_TO_CATEGORIES: Record<LogGroup, LogCategory[]> = {
   likes: ['like'],
   shares: ['share'],
   subs: ['subscribe'],
-  rules: ['rule'],
-  actions: ['action'],
+  // 'rules' incluye 'action' porque la ejecución de reglas se loguea
+  // como rule_dispatcher con cat="rule"; no hay categoría 'action'
+  // separada en producción (sería un pill huérfano).
+  rules: ['rule', 'action'],
   social: ['social'],
   music: ['music'],
   ia: ['ia'],

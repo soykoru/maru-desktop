@@ -41,7 +41,6 @@ const ALL_GROUPS: LogGroup[] = [
   'shares',
   'subs',
   'rules',
-  'actions',
   'social',
   'music',
   'ia',

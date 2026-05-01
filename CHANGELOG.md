@@ -1,5 +1,341 @@
 # Changelog — maru-desktop
 
+## 1.0.25 — 2026-05-01 · 🪲 Cambios revertidos al click afuera (social, custom games)
+
+Tres bugs raíz que producían la misma sensación de "edité algo, click
+afuera y se revirtió". Las tres atacadas en su origen:
+
+### Raíz A — `_user_to_dto` reventaba con `racha` como dict
+
+El SocialSystem core devuelve los usuarios en **dos formatos distintos**
+según el método admin que los emita:
+- `admin_get_all_users()` → `racha=int` (flat, transformado).
+- `admin_get_user_data(user)` → `racha={"dias":N, "ultimo":..., "record":N}`
+  (nested dict crudo).
+
+El DTO en el sidecar (`backend/social.py:_user_to_dto`) hacía
+`int(raw.get("racha"))`. Con la forma nested, `int({"dias":5})` lanza
+`TypeError`. El RPC `social.users.get` (que se llama tras cada
+`set-racha` para refrescar la UI) crasheaba → la promesa rejectaba en
+el frontend → el `editingCells[key]` se borraba en `onBlur` → el cell
+mostraba el `val` viejo del array `users` no actualizado → parecía que
+"se revertía". Idem `record_racha`, `auto_racha`, relaciones y stats
+con sus formas nested.
+
+Fix: nuevo `_safe_int(v)` (tolerante a None/dict/str) + lectura del DTO
+que entiende **ambas formas** del core (flat de `admin_get_all_users` y
+nested de `admin_get_user_data`). Cubre `racha/record_racha`,
+`auto_racha` (3 formas: `auto_racha` renderer, `racha_automatica` core
+nested, flags flat), relaciones (`marriage`/`casado_con`/`casado`,
+etc.) y stats (`duelos_ganados` flat o nested en `stats`).
+
+### Raíz B — `Dialog` cerraba al click afuera SIN avisar
+
+`packages/ui/src/components/Dialog.tsx` tenía `onClick={onClose}` en el
+backdrop wrapper. **Cualquier** click fuera del card del dialog
+disparaba `onClose` directamente, perdiendo todo el draft local del
+formulario sin pedir confirmación. Idem Escape.
+
+Fix: dos props nuevos en `Dialog`:
+- `unsavedChanges?: boolean` — cuando `true`, click-afuera y Escape
+  piden confirmación con `window.confirm("Tenés cambios sin guardar.
+  ¿Cerrar igual y perderlos?")`. Si el user cancela, el dialog queda
+  abierto con sus ediciones intactas. Default `false` (compat — los
+  diálogos read-only no se ven afectados).
+- `dismissOnBackdrop?: boolean` — opt-in para deshabilitar
+  click-backdrop completamente (default mantiene el comportamiento
+  actual). Cuando `unsavedChanges=true` y este prop NO se pasa, se
+  fuerza a `false` automáticamente — la pérdida accidental de
+  ediciones es muy alta para tolerarla.
+- El botón X y Escape pasan por `attemptClose()` que hace el confirm.
+
+Cableado en:
+- `SocialConfigDialog` → `unsavedChanges={dirty}`.
+- `CustomGameDialog` → `unsavedChanges={dirty && !busy}`. Se calcula
+  comparando un snapshot inicial (al abrir) contra el state actual
+  (id, name, icon, host, port, password, connectionType, categories,
+  shareSounds, shareVoices, tabNames). El snapshot se reinicia al
+  cambiar el `editing` o reabrir el dialog.
+
+### Raíz C — Botón "Guardar" no se ponía amarillo
+
+En `SocialConfigDialog` ya había indicador "● Cambios sin guardar"
+pero el botón Save quedaba siempre azul. En `CustomGameDialog` no
+había indicador alguno. Ambos diálogos ahora:
+- Muestran "● Cambios sin guardar" en `text-warning` en el footer
+  cuando hay diff.
+- El botón Save se pinta de **amarillo** (`!bg-warning !text-bg`) y
+  queda disabled cuando NO hay cambios (no tiene sentido guardar lo
+  mismo).
+
+### Archivos tocados
+
+- `apps/sidecar/maru_sidecar/backend/social.py` — `_safe_int` +
+  `_user_to_dto` reescrito para soportar ambas formas del core.
+- `packages/ui/src/components/Dialog.tsx` — props
+  `unsavedChanges` + `dismissOnBackdrop` + `attemptClose()` con
+  confirm.
+- `apps/desktop/src/renderer/components/dialogs/social/SocialConfigDialog.tsx`
+  — `unsavedChanges={dirty}` + Save amarillo.
+- `apps/desktop/src/renderer/components/dialogs/games/CustomGameDialog.tsx`
+  — snapshot inicial + cálculo de `dirty` + indicador en footer +
+  Save amarillo.
+
+### Verificación esperada
+
+- En tab Usuarios del Social: editar racha de alguien → se queda
+  guardada al click-afuera del input (no se revierte).
+- En SocialConfigDialog: editar algo + click fuera del dialog →
+  pregunta "¿Cerrar igual y perderlos?". Cancelar mantiene el draft.
+- En CustomGameDialog: editar nombre de categoría + click fuera →
+  pregunta antes de cerrar. Botón Save se pone amarillo + indicador
+  "● Cambios sin guardar".
+- Diálogos read-only sin draft (Logs, Datos en preview, etc.) → no
+  cambian su comportamiento (no pasan `unsavedChanges`).
+
+## 1.0.24 — 2026-05-01 · 👑 PlayFan se sincroniza solo con los Super Fans del live
+
+### Cambio de modelo
+
+La lista de "Usuarios prioritarios (PlayFan)" deja de ser editada
+manualmente. Ahora **se sincroniza en vivo** con los Super Fans reales
+del live de TikTok (flag `is_super_fan` que viene en cada
+comment-enriched). El usuario solo edita cuántos `!playfan` puede hacer
+cada uno por día — la pertenencia a la lista la maneja el sidecar.
+
+### Detección automática
+
+- Cuando llega un comment con `is_super_fan=True` → el user se agrega
+  a la lista (o se refresca su `lastSeenMs` si ya estaba) y se le
+  asigna automáticamente el `playfan_default_uses` configurado (5 por
+  defecto).
+- Cuando llega un comment con `is_super_fan=False` (ya no es Super Fan
+  porque venció la suscripción) → el user se quita inmediatamente de
+  la lista de PlayFan.
+- La lista se persiste en `data/spotify.json` (`super_fans` map con
+  firstSeenMs / lastSeenMs / displayName) y se mantiene entre
+  sesiones.
+
+### Sidecar
+
+- `apps/sidecar/maru_sidecar/backend/spotify.py`:
+  - `notify_super_fan(username, is_super_fan, display_name)` —
+    hook idempotente. Persiste solo si hay cambios reales (no escribe
+    el JSON con cada comment de un super fan activo: throttle 5min
+    para refresh de `lastSeenMs`).
+  - `super_fans_list({})` → devuelve `[{username, displayName,
+    firstSeenMs, lastSeenMs, uses}]` ordenado por `lastSeenMs` desc.
+  - `super_fan_set_uses({username, uses})` y `priority_user_set` →
+    valida que el user EXISTA en `super_fans` antes de aceptar; si
+    no, devuelve mensaje claro. Actualiza `priority_users` y se
+    aplica al `SpotifyClient` en vivo (`set_priority_users`) sin
+    esperar al próximo `config_set`.
+  - `priority_user_remove` → marcado como deprecado: devuelve
+    no-op con mensaje explicando que la pertenencia es automática.
+  - `playfan_default_set({uses})` → setea el `uses/día` por defecto
+    para super fans nuevos.
+- `apps/sidecar/maru_sidecar/backend/tiktok.py`:
+  - Nueva inyección `attach_spotify(spotify)`.
+  - `_cache_ranks` llama `spotify.notify_super_fan(...)` cuando el
+    comment-enriched trae el flag `is_super_fan` explícito.
+- `apps/sidecar/maru_sidecar/rpc/registry.py`:
+  - `tiktok_svc.attach_spotify(spotify_svc)` cableado al boot.
+  - 3 RPCs nuevos: `spotify.super-fans.list`,
+    `spotify.super-fans.set-uses`, `spotify.playfan-default.set`.
+
+### UI
+
+`SpotifyConfigDialog` — sección PlayFan rediseñada:
+- Sin input para agregar usuarios manualmente.
+- Sin botón "X" para quitar usuarios.
+- Cada super fan se ve como una row con avatar 👑, displayName,
+  username, "última actividad: hace 5m" y un único input numérico
+  editable: `uses/día` (auto-save on change).
+- Banner azul con `Sparkles` explica el comportamiento automático.
+- Field "Default para super fans nuevos" con auto-save al editar.
+- Empty state cuando no hay super fans aún ("Cuando alguien
+  suscriptor del live deje un comentario, va a aparecer acá").
+- Botón Refresh manual + auto-poll cada 30s mientras el dialog
+  está abierto.
+- `useSpotify` ahora expone `superFans`, `defaultUses`,
+  `refreshSuperFans`, `setSuperFanUses`, `setPlayfanDefaultUses`.
+
+### Tipos
+
+- `SpotifyConfig.playfan_default_uses?: number` — nuevo campo
+  opcional para compat con configs antiguas.
+- `SpotifySuperFan` — nuevo type compartido.
+
+### Archivos tocados
+
+- `apps/sidecar/maru_sidecar/backend/spotify.py`
+- `apps/sidecar/maru_sidecar/backend/tiktok.py`
+- `apps/sidecar/maru_sidecar/rpc/registry.py`
+- `packages/shared/src/types/index.ts`
+- `apps/desktop/src/renderer/lib/use-spotify.ts`
+- `apps/desktop/src/renderer/components/dialogs/spotify/SpotifyConfigDialog.tsx`
+
+## 1.0.23 — 2026-05-01 · 🪲 TTS duplicado en `!racha`/`!suerte` y demás comandos
+
+### Bug raíz (sin parche cosmético — fix en la fuente)
+
+Todo `!cmd` que llega del live de TikTok hablaba **2 veces** por TTS:
+`!racha`, `!suerte`, `!ia`, `!love`, `!duelo`, `!ranking`, `!perfil`,
+`!matrimonio`, etc. El bot de comentarios (texto libre sin `!`) no
+duplicaba — esa fue la pista para encontrar la causa.
+
+**Causa**: `core/tiktok_client.py` emite **DOS** señales `event_received`
+para el mismo `!cmd` recibido del WebSocket:
+1. `comment` con el texto completo (`{"text": "!racha", "user": ...}`)
+2. `command` con el cmd parseado (`{"command": "racha", "user": ...}`)
+
+Comportamiento heredado del MARU original que la GUI antigua manejaba
+(probablemente filtraba con un flag in-window). El sidecar nuevo
+`ChatDispatcher` se suscribe a `tiktok:event` y procesa **ambos**:
+- `comment` → `_handle_comment` → matchea `_CMD_RE` → `_handle_command`
+- `command` → `_dispatch_sync.elif evt_type == "command"` → `_handle_command`
+
+Resultado: cada handler social/IA/fortuna se ejecuta 2 veces, lo que se
+percibe como TTS hablando 2x. `!play` parecía inmune sólo porque el
+cooldown interno de `SocialSystem._cmd_music` silencia la 2ª ejecución;
+los demás comandos no tienen cooldown propio.
+
+La dedupe text-based que ya existía en `social._tts_callback` no salvaba
+el caso porque corre en threads paralelos sin lock — race condition: dos
+threads leen `_last_tts_call` antes de que ninguno lo actualice y ambos
+proceden a hablar.
+
+### Fixes (3 capas de defensa, no parche cosmético)
+
+**Capa 1 — corte en la fuente** (`chat_dispatcher.py`):
+- Nuevo `_is_duplicate_cmd(user, cmd, args, window=2.5s)` — chequeo +
+  set atómico (`threading.Lock`) sobre un dict `(user, cmd, args)` →
+  `last_seen`. GC al pasar 200 entries.
+- `_handle_command` arranca con `if self._is_duplicate_cmd(...): return`,
+  cubriendo ambos paths (comment-derived y command-derived).
+- Comments libres sin `!`, eventos del simulador y comandos
+  legítimamente repetidos por encima de 2.5s pasan sin interferencia.
+
+**Capa 2 — dedupe específica fortuna por gift** (`chat_dispatcher.py`):
+- `_read_fortune` dedupea per-user en ventana 30s.
+- Sin esto, un gift con `repeat_count=10` (streak típico) hacía leer
+  10 fortunas seguidas porque el core emite N events de gift.
+- 30s = espacio suficiente para que la siguiente fortuna del mismo
+  user requiera un nuevo gift no inmediato.
+
+**Capa 3 — defensa en TtsService** (`tts.py`):
+- `speak()` dedupea `(channel, text[:120])` en ventana 1.5s (atómico
+  con lock + GC al pasar 400 entries).
+- Atrapa CUALQUIER camino paralelo que se haya colado por debajo de
+  las dedupes superiores (futuros emisores, RPC manual, race
+  conditions del SocialSystem). El bot literalmente no puede decir lo
+  mismo en el mismo canal dos veces dentro de 1.5s.
+- `tts.test()` y `_music_speak` de social NO pasan por aquí (usan
+  `e.speak_now` directo) → el botón "Probar" sigue funcionando para
+  pruebas repetidas.
+
+**Capa adicional ya existente — `social._tts_callback`**:
+- Sigue dedupeando por texto[:120] en ventana 1.5s, pero ahora bajo
+  `_last_tts_lock` (race fix de la implementación previa).
+
+### Verificación esperada
+
+- `!racha`/`!duelo`/`!matrimonio`/`!perfil`/`!ranking`/`!love` en
+  vivo → narración 1 vez.
+- `!suerte`/`!fortuna`/`!tarot` en vivo → fortuna leída 1 vez.
+- `!ia hola` en vivo → respuesta hablada 1 vez.
+- Gift que dispara fortuna (con `repeat_count=10`) → fortuna 1 vez,
+  no 10.
+- Dos `!racha` del MISMO user >2.5s aparte → ambos disparan.
+- Otro user con el mismo cmd a la vez → ambos disparan (key incluye
+  user).
+- Simulador comment con `!racha` → narración 1 vez.
+- Simulador command cmd=`racha` → narración 1 vez.
+- Texto libre del chat sin `!` → TTS chat 1 vez (no afectado).
+- Botón "Probar voz" → suena cada click (usa `tts.test`/`speak_now`,
+  no pasa por la dedupe).
+
+## 1.0.22 — 2026-05-01 · 🪲 LogPanel: filtros funcionando de verdad
+
+### Bug raíz (fix profundo, no parche)
+
+Los pills de **Likes / Regalos / Follows / Shares / Emotes / Comandos /
+Música / IA / Audio / Subs** eran *adorno*: ningún evento real se
+dejaba filtrar por ellos. Solo los pills "Comentarios", "Sistema",
+"Reglas" y "Errores" funcionaban. Causas:
+
+1. `tiktok.py:_on_log_message` reenviaba TODOS los logs del worker (los
+   `❤️ ...`, `🎁 ...`, `➕ ...`, `📤 ...`, `🎨 ...`) con
+   `category="tiktok"` **forzado** en `LogsService.publish`. Eso
+   bypaseaba el detector regex de `detect_category` que sí los hubiera
+   clasificado como `like`/`gift`/`follow`/`share`/`emote`. Resultado:
+   todo evento en vivo terminaba en categoría `tiktok` y solo aparecía
+   bajo el pill "Sistema".
+2. `tiktok.py:_on_comment_enriched` publicaba TODA línea del chat con
+   `category="comment"` hardcoded — incluso cuando era un comando
+   `⌨️ !cmd de @user`. El pill "Comandos" jamás filtraba comandos del
+   live.
+3. `LogsBridgeHandler.emit()` (root logger → LogsService) no
+   asignaba categoría: dependía del `detect_category` que match-eaba
+   por **keywords azarosos del mensaje** (`spotify`, `tts`, `ia`...).
+   Si un log decía "queue updated" sin la palabra "spotify",
+   terminaba en `system` en vez de `music`. Lo mismo con `tts`,
+   `sounds`, `ia`, `social`, `emotes`, `donations`, `profiles`.
+4. No había regla regex para `subscribe` (⭐) → el pill "Subs" tampoco
+   funcionaba ni siquiera para el simulador.
+5. El pill "Acciones" era huérfano: ningún emisor publica con
+   `category="action"` en producción.
+
+### Fixes
+
+- `apps/sidecar/maru_sidecar/backend/tiktok.py:_on_log_message`: pasa
+  `category=None` y deja que `detect_category` clasifique por
+  emoji-prefix (`🎁`→gift, `❤️`→like, `➕`→follow, `📤`→share,
+  `🎨`→emote).
+- `apps/sidecar/maru_sidecar/backend/tiktok.py:_on_comment_enriched`:
+  categoría dinámica según el contenido — `⌨️` → `command`, sino
+  `comment`.
+- `apps/sidecar/maru_sidecar/backend/logs.py`:
+  - Agregado regex `^⭐|se suscrib|new subscriber` → `subscribe`.
+  - `LogsBridgeHandler.emit` ahora asigna categoría por **nombre
+    del logger Python** (`maru_sidecar.backend.spotify` → `music`,
+    `.tts` → `tts`, `.sounds` → `sound`, `.ia` → `ia`,
+    `.social` → `social`, `.emotes` → `emote`, `.donations` → `gift`,
+    `.profiles` → `profile`, `.rules` → `rule`,
+    `.chat_dispatcher` → `command`, etc.). También cubre el `core.*`
+    cuando el bridge está cargado. Sin el match → cae al detector
+    regex original (compat).
+  - Errores y warnings (level >= ERROR / == WARNING) se categorizan
+    SIEMPRE como `error`/`warn` independiente del source — el pill
+    "Errores" ahora atrapa todo lo que el user necesita ver.
+- Renderer: removido el pill huérfano "Acciones". El pill "Reglas"
+  ahora cubre `rule` + `action` (eran funcionalmente equivalentes:
+  el rule_dispatcher loguea cada ejecución con `cat="rule"`).
+
+### Resultado
+
+Los 15 pills del filter bar (antes 16, sin "Acciones") filtran lo
+que su nombre dice. La siguiente tabla resume qué fuente alimenta
+cada pill (verificado contra emisores reales, no inferido):
+
+| Pill | Categorías | Fuente real |
+|---|---|---|
+| Comentarios | `comment` | tiktok.comment_enriched, simulator |
+| Comandos | `command` | tiktok.comment_enriched (`!cmd`), chat_dispatcher, simulator |
+| Regalos | `gift` | tiktok.log_message (`🎁`), donations, simulator |
+| Emotes | `emote` | tiktok.log_message (`🎨`), emotes service |
+| Follows | `follow` | tiktok.log_message (`➕`), simulator |
+| Likes | `like` | tiktok.log_message (`❤️`), simulator |
+| Shares | `share` | tiktok.log_message (`📤`), simulator |
+| Subs | `subscribe` | simulator + cualquier `⭐` o "se suscribió" |
+| Reglas | `rule`, `action` | rule_dispatcher (cada regla disparada) |
+| Social | `social` | social service, minigames |
+| Música | `music` | spotify service (cualquier log) |
+| IA | `ia` | ia service, fortunes |
+| Audio | `tts`, `sound` | tts service, sounds service |
+| Sistema | `system`, `tiktok`, `profile` | conexión, profiles, defaults |
+| Errores | `error`, `warn` | TODO error/warning sin importar el origen |
+
 ## 1.0.17 — 2026-04-29 · 🎨 Log profesional + fixes de duplicados restantes + Spotify charmap
 
 ### Panel de log redesignado

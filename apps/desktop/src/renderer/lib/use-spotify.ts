@@ -8,9 +8,10 @@
  * conservador 45s — paridad MARU dev mode rate-limit safe).
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type {
   SpotifyConfig,
+  SpotifySuperFan,
 } from '@maru/shared';
 import { rpcCall } from './rpc.js';
 import { useAppStore } from './store/index.js';
@@ -235,6 +236,64 @@ export function useSpotify(options?: {
     [loadConfig],
   );
 
+  // ── Super fans (sync auto desde TikTok is_super_fan) ───────────────
+
+  const [superFans, setSuperFansState] = useState<SpotifySuperFan[]>([]);
+  const [defaultUses, setDefaultUses] = useState<number>(5);
+
+  const refreshSuperFans = useCallback(async () => {
+    try {
+      const r = await rpcCall('spotify.super-fans.list', {});
+      setSuperFansState((r.items as SpotifySuperFan[]) ?? []);
+      if (typeof r.defaultUses === 'number') setDefaultUses(r.defaultUses);
+    } catch {
+      setSuperFansState([]);
+    }
+  }, []);
+
+  const setSuperFanUses = useCallback(
+    async (username: string, uses: number) => {
+      // Optimistic local update.
+      setSuperFansState((prev) =>
+        prev.map((sf) => (sf.username === username ? { ...sf, uses } : sf)),
+      );
+      try {
+        const r = await rpcCall('spotify.super-fans.set-uses', {
+          username,
+          uses,
+        });
+        if (!r.ok) {
+          await refreshSuperFans();
+          throw new Error(r.message ?? 'no se pudo actualizar');
+        }
+        return r;
+      } catch (e) {
+        await refreshSuperFans();
+        throw e;
+      }
+    },
+    [refreshSuperFans],
+  );
+
+  const setPlayfanDefaultUses = useCallback(async (uses: number) => {
+    setDefaultUses(uses);
+    const r = await rpcCall('spotify.playfan-default.set', { uses });
+    if (!r.ok) throw new Error('no se pudo guardar default');
+    if (typeof r.defaultUses === 'number') setDefaultUses(r.defaultUses);
+    return r;
+  }, []);
+
+  // Auto-load + refresh periódico cuando el dialog está abierto.
+  useEffect(() => {
+    if (!autoLoad) return;
+    void refreshSuperFans();
+    // Re-poll cada 30s mientras el dialog esté abierto, así si el
+    // sidecar detecta nuevos super fans en el live aparecen sin que
+    // el usuario tenga que recargar.
+    const id = window.setInterval(() => void refreshSuperFans(), 30_000);
+    return () => window.clearInterval(id);
+  }, [autoLoad, refreshSuperFans]);
+
   return {
     // state
     status,
@@ -266,5 +325,11 @@ export function useSpotify(options?: {
     accountDelete,
     priorityUserSet,
     priorityUserRemove,
+    // super fans
+    superFans,
+    defaultUses,
+    refreshSuperFans,
+    setSuperFanUses,
+    setPlayfanDefaultUses,
   };
 }

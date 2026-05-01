@@ -161,6 +161,10 @@ def build_default_registry() -> MethodRegistry:
     #     `social.refresh_spotify_link()` para activar la conexión.
     social_svc.attach_spotify(spotify_svc)
     spotify_svc.attach_social(social_svc)
+    # TikTokService notifica a SpotifyService cada vez que un comment
+    # trae el flag `is_super_fan` → la lista de PlayFan se mantiene
+    # sincronizada en vivo con el rol real del live, sin gestión manual.
+    tiktok_svc.attach_spotify(spotify_svc)
     # Exponemos para los schedulers en __main__.py.
     reg.spotify_svc = spotify_svc  # type: ignore[attr-defined]
 
@@ -284,6 +288,10 @@ def build_default_registry() -> MethodRegistry:
     reg.register("spotify.config.set", spotify_svc.config_set)
     reg.register("spotify.priority-user.set", spotify_svc.priority_user_set)
     reg.register("spotify.priority-user.remove", spotify_svc.priority_user_remove)
+    # Super fans (sync auto desde TikTok is_super_fan).
+    reg.register("spotify.super-fans.list", spotify_svc.super_fans_list)
+    reg.register("spotify.super-fans.set-uses", spotify_svc.super_fan_set_uses)
+    reg.register("spotify.playfan-default.set", spotify_svc.playfan_default_set)
 
     # ia.*
     reg.register("ia.status", ia_svc.status)

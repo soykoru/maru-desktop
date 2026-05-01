@@ -3,13 +3,14 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
-  Music,
+  Crown,
   Pause,
   Play,
   Plug,
   Plus,
   RefreshCw,
   SkipForward,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -27,6 +28,22 @@ import {
 import type { SpotifyCommandId, SpotifyConfig } from '@maru/shared';
 import { useAppStore } from '../../../lib/store/index.js';
 import { useSpotify } from '../../../lib/use-spotify.js';
+
+function relativeTime(ms: number): string {
+  if (!ms) return 'nunca';
+  const diff = Date.now() - ms;
+  if (diff < 0) return 'recién';
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d`;
+  const mo = Math.floor(d / 30);
+  return `${mo}mo`;
+}
 
 /**
  * `SpotifyConfigDialog` (G14) — réplica del tab Spotify de
@@ -61,9 +78,6 @@ export function SpotifyConfigDialog() {
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [accountName, setAccountName] = useState('');
-  const [selectedAccount, setSelectedAccount] = useState('');
-  const [newPriorityUser, setNewPriorityUser] = useState('');
-  const [newPriorityUses, setNewPriorityUses] = useState(2);
   const [showGuide, setShowGuide] = useState(false);
 
   if (!open) return null;
@@ -144,12 +158,18 @@ export function SpotifyConfigDialog() {
     }
   }
 
-  async function handleAddPriorityUser() {
-    if (!newPriorityUser.trim()) return;
+  async function handleSetSuperFanUses(username: string, uses: number) {
     try {
-      await sp.priorityUserSet(newPriorityUser.trim(), newPriorityUses);
-      setNewPriorityUser('');
-      setNewPriorityUses(2);
+      await sp.setSuperFanUses(username, uses);
+    } catch (ex) {
+      flash(ex instanceof Error ? ex.message : String(ex), false);
+    }
+  }
+
+  async function handleSetDefaultUses(uses: number) {
+    try {
+      await sp.setPlayfanDefaultUses(uses);
+      flash(`✓ Default actualizado: ${uses} usos/día.`);
     } catch (ex) {
       flash(ex instanceof Error ? ex.message : String(ex), false);
     }
@@ -430,7 +450,6 @@ export function SpotifyConfigDialog() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setSelectedAccount(a.name);
                             void (async () => {
                               try {
                                 await sp.accountLoad(a.name);
@@ -771,74 +790,117 @@ export function SpotifyConfigDialog() {
           </div>
         </fieldset>
 
-        {/* Priority users */}
-        <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
-          <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-            ⭐ Usuarios prioritarios (PlayFan)
+        {/* PlayFan — super fans automáticos */}
+        <fieldset className="rounded-xl border border-warning/30 bg-warning/[0.04] p-3 space-y-3">
+          <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-warning flex items-center gap-1.5">
+            <Crown className="h-3.5 w-3.5" />
+            PlayFan · Super Fans del live
+            <Badge variant="default" className="!text-[9px]">
+              {sp.superFans.length}
+            </Badge>
           </legend>
-          <p className="text-[11px] text-fg-subtle">
-            Los usuarios prioritarios pueden usar <code>!playfan</code> que
-            saltea la cola random. Cada uno tiene un límite diario.
-          </p>
 
-          <div className="flex gap-2">
+          <div className="rounded-md border border-info/30 bg-info/5 px-3 py-2 text-[11px] flex items-start gap-2">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-info" />
+            <p className="text-fg-muted leading-snug">
+              Esta lista se sincroniza{' '}
+              <strong className="text-info">automáticamente</strong> con los
+              Super Fans del live. Cuando alguien deja de ser Super Fan, se
+              quita solo. Solo podés editar cuántos{' '}
+              <code>!playfan</code> puede hacer cada uno por día.
+            </p>
+          </div>
+
+          <div className="flex items-end gap-2 px-1">
+            <div className="flex-1">
+              <Label htmlFor="sp-pf-default" className="!text-[10px]">
+                Default para super fans nuevos
+              </Label>
+              <p className="text-[10px] text-fg-subtle leading-tight">
+                Lo que reciben automáticamente al detectarlos. Después podés
+                editar a cada uno por separado.
+              </p>
+            </div>
             <Input
-              value={newPriorityUser}
-              onChange={(e) => setNewPriorityUser(e.target.value)}
-              placeholder="username..."
-              disabled={busy}
-              className="flex-1"
-            />
-            <Input
+              id="sp-pf-default"
               type="number"
               min={1}
               max={50}
-              value={String(newPriorityUses)}
+              value={String(sp.defaultUses)}
               onChange={(e) =>
-                setNewPriorityUses(Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 2)))
+                void handleSetDefaultUses(
+                  Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 5)),
+                )
               }
               disabled={busy}
               suffix="usos/día"
-              className="w-[140px]"
+              className="w-[150px]"
             />
             <Button
               type="button"
-              variant="primary"
+              variant="ghost"
               size="sm"
-              onClick={() => void handleAddPriorityUser()}
-              disabled={busy || !newPriorityUser.trim()}
+              onClick={() => void sp.refreshSuperFans()}
+              disabled={busy}
+              title="Refrescar lista"
+              className="!h-9 !px-2"
             >
-              <Plus className="h-3 w-3" />
-              Agregar
+              <RefreshCw className="h-3.5 w-3.5" />
             </Button>
           </div>
 
-          {Object.keys(sp.config.priority_users).length === 0 ? (
+          {sp.superFans.length === 0 ? (
             <Empty
-              icon={Music}
-              title="Sin usuarios prioritarios"
-              description="Agregá al menos uno para habilitar !playfan."
+              icon={Crown}
+              title="Sin super fans detectados todavía"
+              description={
+                'Cuando alguien suscriptor del live (Super Fan en TikTok) ' +
+                'deje un comentario, va a aparecer acá automáticamente.'
+              }
             />
           ) : (
-            <ul className="divide-y divide-border rounded-lg border border-border bg-bg-elev">
-              {Object.entries(sp.config.priority_users).map(([username, uses]) => (
+            <ul className="divide-y divide-border rounded-lg border border-border bg-bg-elev overflow-hidden">
+              {sp.superFans.map((sf) => (
                 <li
-                  key={username}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs"
+                  key={sf.username}
+                  className="flex items-center gap-3 px-3 py-2 hover:bg-fg/5"
                 >
-                  <span className="font-mono flex-1 truncate">@{username}</span>
-                  <Badge variant="default">{uses} usos/día</Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void sp.priorityUserRemove(username)}
+                  <Crown className="h-3.5 w-3.5 shrink-0 text-warning" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium truncate">
+                        @{sf.displayName || sf.username}
+                      </span>
+                      {sf.username !== sf.displayName?.toLowerCase() && (
+                        <span className="text-[10px] text-fg-subtle font-mono truncate">
+                          ({sf.username})
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-fg-subtle">
+                      Última actividad: hace {relativeTime(sf.lastSeenMs)}
+                      {sf.firstSeenMs > 0 && sf.firstSeenMs !== sf.lastSeenMs
+                        ? ` · Super Fan desde hace ${relativeTime(sf.firstSeenMs)}`
+                        : ''}
+                    </p>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={String(sf.uses)}
+                    onChange={(e) => {
+                      const v = Math.max(
+                        0,
+                        Math.min(50, parseInt(e.target.value, 10) || 0),
+                      );
+                      void handleSetSuperFanUses(sf.username, v);
+                    }}
                     disabled={busy}
-                    title="Quitar"
-                    className="!h-6 !px-1.5"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
+                    suffix="usos/día"
+                    className="w-[140px] !h-8 !text-xs"
+                    title="Editá cuántos !playfan puede hacer por día"
+                  />
                 </li>
               ))}
             </ul>

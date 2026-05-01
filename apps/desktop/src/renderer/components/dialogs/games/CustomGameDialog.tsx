@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { Button, Dialog, Input, Label, Select, Switch } from '@maru/ui';
 import type {
@@ -76,6 +76,44 @@ export function CustomGameDialog({
 
   const idPrefix = useId();
 
+  // Snapshot del estado inicial para detectar cambios sin guardar.
+  // Se reinicia cada vez que el dialog abre (cambia `open` o `editing`).
+  const initialSnapshot = useMemo(() => {
+    if (!open) return '';
+    if (editing) {
+      return JSON.stringify({
+        id: editing.id,
+        name: editing.name,
+        icon: editing.icon,
+        host: editing.connection.host,
+        port: editing.connection.port,
+        password: editing.connection.password ?? '',
+        connectionType: editing.connectionType,
+        categories: editing.categories,
+        shareSounds: editing.shareSounds,
+        shareVoices: editing.shareVoices,
+        tabEntities: editing.tabNames?.entities ?? '',
+        tabItems: editing.tabNames?.items ?? '',
+        tabEvents: editing.tabNames?.events ?? '',
+      });
+    }
+    return JSON.stringify({
+      id: '',
+      name: '',
+      icon: '🎮',
+      host: '127.0.0.1',
+      port: 5000,
+      password: '',
+      connectionType: 'http',
+      categories: [],
+      shareSounds: true,
+      shareVoices: true,
+      tabEntities: '',
+      tabItems: '',
+      tabEvents: '',
+    });
+  }, [open, editing]);
+
   useEffect(() => {
     if (!open) return;
     if (editing) {
@@ -120,6 +158,33 @@ export function CustomGameDialog({
   const nameValid = name.trim().length > 0;
   const portValid = port >= 1 && port <= 65535;
   const canSave = idValid && nameValid && portValid && !busy;
+
+  // Dirty check: comparamos snapshot inicial vs estado actual.
+  // Sin esto, click-fuera del dialog cerraba sin warning y el user
+  // perdía las ediciones (caso reportado: editar nombres de
+  // categorías custom y "se revertía").
+  const dirty = useMemo(() => {
+    const current = JSON.stringify({
+      id,
+      name,
+      icon,
+      host,
+      port,
+      password,
+      connectionType,
+      categories,
+      shareSounds,
+      shareVoices,
+      tabEntities,
+      tabItems,
+      tabEvents,
+    });
+    return current !== initialSnapshot;
+  }, [
+    id, name, icon, host, port, password, connectionType, categories,
+    shareSounds, shareVoices, tabEntities, tabItems, tabEvents,
+    initialSnapshot,
+  ]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -195,6 +260,7 @@ export function CustomGameDialog({
       onClose={onClose}
       size="xl"
       bodyFlush
+      unsavedChanges={dirty && !busy}
       title={title}
       description={
         isStandard
@@ -457,13 +523,26 @@ export function CustomGameDialog({
           )}
         </div>
 
-        <footer className="flex items-center justify-end gap-2 border-t border-border px-5 py-3 bg-bg-base/50">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" variant="primary" size="sm" disabled={!canSave}>
-            {isEdit ? 'Guardar cambios' : '✅ Crear juego'}
-          </Button>
+        <footer className="flex items-center justify-between gap-2 border-t border-border px-5 py-3 bg-bg-base/50">
+          <div className="text-xs text-fg-subtle">
+            {dirty && !error && (
+              <span className="text-warning">● Cambios sin guardar</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant={dirty ? 'primary' : 'secondary'}
+              size="sm"
+              disabled={!canSave || !dirty}
+              className={dirty ? '!bg-warning hover:!bg-warning/90 !text-bg' : ''}
+            >
+              {isEdit ? 'Guardar cambios' : '✅ Crear juego'}
+            </Button>
+          </div>
         </footer>
       </form>
     </Dialog>

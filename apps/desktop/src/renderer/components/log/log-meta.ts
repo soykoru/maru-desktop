@@ -41,7 +41,6 @@ export const LOG_GROUPS: { id: LogGroup; label: string; emoji: string }[] = [
   { id: 'shares', label: 'Shares', emoji: '📤' },
   { id: 'subs', label: 'Subs', emoji: '⭐' },
   { id: 'rules', label: 'Reglas', emoji: '📋' },
-  { id: 'actions', label: 'Acciones', emoji: '🎯' },
   { id: 'social', label: 'Social', emoji: '🤝' },
   { id: 'music', label: 'Música', emoji: '🎶' },
   { id: 'ia', label: 'IA', emoji: '🤖' },

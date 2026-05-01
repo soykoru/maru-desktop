@@ -317,8 +317,34 @@ export interface SpotifyConfig {
   tts_enabled: boolean;
   device_id: string;
   enabled_commands: SpotifyCommandId[];
-  /** username (lower) → daily uses limit (0-50). */
+  /**
+   * username (lower) → daily uses limit (0-50).
+   *
+   * Sincronizado AUTOMÁTICAMENTE desde el rol Super Fan del live de
+   * TikTok. La UI no permite agregar/quitar manualmente; solo edita
+   * los `uses/día` de los super fans actuales.
+   */
   priority_users: Record<string, number>;
+  /**
+   * Default `uses/día` que se asigna a los super fans nuevos cuando
+   * el sidecar los detecta automáticamente.
+   */
+  playfan_default_uses?: number;
+}
+
+/**
+ * Super fan registrado del live (TikTok `is_super_fan` flag).
+ * La membresía se sincroniza en tiempo real desde el sidecar.
+ */
+export interface SpotifySuperFan {
+  username: string;
+  displayName: string;
+  /** Timestamp ms del PRIMER comment-enriched con `is_super_fan=True`. */
+  firstSeenMs: number;
+  /** Timestamp ms del comment-enriched más reciente. */
+  lastSeenMs: number;
+  /** `uses/día` configurado para este super fan (editable). */
+  uses: number;
 }
 
 // ── TTS (G9) ────────────────────────────────────────────────────────────
@@ -734,8 +760,7 @@ export type LogGroup =
   | 'likes' // likes contados
   | 'shares' // compartidos del live
   | 'subs' // subscribers del live
-  | 'rules' // reglas matched (rule)
-  | 'actions' // acciones ejecutadas en el juego (action)
+  | 'rules' // reglas matched + acciones ejecutadas en el juego
   | 'social' // sistema social interno (duelos, rachas, ranking)
   | 'music' // spotify (play, skip, cola)
   | 'ia' // respuestas/queries IA

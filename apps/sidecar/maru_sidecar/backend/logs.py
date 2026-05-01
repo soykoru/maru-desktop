@@ -56,6 +56,7 @@ _CATEGORY_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"^➕\s|nuevo seguidor"), "follow"),
     (re.compile(r"^📤|comparti.* el live"), "share"),
     (re.compile(r"^❤️|^❤"), "like"),
+    (re.compile(r"^⭐|se suscrib|new subscriber", re.IGNORECASE), "subscribe"),
     (re.compile(r"^⌨️|^!"), "command"),
     (re.compile(r"^🐉|^📦|^⚡|spawn |give_item|trigger_event"), "action"),
     # Reglas más amplias después, solo aplican si los emoji-prefix no.
@@ -410,13 +411,50 @@ class LogsBridgeHandler(logging.Handler):
       - El propio `maru_sidecar.backend.logs` (evita loops si el service
         loguea sobre sí mismo).
       - Loggers ruidosos: `websockets.server`, `asyncio` (level < WARNING).
+
+    Categoría: si el `record.name` matchea un módulo conocido (`SOURCE_TO_CATEGORY`),
+    asignamos esa categoría EXPLÍCITAMENTE. Sin esto, los logs de
+    `tts`/`sounds`/`spotify`/`ia`/`social`/`emotes`/`profiles` dependían
+    del azar de keywords en el message para ser clasificados por
+    `detect_category` (regex frágil: "queue updated" no contiene la
+    palabra "spotify" → caía en system → pill Música quedaba huérfano).
     """
 
     _NOISY_LOGGERS = ("websockets", "asyncio", "urllib3")
 
+    # Map del nombre del logger Python a su categoría canónica de log.
+    # Usamos prefix-match (`startswith`) para cubrir submódulos.
+    _SOURCE_TO_CATEGORY: tuple[tuple[str, str], ...] = (
+        ("maru_sidecar.backend.tts", "tts"),
+        ("maru_sidecar.backend.sounds", "sound"),
+        ("maru_sidecar.backend.spotify", "music"),
+        ("maru_sidecar.backend.ia", "ia"),
+        ("maru_sidecar.backend.fortunes", "ia"),
+        ("maru_sidecar.backend.social", "social"),
+        ("maru_sidecar.backend.minigames", "social"),
+        ("maru_sidecar.backend.emotes", "emote"),
+        ("maru_sidecar.backend.donations", "gift"),
+        ("maru_sidecar.backend.rules", "rule"),
+        ("maru_sidecar.backend.rule_dispatcher", "rule"),
+        ("maru_sidecar.backend.chat_dispatcher", "command"),
+        ("maru_sidecar.backend.profiles", "profile"),
+        ("maru_sidecar.backend.tiktok", "tiktok"),
+        ("core.tts_engine", "tts"),
+        ("core.spotify_client", "music"),
+        ("core.ia_engine", "ia"),
+        ("core.tiktok_client", "tiktok"),
+        ("core.social", "social"),
+    )
+
     def __init__(self, service: "LogsService") -> None:
         super().__init__(level=logging.INFO)
         self._service = service
+
+    def _category_for_source(self, name: str) -> str | None:
+        for prefix, cat in self._SOURCE_TO_CATEGORY:
+            if name.startswith(prefix):
+                return cat
+        return None
 
     def emit(self, record: logging.LogRecord) -> None:  # noqa: D401
         try:
@@ -430,10 +468,20 @@ class LogsBridgeHandler(logging.Handler):
                 msg = record.getMessage()
             except Exception:
                 msg = str(record.msg)
+            # Categoría: prioridad source-name > regex de message > level.
+            # Errores y warnings siempre se clasifican como error/warn
+            # (más útil para el pill "Errores" que cualquier otra cat).
+            if record.levelno >= logging.ERROR:
+                cat: str | None = "error"
+            elif record.levelno == logging.WARNING:
+                cat = "warn"
+            else:
+                cat = self._category_for_source(name)
             self._service.publish(
                 msg,
                 level=record.levelname,
                 source=name or "sidecar",
+                category=cat,
             )
         except Exception:
             # Nunca propagar excepciones desde un handler de logging.

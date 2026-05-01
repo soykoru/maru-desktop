@@ -41,7 +41,22 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "device_id": "",
     "enabled_commands": ["play", "skip", "cola", "pause", "playfan"],
     # priority_users guardadas como dict username (lower) → daily_uses.
+    # Sincronizado AUTOMÁTICAMENTE desde super_fans del live (TikTok
+    # `is_super_fan` flag). El usuario solo edita `uses/día`; la
+    # membresía es manejada por el backend al detectar/perder el rol.
     "priority_users": {},
+    # Default de usos diarios al detectar un nuevo super fan.
+    "playfan_default_uses": 5,
+    # Mapa de super fans vistos en el live.
+    #   { username_lower: { "displayName": str,
+    #                       "firstSeenMs": int,
+    #                       "lastSeenMs": int } }
+    # Persistente entre sesiones para que la lista no se vacíe al
+    # reiniciar la app sin estar en vivo. Cuando el sidecar ve un
+    # comment-enriched con `is_super_fan=False`, el user se quita
+    # inmediatamente; cuando ve `is_super_fan=True` se actualiza
+    # `lastSeenMs`.
+    "super_fans": {},
     # Credenciales OAuth — se persisten para que tras reiniciar la app
     # `try_auto_connect()` funcione sin reabrir el flow del navegador.
     # Paridad MARU original (`gui.py:9392-9398` que también las guardaba).
@@ -107,6 +122,27 @@ def _coerce_config(raw: Any) -> dict[str, Any]:
             for k, v in pu.items()
             if isinstance(k, str)
         }
+    try:
+        out["playfan_default_uses"] = max(
+            1, min(50, int(raw.get("playfan_default_uses") or 5))
+        )
+    except (TypeError, ValueError):
+        out["playfan_default_uses"] = 5
+    sf = raw.get("super_fans") or {}
+    if isinstance(sf, dict):
+        coerced_sf: dict[str, dict[str, Any]] = {}
+        for k, v in sf.items():
+            if not isinstance(k, str) or not isinstance(v, dict):
+                continue
+            try:
+                coerced_sf[k.lower()] = {
+                    "displayName": str(v.get("displayName") or k),
+                    "firstSeenMs": int(v.get("firstSeenMs") or 0),
+                    "lastSeenMs": int(v.get("lastSeenMs") or 0),
+                }
+            except (TypeError, ValueError):
+                continue
+        out["super_fans"] = coerced_sf
     out["client_id"] = str(raw.get("client_id") or "").strip()
     out["client_secret"] = str(raw.get("client_secret") or "").strip()
     return out
@@ -681,30 +717,165 @@ class SpotifyService:
         return {"ok": True, "config": dict(self._config)}
 
     def priority_user_set(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Editar el contador `uses/día` de un user prioritario.
+
+        IMPORTANTE: ya no acepta usuarios arbitrarios — solo permite editar
+        super fans existentes. Si el user no es super fan actual, devuelve
+        error. La membresía se sincroniza desde TikTok (`is_super_fan` flag).
+        """
         username = params.get("username")
         if not isinstance(username, str) or not username.strip():
             raise ValueError("username requerido")
+        uname = username.strip().lower()
         uses = params.get("uses")
         try:
             uses_n = max(0, min(50, int(uses or 0)))
         except (TypeError, ValueError):
             uses_n = 2
         with self._lock:
-            self._config["priority_users"][username.strip().lower()] = uses_n
+            if uname not in self._config["super_fans"]:
+                return {
+                    "ok": False,
+                    "message": (
+                        "Solo se puede editar usos de super fans actuales. "
+                        "La lista se sincroniza automáticamente desde el live."
+                    ),
+                }
+            self._config["priority_users"][uname] = uses_n
             self._write_config()
-        return {"ok": True, "username": username.strip().lower(), "uses": uses_n}
+            self._apply_priority_users_to_client()
+        return {"ok": True, "username": uname, "uses": uses_n}
 
     def priority_user_remove(self, params: dict[str, Any]) -> dict[str, Any]:
-        username = params.get("username")
-        if not isinstance(username, str) or not username.strip():
-            raise ValueError("username requerido")
+        """DEPRECATED — la membresía es automática. Devuelve no-op."""
+        return {
+            "ok": False,
+            "message": (
+                "La lista PlayFan se sincroniza automáticamente con los super "
+                "fans del live. No se puede quitar manualmente."
+            ),
+        }
+
+    # ── RPC: super fans (sync con TikTok is_super_fan) ──────────────────
+
+    def super_fans_list(self, _params: dict[str, Any]) -> dict[str, Any]:
+        """Devuelve los super fans actuales con su `uses/día` configurado.
+
+        Shape: `{ items: [{username, displayName, lastSeenMs, firstSeenMs,
+        uses}], defaultUses, total }`.
+        Ordenados por lastSeenMs descendente (los más recientes arriba).
+        """
+        items: list[dict[str, Any]] = []
         with self._lock:
-            removed = self._config["priority_users"].pop(
-                username.strip().lower(), None
-            )
-            if removed is not None:
+            sf = dict(self._config["super_fans"])
+            pu = dict(self._config["priority_users"])
+            default_uses = int(self._config.get("playfan_default_uses") or 5)
+        for uname, meta in sf.items():
+            items.append({
+                "username": uname,
+                "displayName": meta.get("displayName") or uname,
+                "firstSeenMs": int(meta.get("firstSeenMs") or 0),
+                "lastSeenMs": int(meta.get("lastSeenMs") or 0),
+                "uses": int(pu.get(uname, default_uses)),
+            })
+        items.sort(key=lambda i: i["lastSeenMs"], reverse=True)
+        return {"items": items, "defaultUses": default_uses, "total": len(items)}
+
+    def super_fan_set_uses(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Alias semántico de `priority_user_set` con la misma validación."""
+        return self.priority_user_set(params)
+
+    def playfan_default_set(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Setea el `uses/día` por defecto que se asigna a los super fans
+        nuevos cuando se detectan automáticamente. No afecta los usos ya
+        configurados de los super fans existentes."""
+        try:
+            n = max(1, min(50, int(params.get("uses") or 5)))
+        except (TypeError, ValueError):
+            n = 5
+        with self._lock:
+            self._config["playfan_default_uses"] = n
+            self._write_config()
+        return {"ok": True, "defaultUses": n}
+
+    def notify_super_fan(
+        self,
+        username: str,
+        is_super_fan: bool,
+        display_name: str | None = None,
+    ) -> None:
+        """Hook llamado desde TikTokService cuando un comment-enriched
+        trae el flag `is_super_fan` explícito.
+
+          - `is_super_fan=True` → agrega/refresca el user en super_fans
+            y lo sincroniza a priority_users con `playfan_default_uses`
+            (si no existía ya con un valor distinto).
+          - `is_super_fan=False` → elimina al user de super_fans y
+            de priority_users (perdió el rol).
+
+        Idempotente. Persiste solo cuando hay cambios reales (no escribe
+        spotify.json en cada comment).
+        """
+        if not isinstance(username, str):
+            return
+        uname = username.strip().lower()
+        if not uname or uname == "?":
+            return
+        now_ms = int(time.time() * 1000)
+        changed = False
+        with self._lock:
+            sf = self._config["super_fans"]
+            pu = self._config["priority_users"]
+            default_uses = int(self._config.get("playfan_default_uses") or 5)
+            if is_super_fan:
+                existing = sf.get(uname)
+                if existing is None:
+                    sf[uname] = {
+                        "displayName": display_name or username.strip() or uname,
+                        "firstSeenMs": now_ms,
+                        "lastSeenMs": now_ms,
+                    }
+                    changed = True
+                else:
+                    # Solo re-escribimos disco si pasaron >5min desde el
+                    # último update — evita escribir spotify.json a cada
+                    # comment de un super fan activo.
+                    if now_ms - int(existing.get("lastSeenMs") or 0) > 5 * 60 * 1000:
+                        existing["lastSeenMs"] = now_ms
+                        changed = True
+                    if display_name and existing.get("displayName") != display_name:
+                        existing["displayName"] = display_name
+                        changed = True
+                if uname not in pu:
+                    pu[uname] = default_uses
+                    changed = True
+            else:
+                if uname in sf:
+                    sf.pop(uname, None)
+                    changed = True
+                if uname in pu:
+                    pu.pop(uname, None)
+                    changed = True
+            if changed:
                 self._write_config()
-        return {"ok": True, "removed": removed is not None}
+                self._apply_priority_users_to_client()
+
+    def _apply_priority_users_to_client(self) -> None:
+        """Re-aplica la lista de priority_users al SpotifyClient en vivo
+        para que `playfan_request` filtre con el set actualizado sin
+        esperar al próximo `config_set`."""
+        c = self._client
+        if c is None:
+            return
+        try:
+            if hasattr(c, "set_priority_users"):
+                c.set_priority_users(dict(self._config["priority_users"]))
+            else:
+                c.priority_users = set(self._config["priority_users"].keys())
+                if hasattr(c, "playfan_uses"):
+                    c.playfan_uses = dict(self._config["priority_users"])
+        except Exception:
+            log.exception("apply_priority_users fallo")
 
     # ── Polling para push event `spotify:now-playing` ───────────────────
 

@@ -102,6 +102,7 @@ class TikTokService:
         self._donations = donations
         self._logs = logs
         self._emotes = emotes
+        self._spotify: Any = None
 
     def attach_donations(self, donations: Any) -> None:
         self._donations = donations
@@ -111,6 +112,12 @@ class TikTokService:
 
     def attach_emotes(self, emotes: Any) -> None:
         self._emotes = emotes
+
+    def attach_spotify(self, spotify: Any) -> None:
+        """SpotifyService — `_cache_ranks` notifica cuando ve un comment
+        con `is_super_fan=True/False` para sincronizar la lista de
+        usuarios prioritarios !playfan."""
+        self._spotify = spotify
 
     def _extract_avatar_url(self) -> str:
         """Lee la URL del avatar del streamer desde `client._room_info`.
@@ -599,7 +606,15 @@ class TikTokService:
             FILTRO: el handler ORIGINAL del core emite `💬 @user: text` y
             `⌨️ !cmd de @user` SIN prefijo de rangos. Lo suprimimos acá y
             emitimos la versión enriquecida desde `_on_comment_enriched`
-            (que sí tiene super_fan/mod/etc. del UserIdentity)."""
+            (que sí tiene super_fan/mod/etc. del UserIdentity).
+
+            Categoría: NO la forzamos a "tiktok". Pasamos category=None y
+            dejamos que `LogsService.detect_category` clasifique por el
+            emoji-prefix del mensaje (🎁→gift, ❤️→like, ➕→follow, 📤→share,
+            🎨→emote). Sin esto, los pills de Likes/Gifts/Follows/Shares
+            del LogPanel quedaban huérfanos: TODOS los eventos en vivo
+            caían en categoría "tiktok" y solo se veían bajo "Sistema".
+            """
             if self._logs is None:
                 return
             msg = str(message)
@@ -612,7 +627,7 @@ class TikTokService:
                     msg,
                     level="INFO",
                     source="tiktok",
-                    category="tiktok",
+                    category=None,
                 )
             except Exception:
                 log.exception("no pude reenviar log_message")
@@ -677,7 +692,12 @@ class TikTokService:
         def _cache_ranks(user: str, info: dict[str, Any]) -> None:
             """Guarda los flags del user para que el siguiente evento del
             mismo user (gift/follow/like) ya traiga los rangos en
-            `data.<flag>` y las reglas puedan filtrar."""
+            `data.<flag>` y las reglas puedan filtrar.
+
+            Side effect: si el comment trae el flag `is_super_fan`
+            EXPLÍCITO (no None), notifica a `SpotifyService` para que la
+            lista de PlayFan se sincronice automáticamente con el rol
+            real del live."""
             if not user or user == "?":
                 return
             keep = {
@@ -693,6 +713,19 @@ class TikTokService:
                 if k in info
             }
             self._user_ranks_cache[user.lower()] = keep
+            # Sync con SpotifyService.priority_users si tiene el flag.
+            if self._spotify is not None and "is_super_fan" in info:
+                try:
+                    display = (
+                        info.get("nickname")
+                        or info.get("display_name")
+                        or user
+                    )
+                    self._spotify.notify_super_fan(
+                        user, bool(info.get("is_super_fan")), str(display),
+                    )
+                except Exception:
+                    log.exception("notify_super_fan fallo (user=%s)", user)
 
         def _on_comment_enriched(user: str, info: dict[str, Any]) -> None:
             """Comment con flags super_fan/moderator/top_gifter/etc.
@@ -728,7 +761,8 @@ class TikTokService:
                     if emote_ids:
                         ids_str = ", ".join(str(x) for x in emote_ids[:5])
                         emote_suffix = f" 🎨 [{ids_str}]"
-                    if text and text[0] == "!" and len(text) > 1:
+                    is_command = bool(text and text[0] == "!" and len(text) > 1)
+                    if is_command:
                         cmd = text[1:].split()[0].lower()
                         line = f"⌨️ {prefix}!{cmd} de @{user}"
                     elif not text and emote_ids:
@@ -736,15 +770,15 @@ class TikTokService:
                         line = f"💬 {prefix}@{user}: 🎨 emote(s): {', '.join(emote_ids[:5])}"
                     else:
                         line = f"💬 {prefix}@{user}: {text[:50]}{emote_suffix}"
+                    # Categoría dinámica: comandos van al pill "Comandos",
+                    # comentarios al pill "Comentarios". Antes era hardcoded
+                    # "comment" → el pill de Comandos quedaba huérfano para
+                    # los `!cmd` que llegaban del live.
                     self._logs.publish(
                         line,
                         level="INFO",
                         source="tiktok",
-                        # Category: comment (no "chat" — chat NO existe
-                        # en VALID_CATEGORIES → caía a detect_category
-                        # que con [follower] en el rank prefix matcheaba
-                        # como "follow" y mostraba mal en el panel).
-                        category="comment",
+                        category="command" if is_command else "comment",
                     )
             except Exception:
                 log.exception("comment enriched log fallo")

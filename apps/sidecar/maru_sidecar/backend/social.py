@@ -173,8 +173,44 @@ FALLBACK_COMMANDS_META: dict[str, dict[str, Any]] = {
 }
 
 
+def _safe_int(v: Any, default: int = 0) -> int:
+    """Coerce a int tolerante: None/dict/str/etc → default sin crashear."""
+    if isinstance(v, bool):
+        return int(v)
+    if isinstance(v, (int, float)):
+        return int(v)
+    if isinstance(v, str):
+        try:
+            return int(v.strip()) if v.strip() else default
+        except ValueError:
+            return default
+    return default
+
+
 def _user_to_dto(username: str, raw: Any) -> dict[str, Any]:
-    """Coerce un usuario del SocialSystem al DTO del renderer."""
+    """Coerce un usuario del SocialSystem al DTO del renderer.
+
+    El SocialSystem core tiene DOS formas de devolver un user, según el
+    método admin que lo emita:
+
+    1) `admin_get_all_users()` → flat con `racha=int`, `record_racha=int`,
+       `auto_racha_activa=bool`, `auto_racha_restantes=int`,
+       `casado_con/novios_con/mejor_amigo/rival` y
+       `duelos_ganados/duelos_perdidos`.
+
+    2) `admin_get_user_data(user)` → `dict` interno crudo con
+       `racha={"dias":N, "ultimo":..., "record":N}` (NESTED dict),
+       `racha_automatica={"activa":bool, "dias_restantes":N, ...}`,
+       `casado_con/novios_con/mejor_amigo/rival` y
+       `stats={"duelos_ganados":N, "duelos_perdidos":N}`.
+
+    Antes este DTO solo entendía la forma (1), entonces tras un
+    `setRacha` el reload (`users_get` → admin_get_user_data) devolvía
+    `racha={"dias":5}` y `int({"dias":5})` lanzaba TypeError → el RPC
+    fallaba → la UI mostraba el valor viejo (parecía "se revertía").
+    Ahora soporta ambas formas y usa `_safe_int` para no crashear con
+    inputs raros.
+    """
     if not isinstance(raw, dict):
         return {
             "username": username,
@@ -190,28 +226,68 @@ def _user_to_dto(username: str, raw: Any) -> dict[str, Any]:
             "duelos_perdidos": 0,
             "registered_at": None,
         }
-    auto = raw.get("auto_racha") or raw.get("racha_auto")
+    # racha: puede venir flat (`racha=int`) o nested
+    # (`racha={"dias":N, "record":N}`).
+    racha_raw = raw.get("racha")
+    if isinstance(racha_raw, dict):
+        racha_dias = _safe_int(racha_raw.get("dias"))
+        record_racha = _safe_int(
+            raw.get("record_racha", racha_raw.get("record"))
+        )
+    else:
+        racha_dias = _safe_int(racha_raw)
+        record_racha = _safe_int(raw.get("record_racha"))
+    # auto_racha: forma flat (`auto_racha_activa/restantes`), forma core
+    # (`racha_automatica={"activa":bool, "dias_restantes":N, "dias_total":N,
+    # "fecha_inicio":...}`) o forma renderer (`auto_racha={"active":bool,...}`).
+    auto: dict[str, Any] | None = None
+    auto_renderer = raw.get("auto_racha")
+    racha_auto_core = raw.get("racha_automatica")
+    if isinstance(auto_renderer, dict):
+        auto = {
+            "active": bool(auto_renderer.get("active", False)),
+            "total_days": _safe_int(auto_renderer.get("total_days")),
+            "remaining_days": _safe_int(auto_renderer.get("remaining_days")),
+            "started_at": auto_renderer.get("started_at"),
+        }
+    elif isinstance(racha_auto_core, dict):
+        auto = {
+            "active": bool(racha_auto_core.get("activa", False)),
+            "total_days": _safe_int(racha_auto_core.get("dias_total")),
+            "remaining_days": _safe_int(racha_auto_core.get("dias_restantes")),
+            "started_at": racha_auto_core.get("fecha_inicio"),
+        }
+    elif "auto_racha_activa" in raw or "auto_racha_restantes" in raw:
+        auto = {
+            "active": bool(raw.get("auto_racha_activa", False)),
+            "total_days": _safe_int(raw.get("auto_racha_total")),
+            "remaining_days": _safe_int(raw.get("auto_racha_restantes")),
+            "started_at": raw.get("auto_racha_inicio"),
+        }
+    # stats puede venir nested en `stats={"duelos_ganados":N, ...}` o flat.
+    stats_raw = raw.get("stats") if isinstance(raw.get("stats"), dict) else {}
     return {
         "username": username,
         "registered": bool(raw.get("registered", False)),
-        "racha": int(raw.get("racha", 0) or 0),
-        "record_racha": int(raw.get("record_racha", 0) or 0),
-        "auto_racha": (
-            {
-                "active": bool(auto.get("active", False)),
-                "total_days": int(auto.get("total_days", 0) or 0),
-                "remaining_days": int(auto.get("remaining_days", 0) or 0),
-                "started_at": auto.get("started_at"),
-            }
-            if isinstance(auto, dict)
-            else None
+        "racha": racha_dias,
+        "record_racha": record_racha,
+        "auto_racha": auto,
+        "marriage": (
+            raw.get("marriage") or raw.get("casado_con") or raw.get("casado") or None
         ),
-        "marriage": raw.get("marriage") or raw.get("casado") or None,
-        "partner": raw.get("partner") or raw.get("novio") or None,
-        "best_friend": raw.get("best_friend") or raw.get("mejor_amigo") or None,
+        "partner": (
+            raw.get("partner") or raw.get("novios_con") or raw.get("novio") or None
+        ),
+        "best_friend": (
+            raw.get("best_friend") or raw.get("mejor_amigo") or None
+        ),
         "rival": raw.get("rival") or None,
-        "duelos_ganados": int(raw.get("duelos_ganados", 0) or 0),
-        "duelos_perdidos": int(raw.get("duelos_perdidos", 0) or 0),
+        "duelos_ganados": _safe_int(
+            raw.get("duelos_ganados", stats_raw.get("duelos_ganados"))
+        ),
+        "duelos_perdidos": _safe_int(
+            raw.get("duelos_perdidos", stats_raw.get("duelos_perdidos"))
+        ),
         "registered_at": raw.get("registered_at") or raw.get("fecha_registro"),
     }
 
@@ -249,14 +325,19 @@ class SocialService:
         self._tts = tts
         self._spotify_svc: Any = None
         self._logs: Any = None
-        # Dedupe del callback de TTS — el SocialSystem original a veces
-        # invoca tts_speak 2 veces para un mismo evento (ejemplo `!racha`
-        # que resultaba duplicado) por callbacks duplicados, hilos en
-        # paralelo, o callbacks heredados. Si llega la MISMA `text` dentro
-        # de 1s, se ignora la segunda. No afecta narraciones legítimas
-        # consecutivas (suelen variar el texto: `Racha de @x continúa
-        # ...` vs `🔥 Racha @x: 5 días`).
+        # Dedupe del callback de TTS — defensa en profundidad. La causa raíz
+        # de los duplicados de `!racha`/`!suerte` se cortó en
+        # `ChatDispatcher._is_duplicate_cmd` (el core emite `comment` +
+        # `command` para el mismo `!cmd` y antes ChatDispatcher procesaba
+        # ambos). Esta dedupe queda como red de seguridad por si OTRO
+        # camino también dispara la misma narración en paralelo
+        # (ej. `_process_async` corre en thread, podría haber callbacks
+        # heredados del SocialSystem original). Ventana 1.5s.
+        # IMPORTANTE: protegida con lock — el chequeo + set deben ser
+        # atómicos. Sin lock, dos threads paralelos pueden leer el mismo
+        # `_last_tts_call` y AMBOS proceder a hablar antes de actualizarlo.
         self._last_tts_call: tuple[float, str] = (0.0, "")
+        self._last_tts_lock = threading.Lock()
 
     def attach_logs(self, logs: Any) -> None:
         """Cablea LogsService para que `SocialSystem.log()` (la que el core
@@ -407,16 +488,17 @@ class SocialService:
                 voice = sv
         if not text.strip():
             return
-        # Dedupe por (texto[:120], 1s). Cubre el caso `!racha` reportado
-        # por el user donde el TTS sonaba 2 veces (mientras `!play` no).
-        # 1s es ventana segura: las narraciones del SocialSystem nunca
-        # repiten texto exacto en <1s para eventos distintos.
+        # Dedupe atómica por (texto[:120], 1.5s). Bajo el lock para que
+        # dos threads paralelos no pasen ambos el chequeo antes de
+        # actualizar. Ventana 1.5s — las narraciones del SocialSystem
+        # nunca repiten texto exacto en <1.5s para eventos distintos.
         now = time.time()
-        last_ts, last_text = self._last_tts_call
         text_key = text[:120]
-        if last_text == text_key and (now - last_ts) < 1.0:
-            return
-        self._last_tts_call = (now, text_key)
+        with self._last_tts_lock:
+            last_ts, last_text = self._last_tts_call
+            if last_text == text_key and (now - last_ts) < 1.5:
+                return
+            self._last_tts_call = (now, text_key)
         try:
             params: dict[str, Any] = {"text": text, "channel": "social"}
             if voice:
