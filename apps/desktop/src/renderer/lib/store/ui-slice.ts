@@ -32,12 +32,12 @@ export type ActiveModal =
   | 'voices' // G9
   | 'sounds' // G10
   | 'profiles' // G10
-  | 'minigames' // G10
   | 'simulator' // G11
   | 'backup' // G12
   | 'spotify-config' // G14
   | 'emotes' // Galería de emotes/stickers por streamer
-  | 'tiktok-sign-key'; // Configurar API key de eulerstream
+  | 'tiktok-sign-key' // Configurar API key de eulerstream
+  | 'tiktok-api-info'; // Diagnóstico TikTok API (status + version + error)
 
 export interface ModalFrame {
   id: Exclude<ActiveModal, null>;

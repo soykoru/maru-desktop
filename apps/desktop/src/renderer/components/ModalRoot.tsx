@@ -45,9 +45,6 @@ const IaConfigDialog = lazy(() =>
 const SpotifyConfigDialog = lazy(() =>
   import('./dialogs/spotify/SpotifyConfigDialog.js').then((m) => ({ default: m.SpotifyConfigDialog })),
 );
-const MinigamesDialog = lazy(() =>
-  import('./dialogs/minigames/MinigamesDialog.js').then((m) => ({ default: m.MinigamesDialog })),
-);
 const StreamProfilesDialog = lazy(() =>
   import('./dialogs/profiles/StreamProfilesDialog.js').then((m) => ({ default: m.StreamProfilesDialog })),
 );
@@ -56,6 +53,9 @@ const EmotesDialog = lazy(() =>
 );
 const TikTokSignKeyDialog = lazy(() =>
   import('./dialogs/tiktok/TikTokSignKeyDialog.js').then((m) => ({ default: m.TikTokSignKeyDialog })),
+);
+const TikTokApiInfoDialog = lazy(() =>
+  import('./dialogs/tiktok/TikTokApiInfoDialog.js').then((m) => ({ default: m.TikTokApiInfoDialog })),
 );
 const RuleDialog = lazy(() =>
   import('./dialogs/rules/RuleDialog.js').then((m) => ({ default: m.RuleDialog })),
@@ -169,8 +169,6 @@ function renderModalFrame(
       return <StreamProfilesDialog key={id} />;
     case 'sounds':
       return <SoundsDialog key={id} />;
-    case 'minigames':
-      return <MinigamesDialog key={id} />;
     case 'simulator':
       return <SimulatorDialog key={id} />;
     case 'backup':
@@ -181,6 +179,8 @@ function renderModalFrame(
       return <EmotesDialog key={id} />;
     case 'tiktok-sign-key':
       return <TikTokSignKeyDialog key={id} />;
+    case 'tiktok-api-info':
+      return <TikTokApiInfoDialog key={id} />;
     case 'rule': {
       const p = (payload ?? {}) as {
         gameId?: GameId;
@@ -358,11 +358,6 @@ const MODAL_META: Record<string, ModalMeta> = {
     phase: 'G10',
     source: 'gui/dialogs/profiles_dialog.py',
   },
-  minigames: {
-    title: '🎲 Minijuegos',
-    phase: 'G10',
-    source: 'gui/dialogs/minigames_dialog.py',
-  },
   simulator: {
     title: '🎭 Simulador de Eventos',
     phase: 'G11',
@@ -372,6 +367,10 @@ const MODAL_META: Record<string, ModalMeta> = {
     title: '🔄 Gestor de Respaldos',
     phase: 'G12',
     source: 'gui/dialogs/backup_dialog.py',
+  },
+  'tiktok-api-info': {
+    title: '🔧 Diagnóstico TikTok API',
+    phase: 'F1',
   },
   // G13 (overlays-manager) deshabilitado en esta build.
 };

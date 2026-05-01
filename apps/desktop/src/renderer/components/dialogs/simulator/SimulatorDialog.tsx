@@ -64,6 +64,7 @@ interface UserRanks {
   isTopGifter?: boolean;
   isFollower?: boolean;
   memberLevel?: number;
+  gifterLevel?: number;
 }
 
 function RankToggle({
@@ -100,12 +101,15 @@ async function dispatchEvent(
 ): Promise<void> {
   const u = user.trim() || 'TestUser';
   const target = gameId ? { gameId } : {};
-  // Solo incluir ranks si el evento es comment/command (los otros no
-  // los aprovechan).
+  // Pasamos ranks a TODOS los tipos para que las reglas con
+  // required_ranks/excluded_ranks puedan testearse contra cualquier
+  // evento (gift de un super fan, like de un mod, etc.). El sidecar
+  // ignora silenciosamente los flags que no necesite.
   switch (type) {
     case 'gift':
       await rpcCall('simulator.gift', {
         ...target,
+        ...ranks,
         user: u,
         giftName: value || 'Rose',
         diamonds: 1,
@@ -132,17 +136,18 @@ async function dispatchEvent(
       }
       break;
     case 'follow':
-      await rpcCall('simulator.follow', { ...target, user: u });
+      await rpcCall('simulator.follow', { ...target, ...ranks, user: u });
       break;
     case 'share':
-      await rpcCall('simulator.share', { ...target, user: u });
+      await rpcCall('simulator.share', { ...target, ...ranks, user: u });
       break;
     case 'subscribe':
-      await rpcCall('simulator.subscribe', { ...target, user: u });
+      await rpcCall('simulator.subscribe', { ...target, ...ranks, user: u });
       break;
     case 'like':
       await rpcCall('simulator.like', {
         ...target,
+        ...ranks,
         user: u,
         count: parseInt(value || '1', 10) || 1,
       });
@@ -312,55 +317,84 @@ export function SimulatorDialog() {
           </div>
         </div>
 
-        {/* Rangos del usuario — solo afectan comment/command. */}
-        {(eventType === 'comment') && (
-          <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
-            <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-              🏷️ Rango del usuario
-            </legend>
-            <div className="flex flex-wrap gap-2 items-center">
-              <RankToggle
-                label="⭐ Super Fan"
-                active={!!ranks.isSuperFan}
-                onClick={() => toggleRank('isSuperFan')}
+        {/* Rangos del usuario — aplican a TODOS los tipos de evento.
+            Permite testear reglas con required_ranks/excluded_ranks
+            simulando un super fan que dona, un mod que da likes, etc. */}
+        <fieldset className="rounded-xl border border-warning/30 bg-warning/[0.04] p-3 space-y-2">
+          <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-warning">
+            🏷️ Rango del TestUser
+          </legend>
+          <div className="flex flex-wrap gap-2 items-center">
+            <RankToggle
+              label="⭐ Super Fan"
+              active={!!ranks.isSuperFan}
+              onClick={() => toggleRank('isSuperFan')}
+            />
+            <RankToggle
+              label="🛡️ Moderador"
+              active={!!ranks.isModerator}
+              onClick={() => toggleRank('isModerator')}
+            />
+            <RankToggle
+              label="🏆 Top Gifter"
+              active={!!ranks.isTopGifter}
+              onClick={() => toggleRank('isTopGifter')}
+            />
+            <RankToggle
+              label="➕ Seguidor"
+              active={!!ranks.isFollower}
+              onClick={() => toggleRank('isFollower')}
+            />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-fg-muted">Nivel fan L:</span>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={ranks.memberLevel ?? ''}
+                onChange={(e) =>
+                  setMemberLevel(parseInt(e.target.value || '0', 10) || 0)
+                }
+                className="maru-input w-16 text-xs h-7"
+                placeholder="0"
+                title="Nivel del fans club (badge L1-L50)"
               />
-              <RankToggle
-                label="🛡️ Moderador"
-                active={!!ranks.isModerator}
-                onClick={() => toggleRank('isModerator')}
-              />
-              <RankToggle
-                label="🏆 Top Gifter"
-                active={!!ranks.isTopGifter}
-                onClick={() => toggleRank('isTopGifter')}
-              />
-              <RankToggle
-                label="➕ Seguidor"
-                active={!!ranks.isFollower}
-                onClick={() => toggleRank('isFollower')}
-              />
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-fg-muted">Nivel fan:</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={ranks.memberLevel ?? ''}
-                  onChange={(e) =>
-                    setMemberLevel(parseInt(e.target.value || '0', 10) || 0)
-                  }
-                  className="maru-input w-16 text-xs h-7"
-                  placeholder="0"
-                />
-              </div>
             </div>
-            <p className="text-[10px] text-fg-subtle">
-              Estos flags se incluyen en el comment/command y llegan al
-              ChatDispatcher + SocialSystem para que el log/log/comandos
-              sociales reconozcan el rango del usuario simulado.
-            </p>
-          </fieldset>
-        )}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-fg-muted">Gifter G:</span>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={ranks.gifterLevel ?? ''}
+                onChange={(e) =>
+                  setRanks((r) => ({
+                    ...r,
+                    gifterLevel: parseInt(e.target.value || '0', 10) || undefined,
+                  }))
+                }
+                className="maru-input w-16 text-xs h-7"
+                placeholder="0"
+                title="Nivel de gifter (G1-G50)"
+              />
+            </div>
+            {(ranks.isSuperFan || ranks.isModerator || ranks.isTopGifter ||
+              ranks.isFollower || ranks.memberLevel || ranks.gifterLevel) && (
+              <button
+                type="button"
+                onClick={() => setRanks({})}
+                className="ml-auto text-[10px] text-fg-subtle hover:text-fg underline"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-fg-subtle">
+            Estos flags se aplican a CUALQUIER tipo de evento del simulador:
+            podés probar reglas con <code>required_ranks=[super_fan]</code>{' '}
+            simulando un gift, like, comment, etc. del rango elegido.
+          </p>
+        </fieldset>
 
         {/* Sección condicional: gifts */}
         {eventType === 'gift' && (

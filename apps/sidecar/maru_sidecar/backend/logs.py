@@ -431,7 +431,6 @@ class LogsBridgeHandler(logging.Handler):
         ("maru_sidecar.backend.ia", "ia"),
         ("maru_sidecar.backend.fortunes", "ia"),
         ("maru_sidecar.backend.social", "social"),
-        ("maru_sidecar.backend.minigames", "social"),
         ("maru_sidecar.backend.emotes", "emote"),
         ("maru_sidecar.backend.donations", "gift"),
         ("maru_sidecar.backend.rules", "rule"),

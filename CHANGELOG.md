@@ -1,5 +1,129 @@
 # Changelog — maru-desktop
 
+## 1.0.26 — 2026-05-01 · 🪲 8 fixes: dirty stable, Validar/TikTok-API/sounds gallery, simulador con roles, sin minijuegos
+
+### 1) Spotify suffix "canciones" rompía visualmente
+`packages/ui/src/components/Input.tsx`: el `<input flex-1>` no tenía
+`min-w-0`, así que no se podía achicar y empujaba al `suffix` fuera de
+la caja. El suffix tampoco tenía `whitespace-nowrap shrink-0` →
+visualmente quedaba pisado/cortado en cualquier campo angosto (max
+queue 5 + suffix "canciones"). Ahora todo el componente Input es
+robusto a campos estrechos.
+
+### 2) CustomGameDialog: dirty se "apagaba" al cambiar categoría
+**Causa raíz**: el `initialSnapshot` era un `useMemo` con dep
+`[open, editing]`. Cuando algo del store de games re-fetcheaba en
+background y `byId(editingId)` devolvía un objeto distinto (referencia
+nueva), el useMemo recalculaba el snapshot **con los valores actuales
+del state local** (porque ya eran iguales a `editing` post re-fetch),
+lo que hacía `dirty=false`. Botón Save se "apagaba" aunque el state
+local sí tenía cambios.
+**Fix**: snapshot capturado UNA SOLA VEZ con `useRef` en el effect de
+"abrir el dialog" (`useEffect [open, editing?.id]`). Inmutable hasta
+cerrar/reabrir → ningún re-render del store puede invalidarlo.
+Botón Save también ahora no depende de `canSave` para habilitarse
+(solo `dirty && !busy`); el `canSave` se valida al hacer click y se
+muestra error específico si falla → ya no hay contradicción entre
+"Dialog dice tenés cambios" pero "Save está disabled".
+
+### 3) Quitado Minijuegos completo
+Removido botón del Sidebar + `MinigamesDialog.tsx` + slice del store +
+hook `use-minigames.ts` + tipos `MinigamesConfig/MinigameInfo/etc.` +
+6 RPCs (`minigames.meta/.config.get/.config.set/.state/.start/.stop`)
++ módulo `apps/sidecar/maru_sidecar/backend/minigames.py` + entry del
+LogsBridgeHandler + ID `'minigames'` del tipo `ModalId`. Limpieza
+total — el resto de la app sigue funcionando idéntico.
+
+### 4) Simulador con roles para CUALQUIER tipo de evento
+Antes el panel "🏷️ Rango del usuario" solo se mostraba con
+`eventType === 'comment'` y solo `comment`/`command` propagaban los
+ranks. Ahora:
+- Panel SIEMPRE visible (banner amarillo arriba del bloque de evento).
+- Nuevo input `Gifter G` (faltaba en la UI aunque el flag existía).
+- Botón "Limpiar" para resetear todos los ranks.
+- `dispatchEvent()` propaga ranks a `gift/like/follow/share/subscribe`
+  (antes solo `comment/command`).
+- Sidecar `simulator.py`: cada handler ahora extrae `_ranks(params)`,
+  los inyecta en `data`, los pasa a `_emit(user_ranks=...)` (eso
+  emite `tiktok:comment-enriched` para que el ChatDispatcher los
+  cachee), y los muestra en el log con `_rank_label`.
+- `subscribe`: forza `is_super_fan=True` automáticamente (subscribirse
+  ya es ser super fan).
+**Resultado**: podés probar reglas con `required_ranks=[super_fan]`
+simulando un gift, like, comment o cualquier evento del rango elegido.
+
+### 5) Botón "Validar" no funcionaba
+**Causa raíz**: `apps/sidecar/.../backend/rules.py:validate_all` hacía
+`from gui.widgets.rule_validator import RuleValidator` — ese módulo
+es del GUI original PyQt y **NO está empaquetado en el sidecar
+PyInstaller**. El import fallaba en cada release y el RPC devolvía
+`{ok: false, message: "validador no disponible: ..."}`. El botón
+Validar no mostraba nada útil.
+**Fix**: validador NATIVO en el sidecar (sin dependencias del GUI):
+- Estructura básica de cada regla (name, trigger_type, actions).
+- Validación por trigger: gift contra catálogo (custom_gifts +
+  estándar mínimos), command sin prefijo `!`/`/`, like/like_milestone
+  con número > 0.
+- Cada acción: action_type, action_value contra catálogo de la
+  categoría (`data_<gameId>.json`), amount >= 1.
+- Detección de conflictos: dos reglas con mismo `(trigger_type,
+  trigger_value)` → warning de match doble.
+- Devuelve `{ok, problems[], conflicts[], error_count, warning_count,
+  info_count, totalRules}` exactamente como el frontend espera.
+
+### 6) Gestor de sonidos con imágenes reales de gifts
+`SoundsDialog → GiftSoundsList` mostraba solo el emoji fallback de
+cada gift. Ahora cada row usa `<MaruImage scope="donaciones"
+path={iconPath} />` con el PNG real del gift (auto-descargado del live)
+y emoji fallback solo si la imagen no carga. También se muestran las
+coins (💎) por gift para que el usuario identifique cuál es cuál.
+
+### 7) Selector de regalo de fortuna usa la galería visual
+Sidebar `🔮 Fortuna`: el `<select>` plano fue reemplazado por un
+botón que abre `GiftSelectorDialog` (la misma galería visual de gifts
+con cards 110×135, search, filtros, doble-click). Muestra inline el
+gift elegido con `MaruImage` + nombre + coins. Mucho más fácil de
+identificar que un dropdown con texto.
+
+### 8) Botón "TikTok API" del Sidebar no respondía bien
+**Causa raíz**: usaba `alert()` nativo del browser que en Electron
+puede quedar silente, y el sidecar `tiktok.status` solo devolvía
+`{connected, username, stats}` — el frontend leía `version`/`lastError`
+que nunca venían → el alert mostraba info pobre y el user lo percibía
+como "no funciona".
+**Fix**:
+- Sidecar `tiktok.status` ampliado: ahora devuelve `version` (de
+  `importlib.metadata` para `TikTokLive`), `reconnectAttempts`,
+  `autoReconnect`, `signKeyConfigured`, `lastError`.
+- `_on_error` ahora guarda el último error en `self._last_error`
+  para diagnóstico en el botón.
+- Nuevo modal `TikTokApiInfoDialog` (reemplaza al `alert()`):
+  estado conectado / username / versión TikTokLive / API key
+  configurada o no / stats (viewers, likes, diamonds, followers,
+  shares) / último error en mono. Botón Refresh + acceso directo
+  a "Configurar API key".
+
+### Archivos tocados (resumen)
+
+- **UI base**: `packages/ui/src/components/Input.tsx`,
+  `packages/ui/src/components/Dialog.tsx` (sin cambios — heredado).
+- **Renderer**: `Sidebar.tsx`, `ModalRoot.tsx`,
+  `dialogs/games/CustomGameDialog.tsx`,
+  `dialogs/sounds/SoundsDialog.tsx`,
+  `dialogs/simulator/SimulatorDialog.tsx`,
+  `dialogs/tiktok/TikTokApiInfoDialog.tsx` (nuevo),
+  `lib/store/index.ts`, `lib/store/ui-slice.ts`.
+- **Sidecar**: `backend/rules.py` (validate_all nativo),
+  `backend/tiktok.py` (status ampliado, _last_error),
+  `backend/simulator.py` (ranks en todos los tipos),
+  `backend/logs.py` (entry minigames removida),
+  `rpc/registry.py` (minigames removido).
+- **Shared**: `packages/shared/src/types/index.ts` (Minigames types
+  removidos), `packages/shared/src/rpc/methods.ts` (MinigamesMethods
+  removido).
+- **Borrados**: `dialogs/minigames/`, `lib/use-minigames.ts`,
+  `lib/store/minigames-slice.ts`, `backend/minigames.py`.
+
 ## 1.0.25 — 2026-05-01 · 🪲 Cambios revertidos al click afuera (social, custom games)
 
 Tres bugs raíz que producían la misma sensación de "edité algo, click

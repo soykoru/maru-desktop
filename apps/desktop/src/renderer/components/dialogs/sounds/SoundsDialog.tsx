@@ -7,8 +7,8 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
-import { Button, Dialog, Empty, Input, Select, Spinner } from '@maru/ui';
-import type { SoundEvent, SoundLibraryItem } from '@maru/shared';
+import { Button, Dialog, Empty, Input, MaruImage, Select, Spinner } from '@maru/ui';
+import type { DonationGift, SoundEvent, SoundLibraryItem } from '@maru/shared';
 import { useAppStore } from '../../../lib/store/index.js';
 import { useGames } from '../../../lib/use-games.js';
 import { useGifts } from '../../../lib/use-gifts.js';
@@ -270,7 +270,7 @@ export function SoundsDialog() {
           </div>
         ) : tab === 'gifts' ? (
           <GiftSoundsList
-            gifts={allGifts.map((g) => ({ id: g.id, name: g.name, icon: g.icon }))}
+            gifts={allGifts}
             assignments={sounds.gifts}
             library={sounds.library}
             onAssign={(gid, path) => void sounds.assignGift(gid, path)}
@@ -314,7 +314,7 @@ function GiftSoundsList({
   onPlay,
   disabled,
 }: {
-  gifts: { id: string; name: string; icon?: string }[];
+  gifts: DonationGift[];
   assignments: Record<string, string>;
   library: SoundLibraryItem[];
   onAssign: (giftId: string, path: string) => void;
@@ -330,16 +330,41 @@ function GiftSoundsList({
       />
     );
   }
+  // Mismo enriquecimiento de iconPath que GiftCard usa para resolver
+  // la ruta relativa al scope `donaciones/`. Sin esto la imagen real
+  // del PNG nunca se cargaba acá y solo veíamos el emoji fallback.
   return (
     <ul className="divide-y divide-border rounded-lg border border-border bg-bg-elev/30">
       {gifts.map((g) => {
         const path = assignments[g.id] || '';
+        const iconRel = g.iconPath?.startsWith('donaciones/')
+          ? g.iconPath.slice('donaciones/'.length)
+          : g.iconPath;
         return (
           <li key={g.id} className="flex items-center gap-2 px-3 py-2">
-            <span className="font-emoji text-lg shrink-0">{g.icon || '🎁'}</span>
+            <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-md bg-bg-elev/60 overflow-hidden">
+              {iconRel ? (
+                <MaruImage
+                  scope="donaciones"
+                  path={iconRel}
+                  alt={g.name}
+                  width={32}
+                  height={32}
+                  fallback={g.icon || '🎁'}
+                  className="object-contain max-w-[32px] max-h-[32px]"
+                />
+              ) : (
+                <span className="font-emoji text-lg">{g.icon || '🎁'}</span>
+              )}
+            </div>
             <span className="text-sm flex-1 truncate" title={g.name}>
               {g.name}
             </span>
+            {(g.coins ?? 0) > 0 && (
+              <span className="text-[10px] text-fg-subtle font-mono shrink-0">
+                💎{g.coins}
+              </span>
+            )}
             <Select
               value={path}
               onChange={(e) => onAssign(g.id, e.target.value)}

@@ -83,7 +83,6 @@ def build_default_registry() -> MethodRegistry:
     from ..backend.logs import LogsService, install_logs_bridge
     from ..backend.metrics import MetricsService
     from ..backend.migrations import MigrationService
-    from ..backend.minigames import MinigamesService
     from ..backend.overlays import OverlaysService
     from ..backend.chat_dispatcher import ChatDispatcher
     from ..backend.emotes import EmotesService
@@ -121,7 +120,6 @@ def build_default_registry() -> MethodRegistry:
     install_logs_bridge(logs_svc)
     images_svc = ImagesService()
     sounds_svc = SoundsService()
-    minigames_svc = MinigamesService()
     fortunes_svc = FortunesService(settings=settings_svc, tts=tts_svc)
     emotes_svc = EmotesService()
     emotes_svc.attach_sounds(sounds_svc)
@@ -405,13 +403,5 @@ def build_default_registry() -> MethodRegistry:
     reg.register("emotes.delete-streamer", emotes_svc.delete_streamer)
     reg.register("emotes.set-streamer-avatar", emotes_svc.set_streamer_avatar)
     reg.register("emotes.refresh-avatar", emotes_svc.refresh_avatar)
-
-    # minigames.* (G10)
-    reg.register("minigames.meta", minigames_svc.meta)
-    reg.register("minigames.config.get", minigames_svc.config_get)
-    reg.register("minigames.config.set", minigames_svc.config_set)
-    reg.register("minigames.state", minigames_svc.state)
-    reg.register("minigames.start", minigames_svc.start)
-    reg.register("minigames.stop", minigames_svc.stop)
 
     return reg

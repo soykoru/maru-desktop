@@ -19,13 +19,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         className,
       )}
     >
-      {prefix && <span className="text-fg-subtle">{prefix}</span>}
+      {prefix && (
+        <span className="shrink-0 text-fg-subtle">{prefix}</span>
+      )}
       <input
         ref={ref}
         {...props}
-        className="flex-1 bg-transparent text-sm text-fg placeholder:text-fg-subtle outline-none disabled:cursor-not-allowed"
+        className="flex-1 min-w-0 bg-transparent text-sm text-fg placeholder:text-fg-subtle outline-none disabled:cursor-not-allowed"
       />
-      {suffix && <span className="text-fg-subtle">{suffix}</span>}
+      {suffix && (
+        <span className="shrink-0 whitespace-nowrap text-xs text-fg-subtle">
+          {suffix}
+        </span>
+      )}
     </div>
   ),
 );

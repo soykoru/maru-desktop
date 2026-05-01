@@ -125,6 +125,7 @@ class SimulatorService:
         gift_name = str(params.get("giftName") or "rosa")
         diamonds = int(params.get("diamonds") or 1)
         count = int(params.get("count") or 1)
+        ranks = _ranks(params)
         _emit(
             "gift",
             user,
@@ -134,44 +135,81 @@ class SimulatorService:
                 "diamondCount": diamonds,
                 "count": count,
                 "totalDiamonds": diamonds * count,
+                **ranks,
             },
             target_game=_target(params),
+            user_ranks=ranks if ranks else None,
         )
         cnt = f" ×{count}" if count > 1 else ""
         dia = f" 💎{diamonds * count}" if diamonds > 0 else ""
+        rank_label = self._rank_label(ranks)
         self._log_event(
-            f"🎁 @{user} envió: {gift_name}{cnt}{dia}",
+            f"🎁 {rank_label}@{user} envió: {gift_name}{cnt}{dia}",
             "gift",
-            {"gift": gift_name, "count": count, "diamonds": diamonds * count},
+            {"gift": gift_name, "count": count, "diamonds": diamonds * count, **ranks},
         )
         return {"ok": True}
 
     def like(self, params: dict[str, Any]) -> dict[str, Any]:
         user = str(params.get("user") or "tester")
         count = int(params.get("count") or 1)
-        _emit("like", user, {"count": count}, target_game=_target(params))
-        self._log_event(
-            f"❤️ @{user} dio {count} {'likes' if count > 1 else 'like'}",
+        ranks = _ranks(params)
+        _emit(
             "like",
-            {"count": count},
+            user,
+            {"count": count, **ranks},
+            target_game=_target(params),
+            user_ranks=ranks if ranks else None,
+        )
+        rank_label = self._rank_label(ranks)
+        self._log_event(
+            f"❤️ {rank_label}@{user} dio {count} {'likes' if count > 1 else 'like'}",
+            "like",
+            {"count": count, **ranks},
         )
         return {"ok": True}
 
     def follow(self, params: dict[str, Any]) -> dict[str, Any]:
         user = str(params.get("user") or "tester")
-        _emit("follow", user, {}, target_game=_target(params))
-        self._log_event(f"➕ @{user} siguió el live", "follow")
+        ranks = _ranks(params)
+        _emit(
+            "follow",
+            user,
+            {**ranks},
+            target_game=_target(params),
+            user_ranks=ranks if ranks else None,
+        )
+        rank_label = self._rank_label(ranks)
+        self._log_event(f"➕ {rank_label}@{user} siguió el live", "follow")
         return {"ok": True}
 
     def share(self, params: dict[str, Any]) -> dict[str, Any]:
         user = str(params.get("user") or "tester")
-        _emit("share", user, {}, target_game=_target(params))
-        self._log_event(f"📤 @{user} compartió el live", "share")
+        ranks = _ranks(params)
+        _emit(
+            "share",
+            user,
+            {**ranks},
+            target_game=_target(params),
+            user_ranks=ranks if ranks else None,
+        )
+        rank_label = self._rank_label(ranks)
+        self._log_event(f"📤 {rank_label}@{user} compartió el live", "share")
         return {"ok": True}
 
     def subscribe(self, params: dict[str, Any]) -> dict[str, Any]:
         user = str(params.get("user") or "tester")
-        _emit("subscribe", user, {}, target_game=_target(params))
+        ranks = _ranks(params)
+        # Subscribe implica que el user ES super fan — forzamos el flag
+        # aunque el caller no lo haya pasado explícito.
+        ranks.setdefault("is_super_fan", True)
+        _emit(
+            "subscribe",
+            user,
+            {**ranks},
+            target_game=_target(params),
+            user_ranks=ranks,
+        )
         self._log_event(f"⭐ @{user} se suscribió (Super Fan)", "subscribe")
         return {"ok": True}
 

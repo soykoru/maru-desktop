@@ -6,7 +6,6 @@ import { createGamesSlice, type GamesSlice } from './games-slice.js';
 import { createGiftsSlice, type GiftsSlice } from './gifts-slice.js';
 import { createIaSlice, type IaSlice } from './ia-slice.js';
 import { createLogSlice, type LogSlice } from './log-slice.js';
-import { createMinigamesSlice, type MinigamesSlice } from './minigames-slice.js';
 import { createProfilesSlice, type ProfilesSlice } from './profiles-slice.js';
 import { createRulesSlice, type RulesSlice } from './rules-slice.js';
 import { createSocialSlice, type SocialSlice } from './social-slice.js';
@@ -30,7 +29,6 @@ export type AppStore = ConnectionSlice &
   TtsSlice &
   ProfilesSlice &
   SoundsSlice &
-  MinigamesSlice &
   LogSlice &
   BackupsSlice &
   SpotifySlice;
@@ -49,7 +47,6 @@ export const useAppStore = create<AppStore>()((...a) => ({
   ...createTtsSlice(...a),
   ...createProfilesSlice(...a),
   ...createSoundsSlice(...a),
-  ...createMinigamesSlice(...a),
   ...createLogSlice(...a),
   ...createBackupsSlice(...a),
   ...createSpotifySlice(...a),

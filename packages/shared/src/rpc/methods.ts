@@ -19,10 +19,6 @@ import type {
   LogCategory,
   LogEntry,
   LogStats,
-  MinigameId,
-  MinigamesConfig,
-  MinigamesMeta,
-  MinigameState,
   OverlayInfo,
   PingResult,
   RelationshipType,
@@ -412,40 +408,6 @@ export interface SoundsMethods {
   'sounds.stop-all': {
     params: Record<string, never>;
     result: { ok: boolean; message?: string };
-  };
-}
-
-export interface MinigamesMethods {
-  'minigames.meta': {
-    params: Record<string, never>;
-    result: MinigamesMeta;
-  };
-  'minigames.config.get': {
-    params: Record<string, never>;
-    result: { config: MinigamesConfig };
-  };
-  'minigames.config.set': {
-    params: { patch: Partial<MinigamesConfig> };
-    result: { ok: boolean; config: MinigamesConfig };
-  };
-  'minigames.state': {
-    params: Record<string, never>;
-    result: MinigameState;
-  };
-  'minigames.start': {
-    params: { id: MinigameId; config?: WordSearchConfig | WordBombConfig };
-    result: {
-      ok: boolean;
-      active: boolean;
-      id: MinigameId;
-      startedAt: number;
-      engineReady: boolean;
-      message?: string;
-    };
-  };
-  'minigames.stop': {
-    params: Record<string, never>;
-    result: { ok: boolean; wasActive: boolean };
   };
 }
 
@@ -980,6 +942,5 @@ export type RpcMethodMap = SystemMethods &
   MigrationsMethods &
   DonationsMethods &
   SoundsMethods &
-  MinigamesMethods &
   FortunesMethods &
   EmotesMethods;

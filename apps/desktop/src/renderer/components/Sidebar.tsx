@@ -25,6 +25,8 @@ import { useGifts } from '../lib/use-gifts.js';
 import { useTts } from '../lib/use-tts.js';
 import { rpcCall } from '../lib/rpc.js';
 import type { FortunesConfig, GameId, TtsVoiceMode } from '@maru/shared';
+import { GiftSelectorDialog } from './dialogs/gifts/GiftSelectorDialog.js';
+import { MaruImage } from '@maru/ui';
 
 /**
  * Sidebar — réplica fiel del `_build_left_panel` del MARU original.
@@ -155,6 +157,7 @@ export function Sidebar(): ReactNode {
   });
   const [fortuneTesting, setFortuneTesting] = useState(false);
   const [fortuneFlash, setFortuneFlash] = useState<string | null>(null);
+  const [fortuneGiftPickerOpen, setFortuneGiftPickerOpen] = useState(false);
 
   useEffect(() => {
     void rpcCall('fortunes.config.get', {})
@@ -625,23 +628,68 @@ export function Sidebar(): ReactNode {
 
         <div className="mt-2 flex items-center gap-2">
           <span className="text-xs text-fg-muted shrink-0 w-12">Regalo:</span>
-          <select
-            className="maru-input w-full text-xs"
-            value={fortunesConfig.gift_id}
-            onChange={(e) => patchFortunes({ gift_id: e.target.value })}
-            disabled={!fortunesConfig.enabled}
-          >
-            <option value="">-- Seleccionar regalo --</option>
-            {allGifts
-              .filter((g) => !g.disabled)
-              .sort((a, b) => a.coins - b.coins || a.name.localeCompare(b.name))
-              .map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.icon} {g.name} ({g.coins}💎)
-                </option>
-              ))}
-          </select>
+          {(() => {
+            const sel = allGifts.find((g) => g.id === fortunesConfig.gift_id);
+            const iconRel = sel?.iconPath?.startsWith('donaciones/')
+              ? sel.iconPath.slice('donaciones/'.length)
+              : sel?.iconPath;
+            return (
+              <button
+                type="button"
+                onClick={() => setFortuneGiftPickerOpen(true)}
+                disabled={!fortunesConfig.enabled}
+                className={[
+                  'maru-input flex w-full items-center gap-2 text-xs px-2 py-1',
+                  'hover:border-fg-muted disabled:opacity-50 disabled:cursor-not-allowed',
+                  'cursor-pointer text-left',
+                ].join(' ')}
+                title={
+                  sel
+                    ? `${sel.name} (${sel.coins}💎) — click para cambiar`
+                    : 'Click para abrir la galería de regalos'
+                }
+              >
+                {sel ? (
+                  <>
+                    <span className="shrink-0 flex h-5 w-5 items-center justify-center">
+                      {iconRel ? (
+                        <MaruImage
+                          scope="donaciones"
+                          path={iconRel}
+                          alt={sel.name}
+                          width={20}
+                          height={20}
+                          fallback={sel.icon || '🎁'}
+                          className="object-contain max-w-[20px] max-h-[20px]"
+                        />
+                      ) : (
+                        <span className="font-emoji">{sel.icon || '🎁'}</span>
+                      )}
+                    </span>
+                    <span className="flex-1 truncate">{sel.name}</span>
+                    <span className="text-[10px] text-fg-subtle font-mono shrink-0">
+                      💎{sel.coins}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-fg-subtle italic">
+                    🎁 Elegir regalo de la galería…
+                  </span>
+                )}
+              </button>
+            );
+          })()}
         </div>
+        <GiftSelectorDialog
+          open={fortuneGiftPickerOpen}
+          onClose={() => setFortuneGiftPickerOpen(false)}
+          initialId={fortunesConfig.gift_id || null}
+          title="🎁 Regalo que dispara fortuna"
+          onSelect={(g) => {
+            patchFortunes({ gift_id: g.id });
+            setFortuneGiftPickerOpen(false);
+          }}
+        />
 
         <div className="mt-2 flex items-center gap-2">
           <span className="text-xs text-fg-muted shrink-0 w-12">Voz:</span>
@@ -725,14 +773,6 @@ export function Sidebar(): ReactNode {
           </Button>
         </div>
 
-        <Button
-          variant="secondary"
-          size="sm"
-          className="mt-2 w-full"
-          onClick={() => openModal('minigames')}
-        >
-          🎲 Minijuegos
-        </Button>
       </GroupBox>
 
       {/* ── ⚙️ Configuración ──────────────────────────────────────── */}
@@ -827,29 +867,8 @@ export function Sidebar(): ReactNode {
           variant="secondary"
           size="sm"
           className="mt-1.5 w-full"
-          title="Verificar estado / versión del cliente TikTokLive"
-          onClick={async () => {
-            try {
-              const r = (await rpcCall('tiktok.status', {})) as {
-                connected?: boolean;
-                version?: string;
-                username?: string;
-                lastError?: string;
-              };
-              const lines = [
-                `Estado: ${r.connected ? '🟢 Conectado' : '⚪ Desconectado'}`,
-                r.version && `TikTokLive: ${r.version}`,
-                r.username && `Usuario: @${r.username}`,
-                r.lastError && `Último error: ${r.lastError}`,
-              ].filter(Boolean);
-              setTikTokError(null);
-              alert(`🔧 TikTok API\n\n${lines.join('\n')}`);
-            } catch (ex) {
-              alert(
-                `❌ No pude consultar TikTok API\n${ex instanceof Error ? ex.message : String(ex)}`,
-              );
-            }
-          }}
+          title="Diagnóstico del cliente TikTokLive (estado, versión, errores)"
+          onClick={() => openModal('tiktok-api-info')}
         >
           <Wrench className="h-3.5 w-3.5" />
           TikTok API

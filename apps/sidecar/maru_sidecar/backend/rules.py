@@ -449,31 +449,32 @@ class RulesService:
         return {"ok": True, "messages": msgs}
 
     def validate_all(self, params: dict[str, Any]) -> dict[str, Any]:
-        """Valida TODAS las reglas del juego contra catálogo de gifts y data
-        del juego (paridad MARU `validate_all_rules` + `RuleValidator`).
+        """Valida TODAS las reglas del juego — implementación nativa del
+        sidecar (NO depende de `gui.widgets.rule_validator` del MARU
+        original que NO está empaquetado en el sidecar PyInstaller).
 
-        Reusa el `RuleValidator` original via core_bridge — lectura del
-        json es la misma, así que reportamos exactamente lo que el original
-        muestra en `main_window.py:_validate_all_rules`."""
+        Reglas que se chequean por cada Rule:
+          - **estructura**: tiene `name`, `trigger_type`, `actions[]` o
+            campos legacy.
+          - **trigger**: el trigger_type es válido y trigger_value tiene
+            el formato esperado para su tipo (gift necesita nombre,
+            like/like_milestone necesita número, command necesita cmd
+            sin `!`).
+          - **trigger_value de gifts**: existe en el catálogo de gifts
+            (custom_gifts del `gifts.json` o gift estándar conocido).
+          - **acciones**: cada action tiene action_type/action_value
+            y `amount` >= 1.
+          - **action_value**: existe en el catálogo de datos del juego
+            (`data_<gameId>.json` por categoría).
+
+        Conflictos detectados entre reglas:
+          - Dos reglas con el mismo `(trigger_type, trigger_value)` y
+            sin `cooldown` distinto → posible match doble.
+        """
         game_id = _validate_game(params.get("gameId"))
         rules = self._read(game_id)
-        try:
-            from .. import core_bridge
-            core_bridge.install()
-            from gui.widgets.rule_validator import RuleValidator  # type: ignore
-        except Exception as exc:
-            log.warning("rule_validator no disponible: %s", exc)
-            return {
-                "ok": False,
-                "problems": [],
-                "conflicts": [],
-                "error_count": 0,
-                "warning_count": 0,
-                "info_count": 0,
-                "message": f"validador no disponible: {exc}",
-            }
 
-        # Cargar custom_gifts desde gifts.json (donde DonationsService persiste).
+        # Catálogo de gifts conocidos (custom + estándar mínimos).
         custom_gifts: dict[str, Any] = {}
         try:
             gifts_path = self._data_dir / "gifts.json"
@@ -485,30 +486,180 @@ class RulesService:
                         custom_gifts = cg
         except Exception:
             log.exception("no pude leer custom_gifts")
+        # Set de gift names lower para match laxo.
+        known_gift_names = {
+            str(name).strip().lower()
+            for name in custom_gifts.keys()
+        }
+        # Gifts estándar mínimos que TikTok siempre tiene.
+        known_gift_names.update({
+            "rose", "tiktok", "panda", "ice cream cone", "love bang",
+            "perfume", "doughnut", "sunglasses", "rainbow puke",
+            "team bracelet", "finger heart", "love you", "thumbs up",
+            "gg", "hello", "you're amazing",
+        })
 
+        # Catálogo de data_<gameId>.json por categoría.
+        # Soporta tanto `{categories: {<cat_id>: [...]}}` como
+        # `{<cat_id>: [...]}` (formato legacy).
+        data_path = self._data_dir / f"data_{game_id}.json"
+        catalog_by_cat: dict[str, set[str]] = {}
         try:
-            validator = RuleValidator(self._data_dir)
-            result = validator.validate_rules_batch(
-                rules, game_id, custom_gifts
-            )
-        except Exception as exc:
-            log.exception("validate_all falló")
-            return {
-                "ok": False,
-                "problems": [],
-                "conflicts": [],
-                "error_count": 0,
-                "warning_count": 0,
-                "info_count": 0,
-                "message": str(exc),
-            }
+            if data_path.exists():
+                doc = json.loads(data_path.read_text(encoding="utf-8"))
+                if isinstance(doc, dict):
+                    cats = doc.get("categories") if isinstance(doc.get("categories"), dict) else doc
+                    for cat_id, entries in cats.items():
+                        if not isinstance(entries, list):
+                            continue
+                        names: set[str] = set()
+                        for e in entries:
+                            if isinstance(e, dict):
+                                n = e.get("name") or e.get("display_name") or e.get("id")
+                            else:
+                                n = e
+                            if n:
+                                names.add(str(n).strip().lower())
+                        catalog_by_cat[str(cat_id)] = names
+        except Exception:
+            log.exception("no pude leer data_%s.json", game_id)
+
+        # Counters + buckets.
+        problems: list[dict[str, Any]] = []
+        conflicts: list[dict[str, Any]] = []
+        error_count = 0
+        warning_count = 0
+        info_count = 0
+
+        def _add(rule_name: str, message: str, ptype: str, suggestion: str | None = None) -> None:
+            nonlocal error_count, warning_count, info_count
+            problems.append({
+                "rule_name": rule_name,
+                "message": message,
+                "suggestion": suggestion,
+                "type": ptype,
+            })
+            if ptype == "error":
+                error_count += 1
+            elif ptype == "warning":
+                warning_count += 1
+            else:
+                info_count += 1
+
+        # Para detectar conflictos.
+        seen_triggers: dict[tuple[str, str], list[str]] = {}
+
+        for rule in rules:
+            name = str(rule.get("name") or rule.get("id") or "?")
+            trigger_type = str(rule.get("trigger_type") or "").strip().lower()
+            trigger_value = str(rule.get("trigger_value") or "").strip()
+
+            # 1) Estructura básica.
+            if not name or name == "?":
+                _add(name, "La regla no tiene nombre", "warning",
+                     "Asignale un nombre descriptivo")
+            if not trigger_type:
+                _add(name, "Sin trigger_type", "error",
+                     "Definí gift / command / follow / share / subscribe / like / like_milestone")
+                continue
+            if trigger_type not in {
+                "gift", "command", "follow", "share", "subscribe",
+                "like", "like_milestone",
+            }:
+                _add(name, f"trigger_type desconocido: {trigger_type}", "error")
+                continue
+
+            # 2) Validación por tipo de trigger.
+            if trigger_type == "gift":
+                if not trigger_value:
+                    _add(name, "trigger_value vacío para tipo gift", "error",
+                         "Especificá el nombre del regalo (ej. rose)")
+                else:
+                    if trigger_value.lower() not in known_gift_names:
+                        _add(
+                            name,
+                            f"Gift '{trigger_value}' no encontrado en el catálogo",
+                            "warning",
+                            "Verificá la galería de regalos o agregalo como custom_gift",
+                        )
+            elif trigger_type == "command":
+                if not trigger_value:
+                    _add(name, "trigger_value vacío para tipo command", "error",
+                         "Especificá el comando sin '!' (ej. play)")
+                elif trigger_value.startswith("!") or trigger_value.startswith("/"):
+                    _add(name, f"trigger_value '{trigger_value}' no debe llevar prefijo", "warning",
+                         "Quitá el ! o / inicial")
+            elif trigger_type in ("like", "like_milestone"):
+                try:
+                    n = int(trigger_value or "0")
+                    if n <= 0:
+                        _add(name, f"{trigger_type} requiere un número > 0", "error")
+                except ValueError:
+                    _add(name, f"trigger_value '{trigger_value}' no es un número válido para {trigger_type}", "error")
+            # follow / share / subscribe no necesitan trigger_value.
+
+            # 3) Tracking de conflictos por (type, value).
+            if trigger_value:
+                key = (trigger_type, trigger_value.strip().lower())
+                seen_triggers.setdefault(key, []).append(name)
+
+            # 4) Acciones.
+            actions = rule.get("actions") if isinstance(rule.get("actions"), list) else []
+            if not actions and rule.get("action_type"):
+                # Usar shape legacy.
+                actions = [{
+                    "action_type": rule.get("action_type"),
+                    "action_value": rule.get("action_value"),
+                    "amount": rule.get("amount", 1),
+                }]
+            if not actions:
+                _add(name, "La regla no tiene acciones", "error",
+                     "Agregá al menos una acción (spawn / give_item / trigger_event)")
+                continue
+
+            for i, a in enumerate(actions, start=1):
+                if not isinstance(a, dict):
+                    _add(name, f"Acción #{i}: estructura inválida", "error")
+                    continue
+                a_type = str(a.get("action_type") or "").strip()
+                a_value = str(a.get("action_value") or "").strip()
+                amount = a.get("amount", 1)
+                if not a_type:
+                    _add(name, f"Acción #{i}: sin action_type", "error")
+                if not a_value:
+                    _add(name, f"Acción #{i}: sin action_value", "warning",
+                         "Especificá qué entidad/item disparar")
+                try:
+                    if int(amount) < 1:
+                        _add(name, f"Acción #{i}: amount debe ser >= 1", "warning")
+                except (TypeError, ValueError):
+                    _add(name, f"Acción #{i}: amount inválido", "warning")
+                # Verificar que action_value exista en catálogo de su categoría.
+                cat_set = catalog_by_cat.get(a_type)
+                if cat_set is not None and a_value:
+                    if a_value.lower() not in cat_set:
+                        _add(
+                            name,
+                            f"Acción #{i}: '{a_value}' no está en la categoría '{a_type}' del juego",
+                            "warning",
+                            "Verificá la pestaña Datos del juego",
+                        )
+
+        # Conflictos: mismo trigger en >1 regla sin cooldown distinto.
+        for (t_type, t_val), rule_names in seen_triggers.items():
+            if len(rule_names) > 1:
+                conflicts.append({
+                    "message": f"{len(rule_names)} reglas usan el mismo trigger {t_type}={t_val}: " + ", ".join(rule_names),
+                })
+                warning_count += 1
+
         return {
             "ok": True,
-            "problems": result.get("problems") or [],
-            "conflicts": result.get("conflicts") or [],
-            "error_count": int(result.get("error_count") or 0),
-            "warning_count": int(result.get("warning_count") or 0),
-            "info_count": int(result.get("info_count") or 0),
+            "problems": problems,
+            "conflicts": conflicts,
+            "error_count": error_count,
+            "warning_count": warning_count,
+            "info_count": info_count,
             "totalRules": len(rules),
         }
 

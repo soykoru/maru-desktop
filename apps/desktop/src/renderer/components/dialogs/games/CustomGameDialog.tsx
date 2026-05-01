@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { Button, Dialog, Input, Label, Select, Switch } from '@maru/ui';
 import type {
@@ -76,12 +76,38 @@ export function CustomGameDialog({
 
   const idPrefix = useId();
 
-  // Snapshot del estado inicial para detectar cambios sin guardar.
-  // Se reinicia cada vez que el dialog abre (cambia `open` o `editing`).
-  const initialSnapshot = useMemo(() => {
-    if (!open) return '';
+  // Snapshot del estado inicial — capturado UNA SOLA VEZ cuando el
+  // dialog abre, para detectar cambios sin guardar. Antes esto era un
+  // useMemo dependiente de `editing` (referencia del store): si en
+  // background el store hacía re-fetch (refresh games) y `byId`
+  // momentáneamente devolvía `null` o un objeto distinto, el useMemo
+  // recalculaba el snapshot con valores actuales del store y dirty
+  // se igualaba a `false` aunque el state local SÍ tenía cambios →
+  // botón Save se "apagaba" después de cambiar de categoría o por
+  // cualquier otro re-render del store. Ahora es un useRef que se
+  // setea solo en el effect de "abrir el dialog" y queda inmutable
+  // hasta cerrar/reabrir.
+  const initialSnapshotRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!open) return;
+    let next: {
+      id: string;
+      name: string;
+      icon: string;
+      host: string;
+      port: number;
+      password: string;
+      connectionType: GameConnectionType;
+      categories: GameCategory[];
+      shareSounds: boolean;
+      shareVoices: boolean;
+      tabEntities: string;
+      tabItems: string;
+      tabEvents: string;
+    };
     if (editing) {
-      return JSON.stringify({
+      next = {
         id: editing.id,
         name: editing.name,
         icon: editing.icon,
@@ -95,56 +121,38 @@ export function CustomGameDialog({
         tabEntities: editing.tabNames?.entities ?? '',
         tabItems: editing.tabNames?.items ?? '',
         tabEvents: editing.tabNames?.events ?? '',
-      });
-    }
-    return JSON.stringify({
-      id: '',
-      name: '',
-      icon: '🎮',
-      host: '127.0.0.1',
-      port: 5000,
-      password: '',
-      connectionType: 'http',
-      categories: [],
-      shareSounds: true,
-      shareVoices: true,
-      tabEntities: '',
-      tabItems: '',
-      tabEvents: '',
-    });
-  }, [open, editing]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (editing) {
-      setId(editing.id);
-      setName(editing.name);
-      setIcon(editing.icon);
-      setHost(editing.connection.host);
-      setPort(editing.connection.port);
-      setPassword(editing.connection.password ?? '');
-      setConnectionType(editing.connectionType);
-      setCategories(editing.categories);
-      setShareSounds(editing.shareSounds);
-      setShareVoices(editing.shareVoices);
-      setTabEntities(editing.tabNames?.entities ?? '');
-      setTabItems(editing.tabNames?.items ?? '');
-      setTabEvents(editing.tabNames?.events ?? '');
+      };
     } else {
-      setId('');
-      setName('');
-      setIcon('🎮');
-      setHost('127.0.0.1');
-      setPort(5000);
-      setPassword('');
-      setConnectionType('http');
-      setCategories([]);
-      setShareSounds(true);
-      setShareVoices(true);
-      setTabEntities('');
-      setTabItems('');
-      setTabEvents('');
+      next = {
+        id: '',
+        name: '',
+        icon: '🎮',
+        host: '127.0.0.1',
+        port: 5000,
+        password: '',
+        connectionType: 'http',
+        categories: [],
+        shareSounds: true,
+        shareVoices: true,
+        tabEntities: '',
+        tabItems: '',
+        tabEvents: '',
+      };
     }
+    setId(next.id);
+    setName(next.name);
+    setIcon(next.icon);
+    setHost(next.host);
+    setPort(next.port);
+    setPassword(next.password);
+    setConnectionType(next.connectionType);
+    setCategories(next.categories);
+    setShareSounds(next.shareSounds);
+    setShareVoices(next.shareVoices);
+    setTabEntities(next.tabEntities);
+    setTabItems(next.tabItems);
+    setTabEvents(next.tabEvents);
+    initialSnapshotRef.current = JSON.stringify(next);
     setError(null);
     setBusy(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,11 +167,12 @@ export function CustomGameDialog({
   const portValid = port >= 1 && port <= 65535;
   const canSave = idValid && nameValid && portValid && !busy;
 
-  // Dirty check: comparamos snapshot inicial vs estado actual.
-  // Sin esto, click-fuera del dialog cerraba sin warning y el user
-  // perdía las ediciones (caso reportado: editar nombres de
-  // categorías custom y "se revertía").
+  // Dirty check: comparamos snapshot inicial (capturado al abrir,
+  // inmutable) vs estado actual. El initialSnapshotRef se setea solo
+  // en el effect de "abrir el dialog" → ningún re-render del store
+  // puede invalidarlo a mitad de edición.
   const dirty = useMemo(() => {
+    if (!initialSnapshotRef.current) return false;
     const current = JSON.stringify({
       id,
       name,
@@ -179,11 +188,10 @@ export function CustomGameDialog({
       tabItems,
       tabEvents,
     });
-    return current !== initialSnapshot;
+    return current !== initialSnapshotRef.current;
   }, [
     id, name, icon, host, port, password, connectionType, categories,
     shareSounds, shareVoices, tabEntities, tabItems, tabEvents,
-    initialSnapshot,
   ]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -537,8 +545,19 @@ export function CustomGameDialog({
               type="submit"
               variant={dirty ? 'primary' : 'secondary'}
               size="sm"
-              disabled={!canSave || !dirty}
-              className={dirty ? '!bg-warning hover:!bg-warning/90 !text-bg' : ''}
+              disabled={busy || !dirty}
+              className={
+                dirty && canSave
+                  ? '!bg-warning hover:!bg-warning/90 !text-bg'
+                  : ''
+              }
+              title={
+                !dirty
+                  ? 'No hay cambios para guardar'
+                  : !canSave
+                    ? 'Hay errores de validación (id/nombre/puerto)'
+                    : ''
+              }
             >
               {isEdit ? 'Guardar cambios' : '✅ Crear juego'}
             </Button>

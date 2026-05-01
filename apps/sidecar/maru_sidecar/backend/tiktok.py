@@ -103,6 +103,10 @@ class TikTokService:
         self._logs = logs
         self._emotes = emotes
         self._spotify: Any = None
+        # Último mensaje de error (para diagnóstico desde el botón
+        # "TikTok API" del sidebar). Se refresca con cada error fatal del
+        # worker (`_on_error` / `_on_log_message` con SignAPIError).
+        self._last_error: str = ""
 
     def attach_donations(self, donations: Any) -> None:
         self._donations = donations
@@ -150,10 +154,40 @@ class TikTokService:
         return ""
 
     def status(self, _params: dict[str, Any]) -> dict[str, Any]:
+        # Versión de TikTokLive instalada en el sidecar — útil para que el
+        # user pueda diagnosticar si el cliente está al día. Si no se
+        # puede importar, devolvemos versión vacía sin crashear.
+        version = ""
+        try:
+            import importlib.metadata as _md
+            version = _md.version("TikTokLive") or ""
+        except Exception:
+            try:
+                import TikTokLive as _tl  # type: ignore
+                version = str(getattr(_tl, "__version__", "") or "")
+            except Exception:
+                version = ""
+        # Reconectando + último error visible para el botón "TikTok API"
+        # del sidebar (sin esto el alert solo decía "Conectado/
+        # Desconectado" y el user no podía diagnosticar nada).
+        sign_key_present = False
+        try:
+            from ..runtime import SECRETS_DIR
+            key_file = SECRETS_DIR / "tiktok_sign.key"
+            sign_key_present = key_file.is_file() and bool(
+                key_file.read_text(encoding="utf-8").strip()
+            )
+        except Exception:
+            pass
         return {
             "connected": self._connected,
             "username": self._username,
             "stats": dict(self._stats),
+            "version": version,
+            "reconnectAttempts": self._reconnect_attempts,
+            "autoReconnect": self._auto_reconnect,
+            "signKeyConfigured": sign_key_present,
+            "lastError": getattr(self, "_last_error", "") or "",
         }
 
     def sign_key_get(self, _params: dict[str, Any]) -> dict[str, Any]:
@@ -585,6 +619,9 @@ class TikTokService:
 
         def _on_error(message: str) -> None:
             bus.publish("tiktok:error", {"message": message})
+            # Guardar el último error para que el botón "TikTok API" del
+            # sidebar lo muestre en el modal de diagnóstico.
+            self._last_error = str(message)[:200]
             # Loggear errores también al panel de logs para visibilidad
             # inmediata (paridad con `worker.log_message`).
             try:

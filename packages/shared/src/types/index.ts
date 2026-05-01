@@ -654,65 +654,6 @@ export interface SoundsConfig {
   volume: number;
 }
 
-// ── Minigames (G10) ─────────────────────────────────────────────────────
-
-export type MinigameId = 'wordSearch' | 'wordSearchLite' | 'wordBomb';
-
-export interface MinigameInfo {
-  id: MinigameId;
-  name: string;
-  icon: string;
-  description: string;
-}
-
-export interface WordSearchConfig {
-  category: string;
-  /** 4-12 */
-  wordCount: number;
-  /** 8-15 */
-  rows: number;
-  /** 8-15 */
-  cols: number;
-}
-
-export interface WordBombConfig {
-  /** 5-30 segundos. */
-  turnTime: number;
-  /** 1-5 vidas. */
-  lives: number;
-}
-
-export interface MinigamesConfig {
-  wordSearch: WordSearchConfig;
-  wordSearchLite: WordSearchConfig;
-  wordBomb: WordBombConfig;
-}
-
-export interface MinigamesMeta {
-  minigames: MinigameInfo[];
-  wordSearchCategories: { id: string; name: string }[];
-  ranges: {
-    wordSearch: {
-      wordCount: [number, number];
-      rows: [number, number];
-      cols: [number, number];
-    };
-    wordBomb: {
-      turnTime: [number, number];
-      lives: [number, number];
-    };
-  };
-}
-
-export type MinigameState =
-  | { active: false }
-  | {
-      active: true;
-      id: MinigameId;
-      config: WordSearchConfig | WordBombConfig;
-      startedAt: number;
-    };
-
 // ── Logs (G11) ──────────────────────────────────────────────────────────
 
 export const LOG_CATEGORIES = [
