@@ -42,11 +42,11 @@
   --maru-bg-elevated: 36 38 64;         /* paneles flotantes */
   --maru-bg-overlay: 8 8 15;            /* backdrop modal */
 
-  /* ── Text ────────────────────────────────────────────────────────── */
-  --maru-fg: 255 255 255;
-  --maru-fg-muted: 184 188 208;         /* +contraste vs antes (178) */
-  --maru-fg-subtle: 116 122 145;        /* +contraste vs antes (102) */
-  --maru-fg-hint: 89 94 115;
+  /* ── Text — off-white, no blanco puro (evita el "brillo" molesto) ── */
+  --maru-fg: 232 234 244;               /* #e8eaf4 — premium frío */
+  --maru-fg-muted: 174 180 200;         /* jerarquía clara */
+  --maru-fg-subtle: 122 128 150;
+  --maru-fg-hint: 92 96 118;
 
   /* ── Brand & Accents (signature MARU) ────────────────────────────── */
   --maru-accent: 243 156 18;            /* #f39c12 naranja-mostaza */
@@ -123,10 +123,10 @@
   --maru-bg-elevated: 68 71 90;         /* #44475a */
   --maru-bg-overlay: 22 24 33;
 
-  --maru-fg: 248 248 242;               /* #f8f8f2 */
-  --maru-fg-muted: 200 200 215;
-  --maru-fg-subtle: 130 135 155;
-  --maru-fg-hint: 98 114 164;
+  --maru-fg: 230 230 222;               /* off-white cálido (no #f8f8f2 puro) */
+  --maru-fg-muted: 188 188 200;
+  --maru-fg-subtle: 132 138 160;
+  --maru-fg-hint: 102 116 162;
 
   /* Brand: pink (firma dracula) */
   --maru-accent: 255 121 198;           /* #ff79c6 pink */
@@ -196,10 +196,11 @@
   --maru-bg-elevated: 41 46 66;         /* #292e42 */
   --maru-bg-overlay: 13 14 25;
 
-  --maru-fg: 192 202 245;               /* #c0caf5 */
-  --maru-fg-muted: 169 177 214;         /* #a9b1d6 */
-  --maru-fg-subtle: 86 95 137;          /* #565f89 */
-  --maru-fg-hint: 65 72 104;            /* #414868 */
+  /* Text Tokyo Night — paleta oficial pero con brillo suavizado */
+  --maru-fg: 184 196 232;               /* ligeramente menos saturado que c0caf5 */
+  --maru-fg-muted: 158 168 204;
+  --maru-fg-subtle: 92 102 142;
+  --maru-fg-hint: 70 76 108;
 
   /* Brand: magenta-violeta */
   --maru-accent: 187 154 247;           /* #bb9af7 magenta */
@@ -269,10 +270,11 @@
   --maru-bg-elevated: 69 71 90;         /* #45475a surface1 */
   --maru-bg-overlay: 17 17 27;
 
-  --maru-fg: 205 214 244;               /* #cdd6f4 text */
-  --maru-fg-muted: 186 194 222;         /* #bac2de subtext1 */
-  --maru-fg-subtle: 147 153 178;        /* #9399b2 overlay2 */
-  --maru-fg-hint: 108 112 134;          /* #6c7086 overlay0 */
+  /* Text Catppuccin — subtext1 como base (no text puro) suaviza el brillo */
+  --maru-fg: 196 204 234;               /* entre text (cdd6f4) y subtext1 (bac2de) */
+  --maru-fg-muted: 172 180 210;
+  --maru-fg-subtle: 138 146 172;
+  --maru-fg-hint: 105 110 132;
 
   /* Brand: mauve (firma catppuccin) */
   --maru-accent: 203 166 247;           /* #cba6f7 mauve */
@@ -409,7 +411,9 @@ body {
     Roboto,
     sans-serif;
   font-feature-settings: 'cv11', 'ss01', 'ss03';
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   -webkit-user-select: none;
   user-select: none;
@@ -700,13 +704,16 @@ select:focus-visible {
     transform: translateY(0);
   }
 
-  /* Input premium con focus ring sutil */
+  /* Input premium — UN solo contorno limpio (sin doble línea).
+     El focus se comunica con border-color + glow muy sutil (box-shadow
+     sin ring extra). Evita el efecto "doble borde" reportado en v1.0.32. */
   .maru-input {
     background: rgb(var(--maru-mn-input) / 0.95);
     color: rgb(var(--maru-fg));
     border: 1px solid rgb(var(--maru-mn-input-border));
     border-radius: var(--maru-radius-sm);
     padding: 0.5rem 0.75rem;
+    outline: none;
     transition:
       border-color var(--maru-dur-fast) var(--maru-ease),
       box-shadow var(--maru-dur-fast) var(--maru-ease),
@@ -715,10 +722,11 @@ select:focus-visible {
   .maru-input:hover:not(:disabled) {
     border-color: rgb(var(--maru-fg) / 0.18);
   }
-  .maru-input:focus {
+  .maru-input:focus,
+  .maru-input:focus-visible {
     border-color: rgb(var(--maru-mn-cyan));
     outline: none;
-    box-shadow: 0 0 0 3px rgb(var(--maru-mn-cyan) / 0.15);
+    box-shadow: 0 0 0 3px rgb(var(--maru-mn-cyan) / 0.10);
   }
   .maru-input::placeholder {
     color: rgb(var(--maru-fg-subtle));
@@ -840,4 +848,32 @@ select:focus-visible {
 .font-mono,
 [data-tabular] {
   font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Performance utilities
+ *
+ * `content-visibility: auto` permite al browser saltar layout/paint de
+ * elementos fuera del viewport. Aplicado al log scroll y grids de gifts
+ * con `data-cv-auto` da una mejora notable cuando hay 200+ filas.
+ *
+ * `contain: layout paint` aísla repaints — cuando una fila del log
+ * cambia, no invalida el layout de las demás.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-cv-auto] {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 32px;
+}
+
+[data-cv-auto-row] {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 28px;
+  contain: layout paint;
+}
+
+[data-cv-auto-card] {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 120px;
+  contain: layout paint;
 }

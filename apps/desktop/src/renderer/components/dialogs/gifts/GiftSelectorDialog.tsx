@@ -3,6 +3,7 @@ import { ImageOff, Search } from 'lucide-react';
 import { Button, Dialog, Empty, Input, Spinner } from '@maru/ui';
 import type { DonationGift } from '@maru/shared';
 import { useGifts } from '../../../lib/use-gifts.js';
+import { useDebouncedValue } from '../../../lib/hooks.js';
 import { GiftCard } from './GiftCard.js';
 
 /**
@@ -45,6 +46,9 @@ export function GiftSelectorDialog({
 }: GiftSelectorDialogProps) {
   const { allGifts, status, error, refresh } = useGifts({ autoLoad: open });
   const [search, setSearch] = useState('');
+  // Debounce 200ms — el filtro corre sobre 1000+ gifts. Sin esto cada
+  // keystroke recorre + ordena toda la lista. Input sigue typing inmediato.
+  const debouncedSearch = useDebouncedValue(search, 200);
   const [picked, setPicked] = useState<string | null>(initialId);
 
   useEffect(() => {
@@ -56,7 +60,7 @@ export function GiftSelectorDialog({
 
   const visible = useMemo(() => {
     const excluded = new Set(excludeIds);
-    const q = search.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     // Si el query es un número entero puro (ej. "100"), tratamos
     // también como filtro por coins exactos. Si trae texto, filtramos
     // por name/id como antes. Esto permite "1" → todas las que valen
@@ -78,7 +82,7 @@ export function GiftSelectorDialog({
     return out
       .slice()
       .sort((a, b) => b.coins - a.coins || a.name.localeCompare(b.name));
-  }, [allGifts, excludeIds, search, showDisabled]);
+  }, [allGifts, excludeIds, debouncedSearch, showDisabled]);
 
   const selected = visible.find((g) => g.id === picked) ?? null;
 

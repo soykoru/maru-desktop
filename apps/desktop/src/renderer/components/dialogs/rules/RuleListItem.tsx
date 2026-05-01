@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ArrowRight, Copy, Edit3, Play, Shuffle, Trash2 } from 'lucide-react';
 import { Badge, Button, Switch } from '@maru/ui';
 import { MaruImage } from '@maru/ui';
@@ -84,7 +85,7 @@ const EMPTY_GIFT_ICONS = new Map<string, string>();
 const EMPTY_GIFT_COINS = new Map<string, number>();
 const EMPTY_NAME_TO_CMD = new Map<string, string>();
 
-export function RuleListItem({
+function RuleListItemImpl({
   rule,
   gameId,
   giftIcons = EMPTY_GIFT_ICONS,
@@ -378,3 +379,11 @@ export function RuleListItem({
     </div>
   );
 }
+
+/**
+ * Memoizado por shallow-compare de props. Re-renderiza solo si cambia
+ * la regla, gameId, selected o busy. Optimización clave cuando hay
+ * muchas reglas y llegan eventos del live.
+ */
+export const RuleListItem = memo(RuleListItemImpl);
+RuleListItem.displayName = 'RuleListItem';

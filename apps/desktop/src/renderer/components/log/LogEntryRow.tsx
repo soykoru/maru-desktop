@@ -138,6 +138,7 @@ export const LogEntryRow = memo(function LogEntryRow({
 
   return (
     <div
+      data-cv-auto-row
       className={`group flex items-baseline gap-2 px-2 py-[3px] text-[11px] font-mono leading-snug rounded-sm relative pl-3 ${tint}`}
       title={`[${entry.source}] ${entry.message}`}
     >

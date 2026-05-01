@@ -3,6 +3,7 @@
  *
  * - `useDocumentVisible`: pausa polling cuando la ventana no está activa.
  * - `usePollingInterval`: setInterval que respeta visibility + cleanup correcto.
+ * - `useDebouncedValue`: debouncea cualquier valor (ideal para search inputs).
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -78,4 +79,25 @@ export function usePollingInterval(tick: () => void | Promise<void>, intervalMs:
       window.clearInterval(id);
     };
   }, [visible, intervalMs]);
+}
+
+/**
+ * Devuelve un valor debounced. Útil para search inputs donde no querés
+ * filtrar en cada keystroke (laggy en listas grandes). Default 250ms.
+ *
+ * Uso:
+ *   const [search, setSearch] = useState('');
+ *   const debouncedSearch = useDebouncedValue(search, 250);
+ *   // usar debouncedSearch en el filtro / RPC.
+ *
+ * El input sigue siendo controlled (typing inmediato), pero el filtro
+ * pesado (1000+ items) corre cada 250ms. Sin lag perceptible.
+ */
+export function useDebouncedValue<T>(value: T, delayMs: number = 250): T {
+  const [debounced, setDebounced] = useState<T>(value);
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
 }

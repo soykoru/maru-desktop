@@ -1,5 +1,108 @@
 # Changelog — maru-desktop
 
+## 1.0.33 — 2026-05-01 · ✨ FASE 1 polish: input limpio + temas refinados + perf
+
+Continuación del rediseño v1.0.32. Esta release ataca el feedback del
+user: **doble contorno** en inputs y **letras blancas que brillan**, +
+optimizaciones de performance reales sin tocar lógica.
+
+### 1) Doble contorno en inputs ELIMINADO
+
+**Bug visual reportado**: los inputs y barras de búsqueda mostraban
+DOS líneas: el `border` del wrapper + un `ring` exterior `focus-within`
+(2px adicionales). Quedaba el efecto de marco doble.
+
+**Fix sistémico** (1 cambio = arregla TODAS las búsquedas):
+- `packages/ui/src/components/Input.tsx`: removido
+  `focus-within:ring-2 focus-within:ring-mn-cyan/15`. Reemplazado por
+  `focus-within:shadow-[0_0_0_3px_rgb(126_214_223/0.10)]` — UN solo
+  contorno (border) que cambia color en focus + glow muy sutil sin
+  línea extra.
+- `packages/ui/src/components/Select.tsx`: misma corrección.
+- `packages/ui/styles/globals.css` `.maru-input`: idem.
+- Inputs internos ahora con `border-0 ring-0 focus:outline-none
+  focus:ring-0` para asegurar que ningún reset de Tailwind o browser
+  default agregue contorno extra.
+
+**Resultado**: barras de búsqueda en RulesTab, GiftSelectorDialog,
+GiftsDialog, SoundsDialog, SimulatorDialog, UsersTab, LogPanel,
+EntitySelectorDialog — todas se ven limpias con un solo contorno.
+
+### 2) Texto refinado en los 4 temas (sin "brillo" molesto)
+
+**Feedback**: las letras blancas brillaban demasiado contra los
+backgrounds oscuros (especialmente en streams largos cansa la vista).
+
+**Cambio**: bajado el `--maru-fg` de blanco puro `#ffffff` a off-white
+en cada tema. Mantiene contraste AAA pero suaviza el reflejo:
+
+| Tema | Antes | Ahora |
+|------|-------|-------|
+| Midnight | `#ffffff` | `#e8eaf4` (off-white frío premium) |
+| Dracula | `#f8f8f2` | `#e6e6de` (off-white cálido) |
+| Tokyo Night | `#c0caf5` | `#b8c4e8` (saturación bajada) |
+| Catppuccin Mocha | `#cdd6f4` | `#c4ccea` (entre text y subtext1) |
+
+También refinada la jerarquía `--maru-fg-muted` / `-subtle` / `-hint`
+en cada tema para que la diferencia entre niveles sea natural sin
+pelear con el fg principal.
+
+`body` agregado: `font-weight: 400` explícito + `-moz-osx-font-smoothing:
+grayscale` para rendering parejo cross-platform.
+
+### 3) Performance: memoización + content-visibility + debounce
+
+#### React.memo en RuleListItem
+Cuando hay 50+ reglas y llega un push event del live, ANTES todas las
+filas re-renderizaban. AHORA solo re-renderiza la fila cuya prop cambió
+(shallow compare). Mejora notable cuando el stream tiene mucha
+actividad.
+
+`apps/desktop/src/renderer/components/dialogs/rules/RuleListItem.tsx`:
+- Función renombrada a `RuleListItemImpl` interna.
+- Export `RuleListItem = memo(RuleListItemImpl)`.
+- Props con default values estables (los `EMPTY_*` Maps en module
+  scope) — clave para que el memo funcione bien.
+
+`LogEntryRow` ya estaba memoizado (sesión 30/04).
+
+#### content-visibility: auto en filas del log
+`globals.css`: nuevos atributos `data-cv-auto-row`, `data-cv-auto-card`,
+`data-cv-auto`. Aplican `content-visibility: auto` + `contain: layout
+paint` + `contain-intrinsic-size` calibrado.
+
+`LogEntryRow` ahora marcado con `data-cv-auto-row`. El browser salta
+layout/paint de filas fuera del viewport — beneficio masivo en buffers
+densos (200+ events).
+
+#### useDebouncedValue hook
+`apps/desktop/src/renderer/lib/hooks.ts`: nuevo hook
+`useDebouncedValue<T>(value, delayMs = 250)`. Útil para search inputs
+donde el filtro corre sobre listas grandes.
+
+Aplicado en `GiftSelectorDialog` (1000+ gifts en TikTok). El input
+sigue siendo controlado (typing instantáneo en pantalla), pero el
+filtro+sort pesado corre cada 200ms en lugar de cada keystroke.
+
+### 4) Garantías técnicas (intactas)
+
+- ✅ Sidecar Python ni se mira.
+- ✅ Main process Electron ni se mira.
+- ✅ RPCs sin cambios.
+- ✅ Push events bus, store Zustand intactos.
+- ✅ Regex de logs con emojis (`^🎵|^🎶|...`) intactas.
+- ✅ Strings con emojis en componentes intactos.
+- ✅ `.maru-bg-shell` con isolation+contain — anti-flicker mantenido.
+- ✅ `<Card>` sin backdrop-blur por default — no flicker en push events.
+
+### Métricas
+
+- CSS bundle: 64.59 KB → ~64.75 KB (+0.16 KB, content-visibility utils).
+- JS bundle main: 114.68 KB → 115.23 KB (+0.55 KB, hook nuevo).
+- Build pasa limpio en 1.88s, 1711 modules.
+
+---
+
 ## 1.0.32 — 2026-05-01 · 🎨 Premium Polish + Multi-Theme System
 
 Rediseño visual 100% premium **sin tocar lógica**. Sidecar Python, RPCs,
