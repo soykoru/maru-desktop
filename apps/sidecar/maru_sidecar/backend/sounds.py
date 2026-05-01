@@ -32,6 +32,7 @@ NO usa core.tts ni pygame. Solo IO + JSON.
 from __future__ import annotations
 
 import json
+import queue
 import re
 import threading
 import time
@@ -101,6 +102,16 @@ class SoundsService:
         self._mixer_ready = False
         self._mixer_lock = threading.Lock()
         DATA_DIR.mkdir(parents=True, exist_ok=True)
+        # Cola de sonidos para gifts/events. Sin esta cola, 100 rosas
+        # llegando juntas reproducían 100 sonidos SIMULTÁNEOS en
+        # mixer.Sound() → cacofonía. Ahora encolamos y un worker
+        # thread los reproduce uno tras otro, esperando a que termine
+        # el actual antes de empezar el siguiente.
+        # Capacidad limitada a 50 — si llega un streak gigante, los
+        # extras se descartan en silencio (mejor que freezar el live).
+        self._play_queue: queue.Queue[tuple[str, int]] = queue.Queue(maxsize=50)
+        self._play_worker: threading.Thread | None = None
+        self._play_worker_lock = threading.Lock()
 
     # ── Playback server-side (paridad MARU original con pygame) ──────────
 
@@ -126,8 +137,96 @@ class SoundsService:
                 log.debug("pygame.mixer no disponible: %s", exc)
                 return None
 
+    def _ensure_play_worker(self) -> None:
+        """Lazy-start del thread worker que consume la cola de sonidos
+        secuencialmente. Idempotente."""
+        with self._play_worker_lock:
+            if self._play_worker is not None and self._play_worker.is_alive():
+                return
+            t = threading.Thread(
+                target=self._play_worker_loop,
+                name="sounds-queue-worker",
+                daemon=True,
+            )
+            self._play_worker = t
+            t.start()
+
+    def _play_worker_loop(self) -> None:
+        """Loop del worker: saca un (path, volume) de la cola y lo
+        reproduce ESPERANDO a que termine antes de tomar el siguiente.
+        Asegura que un streak de 100 gifts encole 100 sonidos que
+        suenen uno tras otro, no todos a la vez."""
+        pg = self._ensure_mixer()
+        if pg is None:
+            return
+        while True:
+            try:
+                item = self._play_queue.get(timeout=60.0)
+            except queue.Empty:
+                # 60s sin sonidos → terminamos el worker y dejamos que
+                # se relance perezosamente cuando vuelva a haber.
+                with self._play_worker_lock:
+                    if self._play_queue.empty():
+                        self._play_worker = None
+                        return
+                continue
+            path_str, volume_pct = item
+            try:
+                p = Path(path_str)
+                if not p.is_file():
+                    continue
+                sound = pg.mixer.Sound(str(p))
+                try:
+                    sound.set_volume(
+                        max(0.0, min(1.0, float(volume_pct) / 100.0))
+                    )
+                except Exception:
+                    pass
+                channel = sound.play()
+                # Esperar a que termine este sonido antes de tomar el
+                # siguiente. Si pygame no devuelve channel (raro), fall
+                # back a sleep estimado por la duración del Sound.
+                if channel is not None:
+                    while channel.get_busy():
+                        pg.time.wait(25)
+                else:
+                    try:
+                        secs = sound.get_length()
+                    except Exception:
+                        secs = 0.5
+                    pg.time.wait(int(max(0.05, secs) * 1000))
+            except Exception as exc:
+                log.warning("sounds: worker play falló (%s): %s", path_str, exc)
+            finally:
+                try:
+                    self._play_queue.task_done()
+                except ValueError:
+                    pass
+
+    def _play_queued(self, path_str: str, volume_pct: int = 80) -> bool:
+        """Encola un sonido para reproducción secuencial. Si la cola
+        está llena (50 items pendientes) descarta silenciosamente para
+        no bloquear el loop del live."""
+        if not path_str:
+            return False
+        if not Path(path_str).is_file():
+            return False
+        try:
+            self._play_queue.put_nowait((path_str, int(volume_pct)))
+        except queue.Full:
+            log.debug("sounds: cola llena, descartando %s", path_str)
+            return False
+        self._ensure_play_worker()
+        return True
+
     def _play_file(self, path_str: str, volume_pct: int = 80) -> bool:
-        """Reproduce un archivo de audio en background. No bloquea."""
+        """Reproduce un archivo INMEDIATAMENTE sin pasar por la cola.
+        Útil para preview manual (botón Probar del SoundsDialog) donde
+        el user espera respuesta instantánea, no encolado.
+
+        Para gifts/events del live, usar `_play_queued` que encola y
+        reproduce secuencialmente — sin esto, 100 rosas llegando
+        juntas hacían sonar 100 sonidos a la vez."""
         if not path_str:
             return False
         p = Path(path_str)
@@ -204,29 +303,57 @@ class SoundsService:
             scopes.append("global")
         return scopes
 
+    def _lookup_gift_path(
+        self, gifts: dict[str, Any], gift_id: str
+    ) -> str | None:
+        """Lookup CASE-INSENSITIVE de un sonido por gift_id.
+
+        El SoundsDialog asigna sonidos con la `g.id` original (casing
+        de TikTok, ej. "Rose"). El worker REAL del core emite
+        `gift_name` en lowercase (ej. "rose"). Sin un lookup
+        case-insensitive, la asignación nunca matchea en producción
+        (solo en simulator que conserva casing).
+        """
+        if not gifts or not gift_id:
+            return None
+        # 1) Match exacto.
+        if gift_id in gifts:
+            return str(gifts[gift_id])
+        # 2) Match lower-cased (caso típico worker).
+        gid_lower = gift_id.lower()
+        if gid_lower in gifts:
+            return str(gifts[gid_lower])
+        # 3) Iteración case-insensitive (cubre todos los casings de
+        # las keys: si key="Rose" y query="rose", o viceversa).
+        for k, v in gifts.items():
+            if isinstance(k, str) and k.lower() == gid_lower:
+                return str(v)
+        return None
+
     def play_for_gift(self, gift_id: str, scope: str = "global") -> bool:
         """Llamado desde ChatDispatcher cuando llega un gift. Busca el
-        sonido en CASCADA: primero scope dado (si no es global),
-        luego juego activo (config.json:activeGame), luego global.
-        Antes solo intentaba `scope=global` y los sonidos asignados
-        al scope del juego activo nunca sonaban — ahora la asignación
-        funciona sin importar dónde se hizo."""
+        sonido en CASCADA: scope explícito → juego activo → global,
+        con lookup CASE-INSENSITIVE en cada scope. Ahora encola en vez
+        de reproducir directo — un streak de 100 rosas suena uno tras
+        otro, no todos a la vez."""
         scopes_to_try = self._resolve_scopes(scope)
-        gid_lower = gift_id.lower()
         for sc in scopes_to_try:
             try:
                 doc = self._read(sc)
             except Exception:
                 continue
             gifts = doc.get("gifts") or {}
-            path = gifts.get(gift_id) or gifts.get(gid_lower)
+            path = self._lookup_gift_path(gifts, gift_id)
             if path:
-                return self._play_file(str(path), int(doc.get("volume") or 80))
+                return self._play_queued(
+                    str(path), int(doc.get("volume") or 80)
+                )
         return False
 
     def play_for_event(self, event_id: str, scope: str = "global") -> bool:
         """`follow`, `share`, `superfan` — reproduce el sonido asignado.
-        Cascada: scope explícito → juego activo → global."""
+        Cascada: scope explícito → juego activo → global. También
+        encolado para evitar overlap en ráfagas de follows/shares."""
         if event_id not in EVENTS:
             return False
         for sc in self._resolve_scopes(scope):
@@ -236,7 +363,9 @@ class SoundsService:
                 continue
             path = (doc.get("events") or {}).get(event_id) or ""
             if path:
-                return self._play_file(str(path), int(doc.get("volume") or 80))
+                return self._play_queued(
+                    str(path), int(doc.get("volume") or 80)
+                )
         return False
 
     # ── Persistencia ─────────────────────────────────────────────────────

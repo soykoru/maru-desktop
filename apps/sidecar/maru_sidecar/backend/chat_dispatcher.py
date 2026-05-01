@@ -313,8 +313,11 @@ class ChatDispatcher:
         if self._sounds is not None and gift_name:
             try:
                 # Probar match exacto y lowercase (ids varían).
-                if not self._sounds.play_for_gift(gift_name):
-                    self._sounds.play_for_gift(gift_name.lower())
+                # Una sola llamada: el lookup interno de play_for_gift
+                # es case-insensitive y cascada de scopes. Antes había
+                # un fallback con .lower() pero NINGUNO matcheaba si la
+                # asignación original tenía casing distinto al recibido.
+                self._sounds.play_for_gift(gift_name)
             except Exception:
                 log.exception("sounds.play_for_gift fallo")
         # 2) Contador de gifts recibidos en sesión.

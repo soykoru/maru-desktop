@@ -295,12 +295,17 @@ class RuleDispatcher:
                     "success": ok,
                 }
                 if self._logs is not None:
+                    # skip_dedupe=True: cada ejecución de regla debe
+                    # aparecer como entry separado en el log (caso real:
+                    # streak de 10 rosas → 10 spawns de slime → user
+                    # quiere ver 10 lineas, no 1 colapsado por dedupe).
                     self._logs.publish(
                         full_msg,
                         level="INFO" if ok else "ERROR",
                         source="rules",
                         category="rule",
                         meta=meta_obj,
+                        skip_dedupe=True,
                     )
                 else:
                     bus.publish(

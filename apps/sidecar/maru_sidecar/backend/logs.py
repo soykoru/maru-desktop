@@ -336,13 +336,15 @@ class LogsService:
         source: str = "app",
         category: str | None = None,
         meta: dict[str, Any] | None = None,
+        skip_dedupe: bool = False,
     ) -> dict[str, Any]:
         """Agrega una entry al buffer y emite push event al renderer.
 
-        Dedupe ventana 500ms: si llega un publish IDÉNTICO (mismo
-        message+source+level) dentro de los últimos 500ms, lo ignoramos.
-        Sin esto, races por re-install de LogsBridgeHandler tras un
-        rebuild del core_bridge causaban entries duplicadas en el panel.
+        Dedupe ventana 500ms-2s para evitar duplicados por handlers
+        re-instalados / SocialSystem doble-fire. PERO algunos callers
+        (rule_dispatcher cuando se ejecuta una regla N veces seguidas
+        por un gift-streak) NECESITAN que cada disparo aparezca como
+        entry separado — para esos pasar `skip_dedupe=True`.
         """
         cat = category if category in VALID_CATEGORIES else detect_category(
             message, level
@@ -358,25 +360,30 @@ class LogsService:
         #      sources, milisegundos de diferencia → la 1ª clave no lo
         #      detecta. La 2ª (más estricta en tiempo, más amplia en clave)
         #      sí.
-        narrow_key = f"{level.upper()}::{source}::{message[:200]}"
-        broad_key = f"{level.upper()}::{message[:200]}"
-        with self._lock:
-            last_narrow = self._recent_keys.get(narrow_key)
-            if last_narrow is not None and now_ms - last_narrow < 2000:
-                return {"id": "", "ts": now_ms, "deduped": True}
-            last_broad = self._recent_keys.get(broad_key)
-            if last_broad is not None and now_ms - last_broad < 200:
-                # Mismo mensaje desde otra source en <200ms — duplicado
-                # casi seguro.
-                return {"id": "", "ts": now_ms, "deduped": True}
-            self._recent_keys[narrow_key] = now_ms
-            self._recent_keys[broad_key] = now_ms
-            # Garbage collect del dict si crece (>500 keys).
-            if len(self._recent_keys) > 500:
-                cutoff = now_ms - 5000
-                self._recent_keys = {
-                    k: v for k, v in self._recent_keys.items() if v >= cutoff
-                }
+        # Si skip_dedupe=True, salteamos AMBAS dedupes — caso del
+        # rule_dispatcher cuando un user dona 10 rosas y la regla
+        # spawn_slime se ejecuta 10 veces; el user QUIERE ver 10 entries
+        # en el log, no 1 colapsado.
+        if not skip_dedupe:
+            narrow_key = f"{level.upper()}::{source}::{message[:200]}"
+            broad_key = f"{level.upper()}::{message[:200]}"
+            with self._lock:
+                last_narrow = self._recent_keys.get(narrow_key)
+                if last_narrow is not None and now_ms - last_narrow < 2000:
+                    return {"id": "", "ts": now_ms, "deduped": True}
+                last_broad = self._recent_keys.get(broad_key)
+                if last_broad is not None and now_ms - last_broad < 200:
+                    # Mismo mensaje desde otra source en <200ms — duplicado
+                    # casi seguro.
+                    return {"id": "", "ts": now_ms, "deduped": True}
+                self._recent_keys[narrow_key] = now_ms
+                self._recent_keys[broad_key] = now_ms
+                # Garbage collect del dict si crece (>500 keys).
+                if len(self._recent_keys) > 500:
+                    cutoff = now_ms - 5000
+                    self._recent_keys = {
+                        k: v for k, v in self._recent_keys.items() if v >= cutoff
+                    }
         entry: dict[str, Any] = {
             "id": f"l-{uuid.uuid4().hex[:10]}",
             "ts": now_ms,

@@ -1,5 +1,74 @@
 # Changelog — maru-desktop
 
+## 1.0.29 — 2026-05-01 · 🪲 3 fixes raíz: gift sound case-insensitive + cola, log N entries, TikTok API render
+
+### 1) Sonidos no suenan en gifts REALES + 100 sonidos a la vez
+**Causa raíz #1** (no suenan): el SoundsDialog asigna sonidos por
+`g.id` con casing original de TikTok (ej. `"Rose"`), pero el WORKER
+REAL del core emite `gift_name` en **lowercase**
+(`core/tiktok_client.py:320: gift_lower = gift_name.lower()`). El
+simulador conserva el casing (`"Rose"`) → matchea; el live envía
+`"rose"` → no matchea (lookup falla porque la KEY del dict es
+`"Rose"`, mi fallback `.lower()` no ayuda).
+**Fix #1**: nuevo `_lookup_gift_path` con lookup CASE-INSENSITIVE —
+prueba match exacto, lower, y finalmente itera todas las keys
+comparando lower-vs-lower. Ahora el sonido suena sin importar el
+casing usado al asignar.
+
+**Causa raíz #2** (todos a la vez): `pygame.mixer.Sound.play()`
+reproduce inmediatamente sin esperar — un streak de 100 rosas
+encolaba 100 sonidos simultáneamente en el mixer → cacofonía.
+**Fix #2**: nueva cola interna (`queue.Queue` capacidad 50) +
+worker thread que reproduce uno tras otro **esperando a que termine
+el actual** (`channel.get_busy()`). Si la cola se llena (>50
+pendientes), descarta el resto silencioso para no freezar el live.
+- `play_for_gift` y `play_for_event` ahora usan `_play_queued`
+  (cola).
+- `tts.test`/preview manual sigue usando `_play_file` directo
+  (instantáneo, no encolado — el user clickea Probar y espera audio
+  inmediato).
+
+### 2) Log no muestra N entries cuando regla dispara N veces
+**Causa raíz**: el dedupe v1.0.23 de `LogsService.publish` colapsa
+publishes con mismo `(level, source, message)` en 2s para evitar
+duplicados de race. Pero el `rule_dispatcher` cuando un user dona
+10 rosas y la regla `spawn_slime` se ejecuta 10 veces, mandaba 10
+publishes idénticos `"✅ slime → ok · @user"` → dedupe los colapsaba
+a 1. El user veía 10 spawns en el juego pero solo 1 línea en el log.
+**Fix**: nuevo parámetro `skip_dedupe: bool = False` en
+`LogsService.publish`. El `rule_dispatcher` lo pasa `True` cuando
+publica una ejecución de regla → cada uno de los 10 spawns aparece
+como entry separado en el log. Las dedupes para handlers
+re-instalados / SocialSystem doble-fire (caso original del v1.0.23)
+siguen funcionando para todos los demás callers.
+
+### 3) TikTok API modal sigue saliendo en blanco
+**Causa raíz**: el render del bloque principal estaba dentro de
+`{(status || isConnected) && (<>...</>)}`. Si el RPC `tiktok.status`
+no respondió aún (primera milisecunda al abrir el modal) Y el user
+NO está conectado al live (tiktokStatus='disconnected'), la
+expresión es `(null || false)` = `false` → modal en BLANCO.
+**Fix**:
+- Sección principal SIEMPRE se renderea (sin condicional).
+- Si `status` aún no está y no hubo error, se ve un banner
+  "🔄 Consultando sidecar…" mientras llega.
+- Si el user no está conectado, se ve "Sin usuario · conectate al
+  live desde el sidebar" en lugar de seccion vacía.
+- Stats con valores por default (0) siempre visibles → diagnóstico
+  inmediato si no llegan push events.
+
+### Archivos tocados
+
+- `apps/sidecar/maru_sidecar/backend/sounds.py` — `_play_queued`,
+  worker thread, `_lookup_gift_path` case-insensitive, queue.
+- `apps/sidecar/maru_sidecar/backend/logs.py` — `skip_dedupe` param.
+- `apps/sidecar/maru_sidecar/backend/rule_dispatcher.py` — pasa
+  `skip_dedupe=True`.
+- `apps/sidecar/maru_sidecar/backend/chat_dispatcher.py` — single
+  call a `play_for_gift` (lookup interno cubre casing).
+- `apps/desktop/src/renderer/components/dialogs/tiktok/TikTokApiInfoDialog.tsx`
+  — render incondicional + banner "consultando".
+
 ## 1.0.28 — 2026-05-01 · 🪲 9 fixes raíz: game id, sounds cascade, sticker simulator, log persistente, gifts search
 
 ### 1) Game ID rechazaba al guardar editando categorías (caso 7_days)
