@@ -133,7 +133,7 @@ export function LogPanel(): ReactNode {
     <>
       <Card className="shrink-0">
         <CardBody className="py-2 px-3">
-          <StatsCounters stats={log.stats} />
+          <StatsCounters entries={log.entries} />
         </CardBody>
       </Card>
 

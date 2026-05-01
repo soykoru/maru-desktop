@@ -104,6 +104,11 @@ BUNDLE_TEMPLATES_DIR: Final[Path] = BUNDLE_GAME_IMAGES_DIR / "_templates"
 
 # User data (writable) — donde se guardan PNGs auto-descargados runtime.
 USERDATA_DONACIONES_DIR: Final[Path] = DATA_DIR / "donaciones"
+# User-writable game images: cuando el user agrega/cambia el ícono de
+# un entry custom en EntryEditForm, se copia acá. El image-lookup
+# busca primero acá, después en BUNDLE_GAME_IMAGES_DIR (que es
+# read-only en el .exe instalado). Mismo layout: <gid>/<cat>/<file>.png.
+USERDATA_GAME_IMAGES_DIR: Final[Path] = DATA_DIR / "game_images"
 
 
 def ensure_runtime_dirs() -> None:
@@ -116,6 +121,7 @@ def ensure_runtime_dirs() -> None:
         SECRETS_DIR,
         SPOTIFY_SECRETS_DIR,
         USERDATA_DONACIONES_DIR,
+        USERDATA_GAME_IMAGES_DIR,
     ):
         d.mkdir(parents=True, exist_ok=True)
 
@@ -137,6 +143,7 @@ __all__ = [
     "BUNDLE_DONACIONES_DIR",
     "BUNDLE_TRIGGERS_DIR",
     "BUNDLE_GAME_IMAGES_DIR",
+    "USERDATA_GAME_IMAGES_DIR",
     "BUNDLE_TEMPLATES_DIR",
     "USERDATA_DONACIONES_DIR",
     "ensure_runtime_dirs",

@@ -1,7 +1,18 @@
 import { useEffect, useId, useState } from 'react';
-import { Loader2, Play, Trash2 } from 'lucide-react';
-import { Button, Input, Label, TextArea } from '@maru/ui';
+import { ImageIcon, Loader2, Play, Trash2, Upload } from 'lucide-react';
+import { Button, Input, Label, MaruImage, TextArea } from '@maru/ui';
 import type { DataEntry, DataKind, GameId } from '@maru/shared';
+import { rpcCall } from '../../../lib/rpc.js';
+
+// Mapa de DataKind ('entities'/'items'/'events'/'valuables') →
+// carpeta donde se guarda la imagen en el bundle. Sigue la convención
+// de game_images/<gid>/<categoryFolder>/<command>.png.
+const KIND_TO_FOLDER: Record<string, string> = {
+  entities: 'entities',
+  items: 'items',
+  events: 'events',
+  valuables: 'valuables',
+};
 
 /**
  * `EntryEditForm` — form inline para create/edit de un entry.
@@ -31,6 +42,8 @@ const EMPTY: DataEntry = { name: '', command: '' };
 export function EntryEditForm({
   entry,
   multilineCommand,
+  gameId,
+  kind,
   onSubmit,
   onCancel,
   onDelete,
@@ -43,7 +56,11 @@ export function EntryEditForm({
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] =
     useState<{ ok: boolean; message: string } | null>(null);
+  const [imageBust, setImageBust] = useState(0);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageFlash, setImageFlash] = useState<string | null>(null);
   const idPrefix = useId();
+  const folder = KIND_TO_FOLDER[String(kind)] ?? String(kind);
 
   useEffect(() => {
     setDraft(initial);
@@ -56,6 +73,72 @@ export function EntryEditForm({
   const dirty =
     draft.name !== initial.name || draft.command !== initial.command;
   const canSave = !busy && !nameInvalid && !commandInvalid && (isCreate || dirty);
+
+  async function handleUploadImage() {
+    if (!draft.command.trim() || !gameId || !folder) {
+      setImageFlash('Definí primero el Comando para guardar la imagen');
+      window.setTimeout(() => setImageFlash(null), 3000);
+      return;
+    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/webp,image/gif';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const path = window.maruApi.getPathForFile(file);
+      if (!path) {
+        setImageFlash('No pude obtener el path absoluto del archivo');
+        window.setTimeout(() => setImageFlash(null), 3000);
+        return;
+      }
+      setImageBusy(true);
+      try {
+        const r = await rpcCall('images.set-entry-image', {
+          gameId,
+          category: folder,
+          command: draft.command.trim(),
+          sourcePath: path,
+        });
+        if (r.ok) {
+          setImageBust(Date.now());
+          setImageFlash('✓ Imagen actualizada');
+        } else {
+          setImageFlash(`✗ ${r.message ?? 'no se pudo guardar'}`);
+        }
+      } catch (ex) {
+        setImageFlash(ex instanceof Error ? ex.message : String(ex));
+      } finally {
+        setImageBusy(false);
+        window.setTimeout(() => setImageFlash(null), 3000);
+      }
+    };
+    input.click();
+  }
+
+  async function handleDeleteImage() {
+    if (!draft.command.trim() || !gameId || !folder) return;
+    if (!confirm('¿Quitar la imagen custom y volver a la del bundle/default?')) return;
+    setImageBusy(true);
+    try {
+      const r = await rpcCall('images.delete-entry-image', {
+        gameId,
+        category: folder,
+        command: draft.command.trim(),
+      });
+      if (r.ok) {
+        setImageBust(Date.now());
+        setImageFlash(
+          r.removed ? '✓ Imagen quitada' : 'No había imagen custom',
+        );
+      }
+    } catch (ex) {
+      setImageFlash(ex instanceof Error ? ex.message : String(ex));
+    } finally {
+      setImageBusy(false);
+      window.setTimeout(() => setImageFlash(null), 3000);
+    }
+  }
 
   async function handleTest() {
     if (!onTest) return;
@@ -92,6 +175,84 @@ export function EntryEditForm({
         void onSubmit(final, isCreate ? undefined : initial.name);
       }}
     >
+      {/* Imagen del entry — se guarda en USERDATA_GAME_IMAGES_DIR/<gid>/<cat>/<command>.<ext>
+          y aparece en la lista de Datos / acciones de reglas / etc.
+          Antes solo se podía cambiar editando archivos del bundle a mano
+          (lo que el user pidió como "como el MARU antiguo"). */}
+      {gameId && folder && (
+        <div className="rounded-lg border border-border bg-bg-elev/30 p-3">
+          <div className="flex items-center gap-3">
+            <div className="shrink-0 flex h-16 w-16 items-center justify-center rounded-md bg-bg-base/40 overflow-hidden">
+              {draft.command.trim() ? (
+                <MaruImage
+                  scope="game"
+                  // Bust el cache cuando subimos una imagen nueva.
+                  path={`${gameId}/${folder}/${draft.command.trim()}.png${imageBust ? `?v=${imageBust}` : ''}`}
+                  alt={draft.name || draft.command}
+                  width={64}
+                  height={64}
+                  fallback={{
+                    scope: 'game',
+                    path: `${gameId}/${folder}/_default_${folder}.png`,
+                  }}
+                  className="object-contain max-w-[64px] max-h-[64px]"
+                />
+              ) : (
+                <ImageIcon className="h-6 w-6 text-fg-subtle" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <Label>Imagen del entry</Label>
+              <p className="text-[11px] text-fg-subtle leading-snug">
+                {draft.command.trim()
+                  ? 'Click "Cambiar" para subir tu propio PNG/JPG. Se sobrepone a la imagen del bundle.'
+                  : 'Definí el comando primero — la imagen se guarda como <command>.png.'}
+              </p>
+              {imageFlash && (
+                <p
+                  className={
+                    'text-[10px] mt-1 ' +
+                    (imageFlash.startsWith('✗') ||
+                    imageFlash.startsWith('No pude')
+                      ? 'text-danger'
+                      : 'text-success')
+                  }
+                >
+                  {imageFlash}
+                </p>
+              )}
+            </div>
+            <div className="shrink-0 flex flex-col gap-1.5">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void handleUploadImage()}
+                disabled={busy || imageBusy || !draft.command.trim()}
+                title="Subir imagen custom para este entry"
+              >
+                {imageBusy ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Upload className="h-3 w-3" />
+                )}
+                Cambiar
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => void handleDeleteImage()}
+                disabled={busy || imageBusy || !draft.command.trim()}
+                title="Quitar imagen custom (vuelve al default)"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <Label htmlFor={`${idPrefix}-name`} required>
           Nombre visible

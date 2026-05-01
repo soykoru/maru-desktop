@@ -36,6 +36,7 @@ from maru_sidecar.runtime import (
     BUNDLE_TEMPLATES_DIR,
     BUNDLE_TRIGGERS_DIR,
     USERDATA_DONACIONES_DIR,
+    USERDATA_GAME_IMAGES_DIR,
 )
 from maru_sidecar.logger import get_logger
 
@@ -308,31 +309,37 @@ class ImageIndex:
                 self._trigger_index[short.lower()] = rel
 
     def _scan_game_images(self) -> None:
-        if not BUNDLE_GAME_IMAGES_DIR.exists():
-            return
-        for game_dir in BUNDLE_GAME_IMAGES_DIR.iterdir():
-            if not game_dir.is_dir():
+        # Escaneamos AMBAS dirs: bundle (read-only del .exe) y userdata
+        # (writable, donde el user agrega imágenes custom). Userdata
+        # tiene PRIORIDAD: si el user subió una imagen para un entry,
+        # debe sobreescribir la del bundle.
+        # Orden importa: primero bundle, luego userdata para que las
+        # del user pisen las del bundle en el dict.
+        for base_dir in (BUNDLE_GAME_IMAGES_DIR, USERDATA_GAME_IMAGES_DIR):
+            if not base_dir.exists():
                 continue
-            if game_dir.name == "_templates":
-                continue  # se maneja en _scan_templates
-            game_id = game_dir.name
-            self._entity_index.setdefault(game_id, {})
-            for cat_dir in game_dir.iterdir():
-                if not cat_dir.is_dir():
+            for game_dir in base_dir.iterdir():
+                if not game_dir.is_dir():
                     continue
-                cat = cat_dir.name
-                cat_map: dict[str, str] = {}
-                for f in cat_dir.iterdir():
-                    if not (f.is_file() and f.suffix.lower() in _IMG_EXTS):
+                if game_dir.name == "_templates":
+                    continue  # se maneja en _scan_templates
+                game_id = game_dir.name
+                self._entity_index.setdefault(game_id, {})
+                for cat_dir in game_dir.iterdir():
+                    if not cat_dir.is_dir():
                         continue
-                    rel = f"game/{game_id}/{cat}/{f.name}"
-                    if f.stem.startswith("_default_"):
-                        # _default_<cat>.png → registrar como default de categoría.
-                        self._category_defaults[(game_id, cat)] = rel
-                        continue
-                    cat_map[f.stem] = rel
-                    cat_map[f.stem.lower()] = rel
-                self._entity_index[game_id][cat] = cat_map
+                    cat = cat_dir.name
+                    cat_map = self._entity_index[game_id].setdefault(cat, {})
+                    for f in cat_dir.iterdir():
+                        if not (f.is_file() and f.suffix.lower() in _IMG_EXTS):
+                            continue
+                        rel = f"game/{game_id}/{cat}/{f.name}"
+                        if f.stem.startswith("_default_"):
+                            # _default_<cat>.png → registrar como default de categoría.
+                            self._category_defaults[(game_id, cat)] = rel
+                            continue
+                        cat_map[f.stem] = rel
+                        cat_map[f.stem.lower()] = rel
 
     def _scan_templates(self) -> None:
         if not BUNDLE_TEMPLATES_DIR.exists():
@@ -534,6 +541,93 @@ class ImagesService:
         """Forzar rescan del bundle (útil después de auto-descarga)."""
         self._index.rebuild()
         return self._index.stats()
+
+    # ── RPC: subir imagen custom para entry / categoría ────────────────
+
+    _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\- ]+$")
+
+    def set_entry_image(self, params: dict[str, object]) -> dict[str, object]:
+        """Copia una imagen del filesystem del usuario al
+        `USERDATA_GAME_IMAGES_DIR/<gameId>/<category>/<command>.png`.
+
+        Permite al user asignar un ícono custom a un entry (entity/item/
+        event) desde el EntryEditForm. La imagen sobreescribe la del
+        bundle si existe, gracias al merge de `_scan_game_images` que
+        prioriza userdata.
+
+        Params:
+          - gameId: id del juego (alfanumérico).
+          - category: carpeta de categoría (entities/items/events/valuables/
+            o cat_id custom).
+          - command: nombre del archivo destino sin extensión.
+          - sourcePath: path absoluto al archivo origen (PNG/JPG/etc.).
+
+        Devuelve `{ok, relPath}` con el path relativo `game/<gid>/<cat>/<file>.png`
+        que el renderer puede pasar a `<MaruImage>`.
+        """
+        import shutil
+        gid = str(params.get("gameId") or "").strip()
+        cat = str(params.get("category") or "").strip()
+        cmd = str(params.get("command") or "").strip()
+        src = str(params.get("sourcePath") or "").strip()
+        if not gid or not cat or not cmd:
+            return {"ok": False, "message": "gameId/category/command requeridos"}
+        if not src or not Path(src).is_file():
+            return {"ok": False, "message": f"archivo origen no existe: {src}"}
+        # Sanitización defensiva — evitar path traversal con ".." en
+        # gameId/category/command.
+        if (".." in gid or ".." in cat or ".." in cmd
+                or "/" in gid or "/" in cat or "\\" in gid or "\\" in cat
+                or "/" in cmd or "\\" in cmd):
+            return {"ok": False, "message": "id/cat/command con caracteres inválidos"}
+        ext = Path(src).suffix.lower()
+        if ext not in _IMG_EXTS:
+            return {"ok": False, "message": f"extensión {ext} no soportada"}
+        # Destino: siempre como .png (los iconos del game scope
+        # se buscan por stem, y png es el formato estándar).
+        # Pero copiamos con la extensión original para no recodificar.
+        target_dir = USERDATA_GAME_IMAGES_DIR / gid / cat
+        target_dir.mkdir(parents=True, exist_ok=True)
+        # Borrar variantes anteriores con MISMO stem para evitar dos
+        # archivos del mismo entry con distintas extensiones (jpg + png).
+        for old in target_dir.glob(f"{cmd}.*"):
+            try:
+                old.unlink()
+            except Exception:
+                pass
+        target = target_dir / f"{cmd}{ext}"
+        try:
+            shutil.copyfile(src, target)
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+        # Forzar rebuild del index para que el lookup encuentre la imagen.
+        self._index.rebuild()
+        return {
+            "ok": True,
+            "relPath": f"game/{gid}/{cat}/{target.name}",
+        }
+
+    def delete_entry_image(self, params: dict[str, object]) -> dict[str, object]:
+        """Elimina la imagen custom del user (vuelve a usar la del
+        bundle o el _default_<cat>.png si existe)."""
+        gid = str(params.get("gameId") or "").strip()
+        cat = str(params.get("category") or "").strip()
+        cmd = str(params.get("command") or "").strip()
+        if not gid or not cat or not cmd:
+            return {"ok": False, "message": "gameId/category/command requeridos"}
+        if (".." in gid or ".." in cat or ".." in cmd):
+            return {"ok": False, "message": "id/cat/command con caracteres inválidos"}
+        target_dir = USERDATA_GAME_IMAGES_DIR / gid / cat
+        removed = 0
+        for f in target_dir.glob(f"{cmd}.*"):
+            try:
+                f.unlink()
+                removed += 1
+            except Exception:
+                pass
+        if removed:
+            self._index.rebuild()
+        return {"ok": True, "removed": removed}
 
 
 __all__ = [

@@ -377,6 +377,8 @@ def build_default_registry() -> MethodRegistry:
     )
     reg.register("images.stats", lambda _p: images_svc.stats())
     reg.register("images.rebuild", lambda _p: images_svc.rebuild())
+    reg.register("images.set-entry-image", images_svc.set_entry_image)
+    reg.register("images.delete-entry-image", images_svc.delete_entry_image)
 
     # sounds.* (G10)
     reg.register("sounds.list", sounds_svc.list)

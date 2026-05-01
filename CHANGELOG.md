@@ -1,5 +1,76 @@
 # Changelog — maru-desktop
 
+## 1.0.31 — 2026-05-01 · 🪲 3 fixes: editor de imagen de entries, música mal categorizada, stats counters reales
+
+### 1) Editor de imagen para entries de juegos (paridad MARU original)
+**Problema**: en MARU original, al crear/editar un entry (entity/item/
+event) en la pestaña Datos, podías subir tu propio PNG/JPG como
+icono. La nueva versión solo te dejaba editar nombre + comando — la
+imagen seguía pegada a lo que vino con el bundle.
+**Fix completo (server + client)**:
+- Nuevo dir runtime `USERDATA_GAME_IMAGES_DIR` (`<appdata>/data/game_images/`)
+  para guardar los iconos custom del user (writable, no se pisa con
+  cada update del .exe).
+- `ImageIndex._scan_game_images` ahora escanea ambas dirs (bundle
+  read-only + userdata writable) y prioriza userdata si hay archivo
+  con el mismo nombre. El image-protocol del Electron main ya
+  soportaba esa prioridad.
+- 2 RPCs nuevos:
+  - `images.set-entry-image({gameId, category, command, sourcePath})`
+    — copia el archivo del filesystem del user a la dir userdata
+    del game, sanitiza paths (no permite `..` ni `/`), borra
+    variantes anteriores con mismo stem (evita duplicados con
+    distintas extensiones).
+  - `images.delete-entry-image({gameId, category, command})` —
+    quita la imagen custom y vuelve a la del bundle / `_default_<cat>.png`.
+  - Ambos hacen rebuild del index para que el lookup encuentre la
+    imagen al instante sin reiniciar el sidecar.
+- `EntryEditForm` (DataDialog) ahora muestra un bloque de imagen
+  arriba del campo Nombre:
+  - Preview 64×64 de la imagen actual (cache-busted al subir nueva).
+  - Botón "Cambiar" → file picker (PNG/JPG/WEBP/GIF) → upload.
+  - Botón trash → `images.delete-entry-image` para volver al default.
+  - Estado: deshabilitado hasta que el `command` esté definido (la
+    imagen se guarda como `<command>.<ext>`).
+
+### 2) Logs de Spotify/música clasificados como "Sistema"
+**Causa raíz**: el regex `r"\btiktok\b|🎵|live"` para categoría
+`tiktok` matcheaba el emoji `🎵`. Mensajes del Spotify player que
+arrancan con `🎵` (típico: "🎵 ▶ Track - Artist") caían en
+`tiktok` → pill "Sistema" en vez de "Música".
+**Fix**:
+- Nueva regla regex de alta prioridad: `^🎵|^🎶|^🎷|^🎺|^🎸|^🎻|^🥁`
+  → categoría `music`. Cualquier mensaje que arranque con emoji
+  musical va al pill "Música".
+- Removido `🎵` del regex de `tiktok` (ya no causa el conflicto).
+- Ampliado el regex genérico de music con palabras clave extras:
+  `cancion`, `canción`, `track`, `reproduciendo`.
+
+### 3) Stats counters arriba del log no detectaban nada
+**Causa raíz**: `StatsCounters` leía `log.stats` (counter incremental
+del store que se mantenía vía `pushLogEntry`). En ciertos casos
+(rebuild del slice, race con `loadInitial` que pisa con stats del
+sidecar), los counters se quedaban out-of-sync con las entries
+reales del buffer.
+**Fix**: `StatsCounters` ahora cuenta DIRECTO desde `entries` del
+buffer (max 500). Si limpias el log → vuelven a 0. Si llega un evento
+→ incrementa al instante. Refleja exactamente lo que se ve en panel,
+sin depender de un counter intermedio.
+
+### Archivos tocados
+
+- `apps/sidecar/maru_sidecar/runtime.py` — `USERDATA_GAME_IMAGES_DIR`.
+- `apps/sidecar/maru_sidecar/backend/images.py` — scan dual dir +
+  RPCs `set-entry-image` / `delete-entry-image`.
+- `apps/sidecar/maru_sidecar/backend/logs.py` — regex música prioritario.
+- `apps/sidecar/maru_sidecar/rpc/registry.py` — registra los 2 RPCs nuevos.
+- `apps/desktop/src/renderer/components/dialogs/data/EntryEditForm.tsx`
+  — bloque de imagen + handleUploadImage / handleDeleteImage.
+- `apps/desktop/src/renderer/components/log/StatsCounters.tsx`
+  — props `entries` (no más `stats`); cuenta del buffer directo.
+- `apps/desktop/src/renderer/components/LogPanel.tsx` — pasa
+  `log.entries` en vez de `log.stats`.
+
 ## 1.0.30 — 2026-05-01 · 🪲 4 fixes: spawn HTTP debug, gifts log individuales, RuleListItem responsive, TikTok estado claro
 
 ### 1) Mensaje "🎯 🐍 terraria spawn ... HTTP 200" innecesario en log

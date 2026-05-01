@@ -59,6 +59,12 @@ _CATEGORY_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"^⭐|se suscrib|new subscriber", re.IGNORECASE), "subscribe"),
     (re.compile(r"^⌨️|^!"), "command"),
     (re.compile(r"^🐉|^📦|^⚡|spawn |give_item|trigger_event"), "action"),
+    # Música: emoji-prefix de música/notas — mensajes de Spotify
+    # típicamente arrancan con "🎵" o "🎶". Estos van ANTES que el
+    # regex genérico de tiktok que también matcheaba 🎵 → caía en
+    # `tiktok`/Sistema. Subido a alta prioridad para que todo lo
+    # musical caiga en pill Música.
+    (re.compile(r"^🎵|^🎶|^🎷|^🎺|^🎸|^🎻|^🥁"), "music"),
     # Reglas más amplias después, solo aplican si los emoji-prefix no.
     (re.compile(r"\bgift\b|\bdonacion|\bregalo", re.IGNORECASE), "gift"),
     (re.compile(r"^[+➕]?\s*nuevo follow|seguidor", re.IGNORECASE), "follow"),
@@ -68,12 +74,14 @@ _CATEGORY_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bcommand\b|comando", re.IGNORECASE), "command"),
     (re.compile(r"\brule\b|regla|trigger.*action", re.IGNORECASE), "rule"),
     (re.compile(r"\bsocial\b|duelo|matrimonio|noviazgo", re.IGNORECASE), "social"),
-    (re.compile(r"\bspotify|playfan|música|musica", re.IGNORECASE), "music"),
+    (re.compile(r"\bspotify|playfan|música|musica|cancion|canción|track\b|\breproduciendo\b", re.IGNORECASE), "music"),
     (re.compile(r"\bia\b|claude|groq|gemini|openai", re.IGNORECASE), "ia"),
     (re.compile(r"\btts\b|voz|speak", re.IGNORECASE), "tts"),
     (re.compile(r"\bsound\b|sonido", re.IGNORECASE), "sound"),
     (re.compile(r"\bprofile\b|perfil", re.IGNORECASE), "profile"),
-    (re.compile(r"\btiktok\b|🎵|live", re.IGNORECASE), "tiktok"),
+    # Quitamos 🎵 del regex de tiktok (estaba causando el bug del
+    # spotify clasificado como sistema).
+    (re.compile(r"\btiktok\b|live", re.IGNORECASE), "tiktok"),
 ]
 
 # Mapeo de level → categoría fallback.
