@@ -629,6 +629,31 @@ class TikTokService:
                 "data": merged,
             }
             bus.publish("tiktok:event", payload)
+            # Log INDIVIDUAL por cada gift recibido (1 entry por evento,
+            # no resumen por streak). El worker emite N events para un
+            # streak de N rosas → vemos N entries "@user envió: rose"
+            # secuenciales en vez del summary "envió 3 rosas" que
+            # confunde cuando se actualiza a "envió 5 rosas".
+            # skip_dedupe=True porque message es idéntico entre los N
+            # events del streak — sin esto, el dedupe colapsaría a 1.
+            if event_type == "gift" and self._logs is not None:
+                gift_name = (
+                    data.get("gift_name")
+                    or data.get("giftName")
+                    or data.get("gift_id")
+                    or "gift"
+                )
+                rank_pref = _rank_prefix(merged) if ranks else ""
+                try:
+                    self._logs.publish(
+                        f"🎁 {rank_pref}@{user} envió: {gift_name}",
+                        level="INFO",
+                        source="tiktok",
+                        category="gift",
+                        skip_dedupe=True,
+                    )
+                except Exception:
+                    pass
 
         def _on_stats(stats: dict[str, Any]) -> None:
             self._stats.update({k: int(v) for k, v in stats.items() if isinstance(v, (int, float))})
@@ -657,24 +682,33 @@ class TikTokService:
             backoff, errores API). Vía LogsService → push event `log:entry`
             (única ruta para evitar duplicados en el panel).
 
-            FILTRO: el handler ORIGINAL del core emite `💬 @user: text` y
-            `⌨️ !cmd de @user` SIN prefijo de rangos. Lo suprimimos acá y
-            emitimos la versión enriquecida desde `_on_comment_enriched`
-            (que sí tiene super_fan/mod/etc. del UserIdentity).
+            FILTROS:
+            - `💬 @user: text` y `⌨️ !cmd de @user`: suprimidos para
+              evitar duplicado con la versión enriquecida del
+              `_on_comment_enriched` (que trae rangos).
+            - `🎁 @user envió: rose xN` (streak summary): suprimidos
+              también — el user pidió ver UN entry por cada gift
+              recibido (no la suma del streak), así que generamos
+              esos logs individualmente desde `_on_event(type=gift)`
+              que sí dispara una vez por cada repeat. Sin esto, el
+              user veía "envió 3 rosas" → segundos después "envió 5
+              rosas" sumando, cuando lo que quería era 5 entries
+              individuales "envió 1 rosa".
 
             Categoría: NO la forzamos a "tiktok". Pasamos category=None y
             dejamos que `LogsService.detect_category` clasifique por el
-            emoji-prefix del mensaje (🎁→gift, ❤️→like, ➕→follow, 📤→share,
-            🎨→emote). Sin esto, los pills de Likes/Gifts/Follows/Shares
-            del LogPanel quedaban huérfanos: TODOS los eventos en vivo
-            caían en categoría "tiktok" y solo se veían bajo "Sistema".
+            emoji-prefix del mensaje.
             """
             if self._logs is None:
                 return
             msg = str(message)
-            # Suprimir las dos formas de log de comments del core para
-            # evitar duplicados con la versión enriquecida.
+            # Suprimir comments / commands (versión enriched los maneja)
+            # y gift summaries por streak (los emitimos individuales).
             if msg.startswith("💬 @") or msg.startswith("⌨️ !"):
+                return
+            if msg.startswith("🎁 @"):
+                # Suprimimos el summary del worker (puede traer "x3" al final).
+                # Los logs individuales por cada gift los emite _on_event.
                 return
             try:
                 self._logs.publish(

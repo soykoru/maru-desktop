@@ -77,8 +77,18 @@ export function TikTokApiInfoDialog() {
   // Datos efectivos: priorizar el store (push events live) sobre el
   // snapshot del RPC para los campos de runtime.
   const isConnected = tiktokStatus === 'connected' || !!status?.connected;
+  const isConnecting = tiktokStatus === 'connecting';
   const usernameToShow = tiktokUsername || status?.username || null;
   const statsToShow = tiktokStats || status?.stats || {};
+  // Badge de estado más descriptivo (cubre conectando + reconectando).
+  const stateBadge: { variant: 'success' | 'default' | 'warning'; text: string } =
+    isConnected
+      ? { variant: 'success', text: '🟢 Conectado' }
+      : isConnecting
+        ? { variant: 'warning', text: '🟡 Conectando…' }
+        : tiktokStatus === 'error'
+          ? { variant: 'warning', text: '⚠ Error' }
+          : { variant: 'default', text: '⚪ Desconectado' };
 
   return (
     <Dialog
@@ -111,27 +121,26 @@ export function TikTokApiInfoDialog() {
           </div>
         )}
         <>
-            {/* Estado conexión */}
+            {/* Estado conexión — siempre con badge (covers
+                connected/connecting/error/disconnected) y siempre con
+                texto del usuario debajo (incluso si está vacío). */}
             <div className="rounded-xl border border-border bg-bg-elev/40 p-3 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-                  Estado
+                  Estado TikTok Live
                 </span>
-                {isConnected ? (
-                  <Badge variant="success">🟢 Conectado</Badge>
+                <Badge variant={stateBadge.variant}>{stateBadge.text}</Badge>
+              </div>
+              <div className="text-sm">
+                Usuario:{' '}
+                {usernameToShow ? (
+                  <strong>@{usernameToShow}</strong>
                 ) : (
-                  <Badge variant="default">⚪ Desconectado</Badge>
+                  <span className="text-fg-subtle italic">
+                    sin usuario · conectate desde el sidebar
+                  </span>
                 )}
               </div>
-              {usernameToShow ? (
-                <div className="text-sm">
-                  Usuario: <strong>@{usernameToShow}</strong>
-                </div>
-              ) : (
-                <div className="text-xs text-fg-subtle italic">
-                  Sin usuario · conectate al live desde el sidebar
-                </div>
-              )}
               {!!status?.reconnectAttempts && status.reconnectAttempts > 0 && (
                 <div className="text-xs text-warning flex items-center gap-1.5">
                   <Activity className="h-3 w-3" />

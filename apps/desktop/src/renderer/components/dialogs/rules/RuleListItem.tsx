@@ -266,9 +266,13 @@ export function RuleListItem({
         </span>
       </div>
 
-      {/* Stack tiny acciones extra */}
+      {/* Stack tiny acciones extra — `hidden xl:flex` para que se
+          oculten cuando la ventana es estrecha y NO empujen los botones
+          de la toolbar fuera del card (bug visual reportado). En
+          pantallas anchas (xl+) se ven igual que antes. El `+overflow`
+          badge muestra cuántas hay sin importar el tamaño. */}
       {restActions.length > 0 && gameId && (
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="hidden xl:flex items-center gap-1 shrink-0">
           {restActions.map((a, i) => {
             const f = actionFolder(a.action_type);
             const file = resolveActionFile(a.action_value, f, nameToCommand);
@@ -291,6 +295,16 @@ export function RuleListItem({
             </span>
           )}
         </div>
+      )}
+      {/* Badge "+N acciones" SIEMPRE visible (incluso en pantallas
+          estrechas donde escondimos los íconos de restActions). */}
+      {actionCount > 1 && (
+        <span
+          className="xl:hidden self-center shrink-0 rounded bg-bg-base/60 px-2 py-0.5 text-[10px] text-fg-muted whitespace-nowrap"
+          title={`${actionCount} acciones totales`}
+        >
+          +{actionCount - 1}
+        </span>
       )}
 
       {/* Nombre + meta — nombre en su propia línea (truncate full width)

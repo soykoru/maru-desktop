@@ -1,5 +1,71 @@
 # Changelog — maru-desktop
 
+## 1.0.30 — 2026-05-01 · 🪲 4 fixes: spawn HTTP debug, gifts log individuales, RuleListItem responsive, TikTok estado claro
+
+### 1) Mensaje "🎯 🐍 terraria spawn ... HTTP 200" innecesario en log
+**Causa raíz**: `core_bridge._patch_games_logging._post_with_log`
+loguea cada HTTP request al mod del juego como `log.info(...)`. Eso
+llega al panel del usuario aunque la información ya está cubierta
+por el log "✅ regla disparada → spawn slime · @user" del
+rule_dispatcher → ruido confuso.
+**Fix**: bajar el log a `log.debug` cuando el HTTP es 200/201/204
+(éxito normal — invisible en panel). Solo errores HTTP (>=400) o
+network errors se quedan como `log.warning` para que el user vea
+problemas reales del mod.
+
+### 2) Gifts en log: N entries individuales (no resumen por streak)
+**Problema**: cuando un user dona N rosas, el core emite eventos
+parciales como "envió 3 rosas", luego "envió 5 rosas" (delta del
+streak). El user veía el resumen actualizándose y se confundía con
+los conteos.
+**Fix**: dos cambios coordinados en `tiktok.py`:
+- `_on_log_message` ahora SUPRIME los logs `🎁 @user envió: ...`
+  del worker (eran los resúmenes).
+- `_on_event(type=gift)` ahora emite UN log entry individual por
+  cada evento gift recibido, con `skip_dedupe=True` para que el
+  dedupe global no los colapse.
+- Resultado: 5 rosas → 5 entries "🎁 @user envió: rose" en el log,
+  uno por uno, secuenciales. Mucho más fácil de leer.
+
+### 3) Bug visual: cards de reglas se cortan al achicar ventana
+**Causa raíz**: `RuleListItem` tenía un bloque `restActions` (íconos
+de acciones extra) con `flex shrink-0` que ocupaba ancho fijo. En
+pantallas estrechas, esos íconos empujaban los botones de la
+toolbar (play/edit/copy/delete) hasta cortarse fuera del card.
+**Fix**: bloque `restActions` con `hidden xl:flex` — solo se ve en
+ventanas anchas (xl: 1280px+). En pantallas estrechas, se reemplaza
+por un badge compacto "+N" que indica cuántas acciones hay sin
+ocupar espacio. Toolbar siempre visible al borde derecho.
+
+### 4) TikTok API modal: estado vacío aunque conectado
+**Causa raíz**: el JSX antes solo mostraba el bloque "Estado" si
+`(status || isConnected)`, dejando blanco si el RPC no había
+respondido. Y el badge de estado no cubría todos los casos.
+**Fix v1.0.29 ya hizo el render incondicional**, pero v1.0.30
+agrega:
+- Badge de estado descriptivo: 🟢 Conectado / 🟡 Conectando… /
+  ⚠ Error / ⚪ Desconectado (cubre los 4 estados del store).
+- Línea "Usuario:" SIEMPRE visible (con texto del @user o
+  "sin usuario · conectate desde el sidebar" si no hay).
+- Header cambiado a "Estado TikTok Live" para clarificar.
+
+### Bonus: smoke build pre-release
+Antes del `release:exe`, corremos `pnpm build` localmente para
+detectar errores de sintaxis JSX en 5 segundos en vez de
+descubrirlos a los 3 minutos del build completo. v1.0.29 falló por
+un `)}` huérfano que esto hubiera detectado al instante.
+
+### Archivos tocados
+
+- `apps/sidecar/maru_sidecar/core_bridge.py` — `_post_with_log`
+  baja a DEBUG en éxito.
+- `apps/sidecar/maru_sidecar/backend/tiktok.py` — suprime gift
+  summary del worker, emite individuales con `skip_dedupe=True`.
+- `apps/desktop/src/renderer/components/dialogs/rules/RuleListItem.tsx`
+  — restActions con `hidden xl:flex` + badge compacto fallback.
+- `apps/desktop/src/renderer/components/dialogs/tiktok/TikTokApiInfoDialog.tsx`
+  — badge de estado descriptivo + línea Usuario siempre visible.
+
 ## 1.0.29 — 2026-05-01 · 🪲 3 fixes raíz: gift sound case-insensitive + cola, log N entries, TikTok API render
 
 ### 1) Sonidos no suenan en gifts REALES + 100 sonidos a la vez

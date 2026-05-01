@@ -1235,10 +1235,24 @@ def _patch_games_logging() -> None:
 
     def _post_with_log(url: str, body: dict, label: str) -> None:
         """Misma llamada que el original pero loguea outcome. Corre en
-        thread del EX como el original."""
+        thread del EX como el original.
+
+        El éxito (HTTP 200/201/204) se loguea a DEBUG para no
+        ensuciar el panel del usuario — el spawn ya se ve reflejado
+        por el log "✅ regla disparada → spawn slime · @user" del
+        rule_dispatcher. Solo errores HTTP / network se elevan a
+        WARNING (visible en pill Errores) para que el user pueda
+        diagnosticar problemas con el mod del juego.
+        """
         try:
             r = _get_session().post(url, json=body, timeout=0.5)
-            log.info("%s → %s HTTP %d", label, url, r.status_code)
+            if 200 <= r.status_code < 300:
+                log.debug("%s → %s HTTP %d", label, url, r.status_code)
+            else:
+                log.warning(
+                    "%s → %s HTTP %d (mod respondió error)",
+                    label, url, r.status_code,
+                )
         except Exception as ex:
             log.warning("%s → %s ERROR: %s", label, url, ex)
 
