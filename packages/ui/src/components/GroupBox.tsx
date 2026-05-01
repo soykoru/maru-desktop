@@ -15,21 +15,13 @@ export interface GroupBoxProps
 }
 
 /**
- * GroupBox — réplica del `QGroupBox` del MARU original.
+ * GroupBox premium — réplica del `QGroupBox` del MARU original con
+ * polish visual: gradient en el title chip + inset highlight + hover sutil
+ * en el borde. Mantiene la API y comportamiento idéntico.
  *
  * Estructura: card oscura con un título superpuesto al borde superior.
- * Es la unidad de composición principal del Sidebar (7 GroupBoxes
+ * Es la unidad de composición principal del Sidebar (GroupBoxes
  * verticales en el original).
- *
- * Estilo derivado del QSS de `gui/themes.py:midnight`:
- *   - bg `rgb(30,30,50,0.9)`
- *   - border 1px `#3a3a5a`
- *   - title color `#7ed6df` (cyan), font 12px bold
- *
- * Premium polish añadido (no rompe paridad):
- *   - inner highlight 1px (subtle inset shadow)
- *   - transition de border en hover
- *   - el título usa el bg del card para "comer" la línea (look QSS)
  */
 export const GroupBox = forwardRef<HTMLDivElement, GroupBoxProps>(
   (
@@ -53,8 +45,8 @@ export const GroupBox = forwardRef<HTMLDivElement, GroupBoxProps>(
       <div
         ref={ref}
         className={cn(
-          'maru-groupbox relative bg-mn-card/90 border border-border rounded-md',
-          'shadow-[0_1px_0_rgb(255_255_255/0.03)_inset]',
+          'maru-groupbox relative bg-mn-card/85 border border-border rounded-md',
+          'shadow-inset-top',
           'transition-colors duration-fast ease-maru',
           'hover:border-border-strong/80',
           padding,
@@ -65,11 +57,13 @@ export const GroupBox = forwardRef<HTMLDivElement, GroupBoxProps>(
       >
         <div
           className={cn(
-            'absolute left-2.5 -top-2.5 px-2 py-0.5',
-            'text-[11px] font-bold tracking-wide',
+            'absolute left-2.5 -top-2.5 px-2 py-[3px]',
+            'text-[11px] font-bold tracking-wide uppercase',
             'text-mn-cyan',
-            'rounded-sm',
-            'bg-mn-card/95',
+            'rounded-[5px]',
+            'bg-gradient-to-b from-bg-elevated to-mn-card',
+            'border border-border',
+            'shadow-inset-top',
             'select-none',
           )}
         >

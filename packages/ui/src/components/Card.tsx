@@ -11,7 +11,8 @@ export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
         // El blur sigue disponible en overlays ocasionales (Dialog, Toast,
         // UpdateBanner) donde el coste de recomposición no se nota.
         'rounded-2xl border border-border bg-bg-surface/95',
-        'shadow-[0_1px_0_rgb(255_255_255/0.03)_inset]',
+        'shadow-inset-top',
+        'transition-colors duration-fast ease-maru',
         className,
       )}
       {...props}

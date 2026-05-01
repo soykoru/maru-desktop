@@ -5,19 +5,46 @@ import { ModalRoot } from './components/ModalRoot.js';
 import { UpdateBanner } from './components/UpdateBanner.js';
 import { useGlobalShortcuts } from './lib/use-shortcuts.js';
 import { wireSidecarEvents } from './lib/event-wire.js';
+import { useAppStore } from './lib/store/index.js';
+import { THEME_LIST, type ThemeId } from './lib/store/ui-slice.js';
+import { rpcCall } from './lib/rpc.js';
 
 /**
- * App root — ventana única (Plan G · Opción A).
- *
- * Reemplaza al HashRouter inventado en F0-F8 (que rompía paridad con
- * MARU original). MARU es una sola ventana con 3 columnas y diálogos
- * modales — eso replicamos.
+ * App root — ventana única.
  *
  *   <MainLayout>  = sidebar 310 + center stretch + log panel 380.
  *   <ModalRoot>   = stack global de modales (single open at a time).
  *   <Toaster>     = notificaciones flotantes.
+ *
+ * Theme boot: lee settings.theme y aplica `data-theme` en <html> antes
+ * de que el usuario interactúe. Si no hay tema persistido o es inválido,
+ * usa `midnight` (default).
  */
 export function App() {
+  const setTheme = useAppStore((s) => s.setTheme);
+
+  // Bootstrap del tema persistido (corre 1 vez al montar)
+  useEffect(() => {
+    void rpcCall('settings.get', {})
+      .then((r) => {
+        const cfg = (r as { config?: { theme?: string } }).config;
+        const persisted = cfg?.theme;
+        if (
+          typeof persisted === 'string' &&
+          THEME_LIST.some((t) => t.id === persisted)
+        ) {
+          setTheme(persisted as ThemeId);
+        } else {
+          // Asegurar data-theme aunque no haya nada persistido
+          document.documentElement.setAttribute('data-theme', 'midnight');
+        }
+      })
+      .catch(() => {
+        document.documentElement.setAttribute('data-theme', 'midnight');
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     return wireSidecarEvents();
   }, []);

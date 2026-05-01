@@ -21,15 +21,20 @@ export function Switch({ checked, onChange, disabled, label, description, size =
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        'relative inline-flex shrink-0 items-center rounded-full transition-colors duration-base',
+        'relative inline-flex shrink-0 items-center rounded-full',
+        'transition-all duration-base ease-maru',
+        'shadow-inset-top',
         dim,
-        checked ? 'bg-accent' : 'bg-bg-elevated border border-border',
+        checked
+          ? 'bg-gradient-to-b from-accent to-accent-hover shadow-glow'
+          : 'bg-bg-elevated border border-border hover:border-border-strong',
         disabled && 'opacity-50 cursor-not-allowed',
       )}
     >
       <span
         className={cn(
-          'inline-block transform rounded-full bg-white shadow-sm transition-transform duration-base',
+          'inline-block transform rounded-full bg-white shadow-md',
+          'transition-transform duration-base ease-spring',
           knob,
           translate,
         )}

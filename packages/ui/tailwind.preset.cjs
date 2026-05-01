@@ -63,6 +63,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          'Geist',
           'Inter',
           'system-ui',
           '-apple-system',
@@ -101,6 +102,9 @@ module.exports = {
         lg: 'var(--maru-shadow-lg)',
         glow: 'var(--maru-glow-accent)',
         'glow-blue': 'var(--maru-glow-blue)',
+        'glow-green': 'var(--maru-glow-green)',
+        'inset-top': 'var(--maru-inset-top)',
+        'inset-top-strong': 'var(--maru-inset-top-strong)',
       },
       transitionTimingFunction: {
         maru: 'var(--maru-ease)',

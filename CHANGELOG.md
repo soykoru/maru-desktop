@@ -1,5 +1,124 @@
 # Changelog — maru-desktop
 
+## 1.0.32 — 2026-05-01 · 🎨 Premium Polish + Multi-Theme System
+
+Rediseño visual 100% premium **sin tocar lógica**. Sidecar Python, RPCs,
+single-instance lock, dedupe, regex de logs con emojis, persistencia,
+auto-update — todo intacto. Solo cambian tokens CSS, tipografía y polish
+de componentes UI primarios.
+
+### 1) Sistema de 4 temas premium con persistencia
+
+Selector de tema visual al final del sidebar con dropdown elegante.
+La elección persiste en `settings.theme` (RPC) y se restaura al boot
+aplicando `data-theme="..."` en `<html>`. Cambiar tema es instantáneo
+(solo CSS vars) y NO reinicia ni desconecta nada.
+
+Temas incluidos:
+- **🌙 Midnight** (default) — paleta MARU original mejorada (más
+  contraste de texto, gradientes refinados, accents radiales en bg).
+- **🦇 Dracula** — púrpura/rosa signature de dracula-theme.com,
+  +40k stars en GitHub.
+- **🗼 Tokyo Night** — azul-violeta noche, paleta del extension VSCode
+  popular 2024 (`#bb9af7` mauve, `#7aa2f7` blue, `#7dcfff` cyan).
+- **🍮 Catppuccin Mocha** — pastel premium (`#cba6f7` mauve, `#cdd6f4`
+  text), comunidad enorme.
+
+Implementado como CSS vars `[data-theme="..."]` en `globals.css`. Los
+nombres de tokens (`--maru-bg-base`, `--maru-fg`, `--maru-accent`,
+etc.) se mantienen IDÉNTICOS — los componentes existentes funcionan sin
+cambios. Cada tema redefine valores; los componentes no saben qué tema
+hay activo.
+
+### 2) Tipografía variable premium
+
+- **Geist** (sans, premium UI) reemplaza Inter como font default. Carga
+  vía Google Fonts CDN con fallback a Inter, system-ui, Segoe UI.
+- **JetBrains Mono** (mono, números/timestamps/code) ya estaba pero
+  ahora se usa más vía `tabular-nums` + utility `.font-mono`.
+- CSP del `index.html` actualizada para permitir `fonts.googleapis.com`
+  + `fonts.gstatic.com` (sin tocar otros dominios).
+
+### 3) Polish premium en componentes UI primarios
+
+`packages/ui/src/components/`:
+- **Button**: gradients internos + inset highlight (1px luz arriba) +
+  `hover:-translate-y-0.5` + `active:translate-y-0` + glows por variant
+  (`shadow-glow` accent, `shadow-glow-blue` primary, custom red en
+  danger). Cero cambios de API/props.
+- **Card**: `shadow-inset-top` + transitions suaves. Mismo API.
+- **GroupBox**: title chip con gradient bg (de `bg-elevated` a
+  `mn-card`) + border + inset highlight. Conserva el look QSS-flotante
+  pero ahora se ve premium.
+- **Input / TextArea**: focus ring sutil con cyan glow + hover en
+  border + ring 3px en focus. Mismo API.
+- **Switch**: gradient en track activo + glow + spring easing en knob.
+  Mismo API.
+- **StatusDot**: anillo `live-ring` animado (1.8s, expande+fade) cuando
+  está conectado. Resto de estados (disconnected, connecting, error)
+  igual.
+
+### 4) Tokens y utilidades premium
+
+`packages/ui/styles/globals.css` reescrito (manteniendo todos los
+nombres existentes):
+- 5 niveles de elevación (`--maru-elev-1..5`) refinados.
+- 2 inset highlights (`--maru-inset-top`, `-strong`) para superficies
+  premium.
+- 3 glows con accent del tema activo (accent / blue / green).
+- 6 keyframes nuevos (`maru-slide-in-left/right`, `maru-live-ring`,
+  etc.) con easing `cubic-bezier(0.22, 1, 0.36, 1)`.
+- Background dedicado `.maru-bg-shell` con 2 radial accents (top-right
+  + bottom-left) + noise texture overlay sutil. GPU-promoted, isolated,
+  contained — anti-flicker (mantiene el fix de sesión 29-04).
+- Scrollbars premium 6px con hover.
+- Focus rings con cyan-blue 70% opacity.
+- Modal backdrop con `blur(10px) saturate(130%)`.
+
+`packages/ui/tailwind.preset.cjs`:
+- Geist agregado como primer fallback en `font-sans`.
+- Nuevos shadows: `glow-green`, `inset-top`, `inset-top-strong`.
+
+### 5) ThemeSwitcher dropdown premium
+
+Nuevo componente `apps/desktop/src/renderer/components/ThemeSwitcher.tsx`:
+- Dropdown con backdrop translúcido + cierra al click fuera.
+- Cada tema con emoji + label + descripción.
+- Preview activo con check icon + bg-accent/15.
+- Animation `animate-fade-in` al abrir.
+- Persistencia inmediata: aplica `data-theme` en DOM + setter en store
+  + RPC `settings.set` con `{ theme: id }`.
+
+Integrado al final del Sidebar (después del GroupBox de Configuración).
+
+### 6) Boot del tema persistido
+
+`App.tsx` lee `settings.get` al montar. Si hay `theme` válido, lo aplica
+con `setTheme()`. Si no, asegura `data-theme="midnight"` en `<html>`
+(default). Si el RPC falla (sidecar booting), también cae a midnight.
+
+### Garantías técnicas (lo que NO se tocó)
+
+- ✅ Sidecar Python (`apps/sidecar/`) intacto.
+- ✅ Main process (`apps/desktop/src/main/`) intacto:
+  `requestSingleInstanceLock`, `killOrphanSidecars`, IPC, attachRpcClient.
+- ✅ Regex que clasifica logs por emojis (`tiktok.py`, `logs.py`,
+  ej. `^🎵|^🎶|^🎷|...` → music) NUNCA tocado.
+- ✅ Strings con emojis (GroupBox titles `🎵 TikTok Live`, eventos del
+  feed 🌹 ❤ 🦁) intactos.
+- ✅ Los 154 RPCs sin cambios.
+- ✅ Push events bus, store Zustand intactos.
+- ✅ Persistencia `%APPDATA%/MARU Live/data/`.
+- ✅ Single instance lock + dedupe doble + idempotencia listeners.
+- ✅ Auto-update electron-updater 6.3.9.
+
+### Verificación pre-release
+
+`pnpm --filter @maru/desktop build` pasa limpio sin warnings (CSS
+@import movido antes de @tailwind). 1711 modules transformados.
+
+---
+
 ## 1.0.31 — 2026-05-01 · 🪲 3 fixes: editor de imagen de entries, música mal categorizada, stats counters reales
 
 ### 1) Editor de imagen para entries de juegos (paridad MARU original)

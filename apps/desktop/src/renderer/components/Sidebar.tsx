@@ -27,6 +27,7 @@ import { rpcCall } from '../lib/rpc.js';
 import type { FortunesConfig, GameId, TtsVoiceMode } from '@maru/shared';
 import { GiftSelectorDialog } from './dialogs/gifts/GiftSelectorDialog.js';
 import { MaruImage } from '@maru/ui';
+import { ThemeSwitcher } from './ThemeSwitcher.js';
 
 /**
  * Sidebar — réplica fiel del `_build_left_panel` del MARU original.
@@ -875,6 +876,11 @@ export function Sidebar(): ReactNode {
         </Button>
 
       </GroupBox>
+
+      {/* ── 🎨 Tema visual ─────────────────────────────────────────── */}
+      <div className="mt-2">
+        <ThemeSwitcher />
+      </div>
 
       {/* Spacer al final */}
       <div className="h-2" />

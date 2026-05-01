@@ -1,127 +1,371 @@
+/* ── Webfonts premium via Google Fonts (CDN, cacheable) ─────────────── */
+/* DEBE ir antes de @tailwind por regla CSS @import */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * MARU Live · Design Tokens (G1 — paleta exacta del MARU original)
+ * MARU Live · Premium Polish + Multi-Theme System
  *
- * Fuente de verdad: docs/audit/MARU_VISUAL_AUDIT.md
- * Origen: gui/constants.py + gui/themes.py:THEMES["midnight"]
+ * Backwards-compatible: todos los nombres de tokens (--maru-*) que ya
+ * usaban los componentes se mantienen IDÉNTICOS. Cada tema redefine los
+ * valores. Default `:root` = midnight (signature MARU).
  *
- * Tema único `midnight`. Los 8 temas inventados en F0-F8 se eliminaron
- * en G1 (regla del Plan G: una identidad fiel, sin variantes).
+ * Temas disponibles:
+ *   [data-theme="midnight"]         — naranja-mostaza signature MARU (default)
+ *   [data-theme="dracula"]          — púrpura/rosa, dracula-theme.com
+ *   [data-theme="tokyo-night"]      — azul-violeta noche, popular VSCode
+ *   [data-theme="catppuccin-mocha"] — pastel mocha, catppuccin.com
  *
- * Convención: triple RGB sin la función rgb() para usar `<alpha-value>`
- * en Tailwind. Los tokens son SEMÁNTICOS (no de marca) para que las
- * variantes premium puedan adaptarse sin tocar componentes.
+ * Selección de tema persiste vía settings.theme (RPC). El boot de la app
+ * lee el tema y aplica [data-theme] en <html>.
+ *
+ * Tipografía:
+ *   sans  → Geist (variable, premium UI)
+ *   mono  → JetBrains Mono (números, timestamps, code)
+ *   emoji → fallback a system emoji fonts (NUNCA reemplaza, los emojis
+ *           son funcionales en el log y eventos del live)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TEMA · MIDNIGHT (default — paleta MARU original mejorada)
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 :root,
 [data-theme='midnight'] {
-  /* ── Surfaces ──────────────────────────────────────────────────────────
-   * Background app: gradient diagonal #1a1a2e → #16213e (del MARU original).
-   * surface = panel oscuro (cards, sidebar bg).
-   * elevated = paneles flotantes (modals).
-   * overlay = backdrop de modales (más oscuro).
-   */
-  --maru-bg-base: 26 26 46; /* #1a1a2e */
-  --maru-bg-base-end: 22 33 62; /* #16213e (gradient end) */
-  --maru-bg-surface: 30 30 50; /* rgba(30,30,50,0.9) en cards */
-  --maru-bg-elevated: 36 38 64; /* paneles flotantes */
-  --maru-bg-overlay: 13 13 20; /* backdrop modal (#0d0d14) */
+  /* ── Surfaces ─────────────────────────────────────────────────────── */
+  --maru-bg-base: 13 13 24;             /* #0d0d18 — más oscuro premium */
+  --maru-bg-base-end: 22 22 40;         /* #161628 */
+  --maru-bg-surface: 30 30 50;          /* card surface */
+  --maru-bg-elevated: 36 38 64;         /* paneles flotantes */
+  --maru-bg-overlay: 8 8 15;            /* backdrop modal */
 
-  /* ── Text ─────────────────────────────────────────────────────────────
-   * Jerarquía MARU: white → 70% → 40% → 35%.
-   */
-  --maru-fg: 255 255 255; /* TEXT_PRIMARY */
-  --maru-fg-muted: 178 178 178; /* TEXT_SECONDARY ≈ rgba(255,255,255,0.7) */
-  --maru-fg-subtle: 102 102 102; /* TEXT_MUTED ≈ rgba(255,255,255,0.4) */
-  --maru-fg-hint: 89 89 89; /* TEXT_HINT ≈ rgba(255,255,255,0.35) */
+  /* ── Text ────────────────────────────────────────────────────────── */
+  --maru-fg: 255 255 255;
+  --maru-fg-muted: 184 188 208;         /* +contraste vs antes (178) */
+  --maru-fg-subtle: 116 122 145;        /* +contraste vs antes (102) */
+  --maru-fg-hint: 89 94 115;
 
-  /* ── Brand & Accents ──────────────────────────────────────────────────
-   * Los 7 accents oficiales del design system MARU.
-   */
-  --maru-accent: 243 156 18; /* #f39c12 — primario (naranja-mostaza) */
+  /* ── Brand & Accents (signature MARU) ────────────────────────────── */
+  --maru-accent: 243 156 18;            /* #f39c12 naranja-mostaza */
   --maru-accent-hover: 249 174 47;
   --maru-accent-soft: 243 156 18;
-  --maru-accent-blue: 116 185 255; /* #74b9ff — selección, focus */
-  --maru-accent-green: 39 174 96; /* #27ae60 — botones save */
-  --maru-accent-green-light: 46 204 113; /* #2ecc71 — hover green / status OK */
-  --maru-accent-red: 231 76 60; /* #e74c3c — danger, errores */
-  --maru-accent-red-dark: 192 57 43; /* #c0392b — gradient red end */
-  --maru-accent-purple: 155 89 182; /* #9b59b6 — secundario morado */
+  --maru-accent-blue: 116 185 255;      /* #74b9ff */
+  --maru-accent-green: 39 174 96;       /* #27ae60 */
+  --maru-accent-green-light: 46 204 113;/* #2ecc71 */
+  --maru-accent-red: 231 76 60;
+  --maru-accent-red-dark: 192 57 43;
+  --maru-accent-purple: 155 89 182;
 
-  /* ── Theme color del MARU original (Midnight QSS) ─────────────────────
-   * Estos son los valores HEX exactos del `gui/themes.py:midnight`.
-   * Se usan para botones primarios y selección de listas.
-   */
-  --maru-mn-button: 74 105 189; /* #4a69bd */
-  --maru-mn-button-end: 60 82 140; /* #3c528c */
-  --maru-mn-button-hover: 106 137 204; /* #6a89cc */
-  --maru-mn-cyan: 126 214 223; /* #7ed6df — GroupBox titles, hints info */
-  --maru-mn-card: 30 30 50; /* rgba(30,30,50,0.9) — GroupBox bg */
-  --maru-mn-input: 20 20 35; /* rgba(20,20,35,0.95) — input bg */
-  --maru-mn-input-border: 58 58 90; /* #3a3a5a */
+  /* ── Theme color del MARU original (Midnight QSS) ────────────────── */
+  --maru-mn-button: 74 105 189;
+  --maru-mn-button-end: 60 82 140;
+  --maru-mn-button-hover: 106 137 204;
+  --maru-mn-cyan: 126 214 223;
+  --maru-mn-card: 30 30 50;
+  --maru-mn-input: 20 20 35;
+  --maru-mn-input-border: 58 58 90;
 
-  /* ── Estado / Status (semánticos) ────────────────────────────────────── */
+  /* ── Estado / Status (semánticos) ────────────────────────────────── */
   --maru-success: 46 204 113;
   --maru-warning: 243 156 18;
   --maru-danger: 231 76 60;
   --maru-info: 116 185 255;
 
-  /* ── Borders ─────────────────────────────────────────────────────────── */
-  --maru-border: 58 58 90; /* #3a3a5a */
-  --maru-border-strong: 80 84 120;
+  /* ── Borders ─────────────────────────────────────────────────────── */
+  --maru-border: 58 58 90;
+  --maru-border-strong: 84 90 130;
   --maru-border-subtle: 40 42 68;
 
-  /* ── Card / Panel tokens (replican exactos de gui/constants.py) ─────── */
-  --maru-card-bg: 255 255 255; /* rgba(255,255,255,0.07) — alpha en clase */
-  --maru-card-bg-alpha: 0.07;
-  --maru-card-bg-hover-alpha: 0.12;
-  --maru-card-border-alpha: 0.1;
-  --maru-card-selected-bg: 116 185 255; /* rgba(116,185,255,0.18) */
+  /* ── Card / Panel tokens ─────────────────────────────────────────── */
+  --maru-card-bg: 255 255 255;
+  --maru-card-bg-alpha: 0.05;           /* más sutil */
+  --maru-card-bg-hover-alpha: 0.10;
+  --maru-card-border-alpha: 0.10;
+  --maru-card-selected-bg: 116 185 255;
   --maru-card-selected-bg-alpha: 0.18;
   --maru-card-selected-border-alpha: 0.5;
 
-  /* ── Premium polish: shadows en capas (elevation 1-5) ─────────────────
-   * 1: cards reposando.   2: hover.   3: dropdowns.
-   * 4: modals.            5: tooltips/floaty UI.
-   */
+  /* ── Glow del accent para botones primarios ──────────────────────── */
+  --maru-glow-accent:
+    0 0 0 1px rgb(243 156 18 / 0.4),
+    0 8px 32px rgb(243 156 18 / 0.22);
+  --maru-glow-blue:
+    0 0 0 1px rgb(116 185 255 / 0.4),
+    0 8px 32px rgb(116 185 255 / 0.22);
+  --maru-glow-green:
+    0 0 0 1px rgb(46 204 113 / 0.4),
+    0 8px 32px rgb(46 204 113 / 0.22);
+
+  /* ── Background radial accents (para .maru-bg-shell) ─────────────── */
+  --maru-bg-glow-1: 243 156 18;
+  --maru-bg-glow-1-alpha: 0.06;
+  --maru-bg-glow-2: 74 105 189;
+  --maru-bg-glow-2-alpha: 0.08;
+
+  /* ── Glass / Blur premium ────────────────────────────────────────── */
+  --maru-glass-bg: rgb(13 13 24 / 0.72);
+  --maru-glass-blur: blur(24px) saturate(160%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TEMA · DRACULA (dracula-theme.com)
+ * Background: #282a36 · Foreground: #f8f8f2 · Pink: #ff79c6
+ * Cyan: #8be9fd · Green: #50fa7b · Orange: #ffb86c · Purple: #bd93f9 · Red: #ff5555
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme='dracula'] {
+  --maru-bg-base: 30 32 44;             /* #1e202c */
+  --maru-bg-base-end: 40 42 54;         /* #282a36 */
+  --maru-bg-surface: 50 52 70;          /* surface */
+  --maru-bg-elevated: 68 71 90;         /* #44475a */
+  --maru-bg-overlay: 22 24 33;
+
+  --maru-fg: 248 248 242;               /* #f8f8f2 */
+  --maru-fg-muted: 200 200 215;
+  --maru-fg-subtle: 130 135 155;
+  --maru-fg-hint: 98 114 164;
+
+  /* Brand: pink (firma dracula) */
+  --maru-accent: 255 121 198;           /* #ff79c6 pink */
+  --maru-accent-hover: 255 142 207;
+  --maru-accent-soft: 255 121 198;
+  --maru-accent-blue: 139 233 253;      /* #8be9fd cyan */
+  --maru-accent-green: 80 250 123;      /* #50fa7b */
+  --maru-accent-green-light: 110 252 145;
+  --maru-accent-red: 255 85 85;         /* #ff5555 */
+  --maru-accent-red-dark: 220 60 60;
+  --maru-accent-purple: 189 147 249;    /* #bd93f9 */
+
+  --maru-mn-button: 189 147 249;        /* purple primary */
+  --maru-mn-button-end: 150 110 220;
+  --maru-mn-button-hover: 209 167 255;
+  --maru-mn-cyan: 139 233 253;
+  --maru-mn-card: 40 42 54;
+  --maru-mn-input: 30 32 44;
+  --maru-mn-input-border: 68 71 90;
+
+  --maru-success: 80 250 123;
+  --maru-warning: 255 184 108;
+  --maru-danger: 255 85 85;
+  --maru-info: 139 233 253;
+
+  --maru-border: 68 71 90;
+  --maru-border-strong: 98 105 130;
+  --maru-border-subtle: 50 52 70;
+
+  --maru-card-bg: 248 248 242;
+  --maru-card-bg-alpha: 0.04;
+  --maru-card-bg-hover-alpha: 0.08;
+  --maru-card-border-alpha: 0.12;
+  --maru-card-selected-bg: 189 147 249;
+  --maru-card-selected-bg-alpha: 0.22;
+  --maru-card-selected-border-alpha: 0.55;
+
+  --maru-glow-accent:
+    0 0 0 1px rgb(255 121 198 / 0.4),
+    0 8px 32px rgb(255 121 198 / 0.25);
+  --maru-glow-blue:
+    0 0 0 1px rgb(139 233 253 / 0.4),
+    0 8px 32px rgb(139 233 253 / 0.22);
+  --maru-glow-green:
+    0 0 0 1px rgb(80 250 123 / 0.4),
+    0 8px 32px rgb(80 250 123 / 0.22);
+
+  --maru-bg-glow-1: 255 121 198;
+  --maru-bg-glow-1-alpha: 0.07;
+  --maru-bg-glow-2: 189 147 249;
+  --maru-bg-glow-2-alpha: 0.08;
+
+  --maru-glass-bg: rgb(22 24 33 / 0.72);
+  --maru-glass-blur: blur(24px) saturate(170%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TEMA · TOKYO NIGHT (github.com/enkia/tokyo-night-vscode-theme)
+ * Background: #1a1b26 · Foreground: #c0caf5 · Blue: #7aa2f7 · Cyan: #7dcfff
+ * Magenta: #bb9af7 · Green: #9ece6a · Orange: #ff9e64 · Red: #f7768e
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme='tokyo-night'] {
+  --maru-bg-base: 22 23 36;             /* #16172a */
+  --maru-bg-base-end: 26 27 38;         /* #1a1b26 */
+  --maru-bg-surface: 36 40 59;          /* #24283b */
+  --maru-bg-elevated: 41 46 66;         /* #292e42 */
+  --maru-bg-overlay: 13 14 25;
+
+  --maru-fg: 192 202 245;               /* #c0caf5 */
+  --maru-fg-muted: 169 177 214;         /* #a9b1d6 */
+  --maru-fg-subtle: 86 95 137;          /* #565f89 */
+  --maru-fg-hint: 65 72 104;            /* #414868 */
+
+  /* Brand: magenta-violeta */
+  --maru-accent: 187 154 247;           /* #bb9af7 magenta */
+  --maru-accent-hover: 200 168 255;
+  --maru-accent-soft: 187 154 247;
+  --maru-accent-blue: 122 162 247;      /* #7aa2f7 */
+  --maru-accent-green: 158 206 106;     /* #9ece6a */
+  --maru-accent-green-light: 175 220 130;
+  --maru-accent-red: 247 118 142;       /* #f7768e */
+  --maru-accent-red-dark: 220 90 115;
+  --maru-accent-purple: 187 154 247;
+
+  --maru-mn-button: 122 162 247;        /* blue primary */
+  --maru-mn-button-end: 90 130 215;
+  --maru-mn-button-hover: 145 185 255;
+  --maru-mn-cyan: 125 207 255;          /* #7dcfff */
+  --maru-mn-card: 36 40 59;
+  --maru-mn-input: 26 27 38;
+  --maru-mn-input-border: 65 72 104;
+
+  --maru-success: 158 206 106;
+  --maru-warning: 255 158 100;          /* #ff9e64 */
+  --maru-danger: 247 118 142;
+  --maru-info: 125 207 255;
+
+  --maru-border: 65 72 104;
+  --maru-border-strong: 90 100 145;
+  --maru-border-subtle: 41 46 66;
+
+  --maru-card-bg: 192 202 245;
+  --maru-card-bg-alpha: 0.04;
+  --maru-card-bg-hover-alpha: 0.09;
+  --maru-card-border-alpha: 0.10;
+  --maru-card-selected-bg: 122 162 247;
+  --maru-card-selected-bg-alpha: 0.20;
+  --maru-card-selected-border-alpha: 0.50;
+
+  --maru-glow-accent:
+    0 0 0 1px rgb(187 154 247 / 0.4),
+    0 8px 32px rgb(187 154 247 / 0.25);
+  --maru-glow-blue:
+    0 0 0 1px rgb(122 162 247 / 0.4),
+    0 8px 32px rgb(122 162 247 / 0.25);
+  --maru-glow-green:
+    0 0 0 1px rgb(158 206 106 / 0.4),
+    0 8px 32px rgb(158 206 106 / 0.22);
+
+  --maru-bg-glow-1: 187 154 247;
+  --maru-bg-glow-1-alpha: 0.08;
+  --maru-bg-glow-2: 122 162 247;
+  --maru-bg-glow-2-alpha: 0.10;
+
+  --maru-glass-bg: rgb(13 14 25 / 0.72);
+  --maru-glass-blur: blur(24px) saturate(150%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TEMA · CATPPUCCIN MOCHA (catppuccin.com — Mocha flavor)
+ * Background: #1e1e2e · Foreground: #cdd6f4 · Mauve: #cba6f7 · Pink: #f5c2e7
+ * Lavender: #b4befe · Sapphire: #74c7ec · Green: #a6e3a1 · Peach: #fab387 · Red: #f38ba8
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme='catppuccin-mocha'] {
+  --maru-bg-base: 17 17 27;             /* #11111b crust */
+  --maru-bg-base-end: 30 30 46;         /* #1e1e2e base */
+  --maru-bg-surface: 49 50 68;          /* #313244 surface0 */
+  --maru-bg-elevated: 69 71 90;         /* #45475a surface1 */
+  --maru-bg-overlay: 17 17 27;
+
+  --maru-fg: 205 214 244;               /* #cdd6f4 text */
+  --maru-fg-muted: 186 194 222;         /* #bac2de subtext1 */
+  --maru-fg-subtle: 147 153 178;        /* #9399b2 overlay2 */
+  --maru-fg-hint: 108 112 134;          /* #6c7086 overlay0 */
+
+  /* Brand: mauve (firma catppuccin) */
+  --maru-accent: 203 166 247;           /* #cba6f7 mauve */
+  --maru-accent-hover: 215 180 255;
+  --maru-accent-soft: 203 166 247;
+  --maru-accent-blue: 137 180 250;      /* #89b4fa */
+  --maru-accent-green: 166 227 161;     /* #a6e3a1 */
+  --maru-accent-green-light: 180 240 175;
+  --maru-accent-red: 243 139 168;       /* #f38ba8 */
+  --maru-accent-red-dark: 220 110 145;
+  --maru-accent-purple: 203 166 247;
+
+  --maru-mn-button: 137 180 250;        /* blue primary */
+  --maru-mn-button-end: 110 150 220;
+  --maru-mn-button-hover: 160 200 255;
+  --maru-mn-cyan: 116 199 236;          /* #74c7ec sapphire */
+  --maru-mn-card: 49 50 68;
+  --maru-mn-input: 30 30 46;
+  --maru-mn-input-border: 69 71 90;
+
+  --maru-success: 166 227 161;
+  --maru-warning: 250 179 135;          /* #fab387 peach */
+  --maru-danger: 243 139 168;
+  --maru-info: 116 199 236;
+
+  --maru-border: 69 71 90;
+  --maru-border-strong: 95 100 125;
+  --maru-border-subtle: 49 50 68;
+
+  --maru-card-bg: 205 214 244;
+  --maru-card-bg-alpha: 0.04;
+  --maru-card-bg-hover-alpha: 0.08;
+  --maru-card-border-alpha: 0.10;
+  --maru-card-selected-bg: 203 166 247;
+  --maru-card-selected-bg-alpha: 0.22;
+  --maru-card-selected-border-alpha: 0.50;
+
+  --maru-glow-accent:
+    0 0 0 1px rgb(203 166 247 / 0.4),
+    0 8px 32px rgb(203 166 247 / 0.25);
+  --maru-glow-blue:
+    0 0 0 1px rgb(137 180 250 / 0.4),
+    0 8px 32px rgb(137 180 250 / 0.22);
+  --maru-glow-green:
+    0 0 0 1px rgb(166 227 161 / 0.4),
+    0 8px 32px rgb(166 227 161 / 0.22);
+
+  --maru-bg-glow-1: 203 166 247;
+  --maru-bg-glow-1-alpha: 0.07;
+  --maru-bg-glow-2: 245 194 231;
+  --maru-bg-glow-2-alpha: 0.06;
+
+  --maru-glass-bg: rgb(17 17 27 / 0.72);
+  --maru-glass-blur: blur(24px) saturate(150%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TOKENS COMUNES (no varían por tema)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Premium polish: shadows en capas (elevation 1-5) ────────────── */
   --maru-elev-1: 0 1px 2px rgb(0 0 0 / 0.4);
-  --maru-elev-2: 0 4px 12px rgb(0 0 0 / 0.35);
-  --maru-elev-3: 0 8px 24px rgb(0 0 0 / 0.4);
+  --maru-elev-2: 0 4px 14px rgb(0 0 0 / 0.35);
+  --maru-elev-3: 0 12px 40px rgb(0 0 0 / 0.5);
   --maru-elev-4: 0 24px 60px rgb(0 0 0 / 0.55);
   --maru-elev-5: 0 32px 80px rgb(0 0 0 / 0.6);
 
-  /* Compatibilidad con tokens previos */
   --maru-shadow-sm: var(--maru-elev-1);
   --maru-shadow-md: var(--maru-elev-2);
   --maru-shadow-lg: var(--maru-elev-3);
 
-  /* Glow del accent para botones primarios */
-  --maru-glow-accent: 0 0 0 1px rgb(243 156 18 / 0.4),
-    0 8px 32px rgb(243 156 18 / 0.18);
-  --maru-glow-blue: 0 0 0 1px rgb(116 185 255 / 0.4),
-    0 8px 32px rgb(116 185 255 / 0.2);
+  /* Inset highlight para superficies premium (1px luz arriba) */
+  --maru-inset-top: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --maru-inset-top-strong: inset 0 1px 0 rgb(255 255 255 / 0.12);
 
-  /* ── Radii (espejo de gui/constants.py) ───────────────────────────────── */
-  --maru-radius-sm: 0.5rem; /* 8px = BTN_RADIUS_SM */
-  --maru-radius-md: 0.625rem; /* 10px = CARD_RADIUS / BTN_RADIUS */
-  --maru-radius-lg: 0.75rem; /* 12px = PANEL_RADIUS */
-  --maru-radius-xl: 1rem; /* 16px (modal containers) */
-  --maru-radius-2xl: 1.25rem;
+  /* ── Radii (espejo de gui/constants.py + premium) ─────────────────── */
+  --maru-radius-sm: 0.5rem;     /* 8px */
+  --maru-radius-md: 0.625rem;   /* 10px */
+  --maru-radius-lg: 0.75rem;    /* 12px */
+  --maru-radius-xl: 1rem;       /* 16px */
+  --maru-radius-2xl: 1.25rem;   /* 20px */
 
-  /* ── Motion ───────────────────────────────────────────────────────────
-   * Easing premium: OutCubic. Timings espejo de las animaciones MARU.
-   */
+  /* ── Motion premium ──────────────────────────────────────────────── */
   --maru-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --maru-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --maru-dur-fast: 120ms;
-  --maru-dur-base: 200ms;
+  --maru-ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --maru-dur-fast: 150ms;
+  --maru-dur-base: 220ms;
   --maru-dur-slow: 320ms;
-  --maru-dur-splash: 1700ms; /* G1.4 — splash progress total */
+  --maru-dur-splash: 1700ms;
 
-  /* ── Z-index scale ──────────────────────────────────────────────────── */
+  /* ── Z-index scale ───────────────────────────────────────────────── */
   --maru-z-base: 0;
   --maru-z-sticky: 100;
   --maru-z-dropdown: 1000;
@@ -129,87 +373,89 @@
   --maru-z-modal: 5001;
   --maru-z-toast: 9000;
   --maru-z-splash: 9500;
-
-  /* ── Glass / Blur premium (modales y backdrops) ───────────────────────── */
-  --maru-glass-bg: rgb(13 13 20 / 0.72);
-  --maru-glass-blur: blur(20px) saturate(140%);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * Base layer
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
   margin: 0;
 }
 
-/* Fallback solido vive en <html> (no en body) para que la capa
-   .maru-bg-shell con z-index:-1 quede ENTRE el html y los paneles
-   (orden de pintado CSS). Si el fallback estuviera en body, el body
-   taparia la capa de fondo. */
 html {
-  background: #0d0d14;
+  background: rgb(var(--maru-bg-base));
 }
 
-/* color-scheme: hacer que TODOS los controles nativos (select dropdowns,
-   scrollbars, fechas, etc.) usen el tema oscuro del SO. Sin esto, los
-   `<option>` de un `<select>` se renderizan con fondo blanco en Windows. */
-html,
-body {
+html, body {
   color-scheme: dark;
 }
 
-/* Forzar fondo oscuro en options nativos (no todas las plataformas
-   respetan color-scheme para options). */
 option {
-  background-color: rgb(20 20 35);
-  color: rgb(255 255 255);
+  background-color: rgb(var(--maru-mn-input));
+  color: rgb(var(--maru-fg));
 }
 
 body {
-  /* Background TRANSPARENTE — el fallback solido vive en <html>, y el
-     gradient real vive en la capa dedicada `.maru-bg-shell` (montada
-     por <App />) — promovida a su propia capa GPU, aislada de repaints.
-     Antes: gradient + background-attachment:fixed en body ⇒ Chromium
-     recomponia el backdrop-filter de las Cards en cada repaint del log
-     y se veia un flash del fondo. */
   background: transparent;
   color: rgb(var(--maru-fg));
-  @apply font-sans antialiased;
+  font-family:
+    'Geist',
+    'Inter',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   font-feature-settings: 'cv11', 'ss01', 'ss03';
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Drag region desactivado por defecto — frame nativo */
   -webkit-user-select: none;
   user-select: none;
+  letter-spacing: -0.005em;
 }
 
-/* ── Capa de fondo dedicada (anti-flicker) ─────────────────────────────
- * Vive como sibling fijo del shell. GPU-promoted (translateZ),
- * aislada (isolation + contain) → ningún repaint de los paneles
- * la invalida. Esto elimina el parpadeo del gradient cuando los
- * push events disparan re-renders.
- */
+/* ── Capa de fondo dedicada (anti-flicker, GPU-promoted, isolated) ──── */
 .maru-bg-shell {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--maru-bg-base)) 0%,
-    rgb(var(--maru-bg-base-end)) 100%
-  );
+  background:
+    radial-gradient(
+      ellipse 800px 500px at top right,
+      rgb(var(--maru-bg-glow-1) / var(--maru-bg-glow-1-alpha)),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 700px 500px at bottom left,
+      rgb(var(--maru-bg-glow-2) / var(--maru-bg-glow-2-alpha)),
+      transparent 70%
+    ),
+    linear-gradient(
+      135deg,
+      rgb(var(--maru-bg-base)) 0%,
+      rgb(var(--maru-bg-base-end)) 100%
+    );
   transform: translateZ(0);
   will-change: transform;
   isolation: isolate;
   contain: strict;
 }
 
-/* Texto seleccionable en zonas de contenido (formularios, logs) */
+/* Noise texture overlay sutil (premium feel) */
+.maru-bg-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.025 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Texto seleccionable en zonas de contenido */
 input,
 textarea,
 [data-selectable] {
@@ -218,7 +464,7 @@ textarea,
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * Scrollbars premium (consistentes con MARU original 6px finos)
+ * Scrollbars premium
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 *::-webkit-scrollbar {
@@ -229,18 +475,17 @@ textarea,
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgb(var(--maru-fg) / 0.15);
+  background: rgb(var(--maru-fg) / 0.14);
   border-radius: 3px;
   transition: background var(--maru-dur-fast) var(--maru-ease);
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--maru-fg) / 0.25);
+  background: rgb(var(--maru-fg) / 0.26);
 }
 *::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-/* Variante "thick" para zonas de mucho contenido (modales grandes) */
 [data-scrollbar='thick']::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -256,8 +501,7 @@ textarea,
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * Focus rings — premium consistency
- * Cada elemento interactivo recibe el mismo ring naranja-accent.
+ * Focus rings premium
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 :focus-visible {
@@ -266,7 +510,6 @@ textarea,
   border-radius: var(--maru-radius-sm);
 }
 
-/* Botones e inputs ya tienen su propio focus styled — sin doble ring */
 button:focus-visible,
 [role='button']:focus-visible,
 input:focus-visible,
@@ -290,78 +533,79 @@ select:focus-visible {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * Component utilities
- * Helpers consistentes con `gui/constants.py:card_style/btn_*_style/...`
- * Cada uno mapea 1:1 al helper Python original para paridad visual.
+ * Component utilities premium
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
-  /* Card primitive — espejo de card_style() */
+  /* Card primitive — premium con inset highlight + smooth hover */
   .maru-card {
-    background: rgb(
-      var(--maru-card-bg) / var(--maru-card-bg-alpha)
-    );
-    border: 1px solid
-      rgb(var(--maru-fg) / var(--maru-card-border-alpha));
+    background: rgb(var(--maru-card-bg) / var(--maru-card-bg-alpha));
+    border: 1px solid rgb(var(--maru-fg) / var(--maru-card-border-alpha));
     border-radius: var(--maru-radius-md);
+    box-shadow: var(--maru-inset-top);
     transition:
       background var(--maru-dur-fast) var(--maru-ease),
       border-color var(--maru-dur-fast) var(--maru-ease),
-      transform var(--maru-dur-fast) var(--maru-ease);
+      transform var(--maru-dur-fast) var(--maru-ease),
+      box-shadow var(--maru-dur-fast) var(--maru-ease);
   }
   .maru-card:hover {
-    background: rgb(
-      var(--maru-card-bg) / var(--maru-card-bg-hover-alpha)
-    );
+    background: rgb(var(--maru-card-bg) / var(--maru-card-bg-hover-alpha));
     border-color: rgb(var(--maru-accent-blue) / 0.3);
+    box-shadow: var(--maru-inset-top), var(--maru-elev-1);
   }
   .maru-card[aria-selected='true'],
   .maru-card[data-selected='true'] {
-    background: rgb(
-      var(--maru-card-selected-bg) /
-        var(--maru-card-selected-bg-alpha)
-    );
-    border: 2px solid
-      rgb(
-        var(--maru-card-selected-bg) /
-          var(--maru-card-selected-border-alpha)
-      );
+    background: rgb(var(--maru-card-selected-bg) / var(--maru-card-selected-bg-alpha));
+    border: 2px solid rgb(var(--maru-card-selected-bg) / var(--maru-card-selected-border-alpha));
   }
 
-  /* Panel — espejo de PANEL_BG del design system */
+  /* Panel — espejo de PANEL_BG */
   .maru-panel {
     background: rgb(0 0 0 / 0.2);
     border-radius: var(--maru-radius-lg);
   }
 
-  /* GroupBox — réplica del QGroupBox del MARU original.
-   * Tiene título superpuesto al borde (estilo QSS).
-   */
+  /* GroupBox premium — title chip con gradient + border */
   .maru-groupbox {
     position: relative;
-    background: rgb(var(--maru-mn-card) / 0.9);
+    background: rgb(var(--maru-mn-card) / 0.85);
     border: 1px solid rgb(var(--maru-border));
     border-radius: var(--maru-radius-md);
     padding: 1rem 0.75rem 0.75rem;
     margin-top: 0.875rem;
+    box-shadow: var(--maru-inset-top);
+    transition: border-color var(--maru-dur-fast) var(--maru-ease);
+  }
+  .maru-groupbox:hover {
+    border-color: rgb(var(--maru-border-strong));
   }
   .maru-groupbox-title {
     position: absolute;
     left: 0.625rem;
     top: -0.625rem;
-    padding: 0.125rem 0.5rem;
-    background: rgb(var(--maru-mn-card) / 0.95);
+    padding: 0.18rem 0.55rem;
+    background:
+      linear-gradient(
+        180deg,
+        rgb(var(--maru-bg-elevated)),
+        rgb(var(--maru-mn-card))
+      );
+    border: 1px solid rgb(var(--maru-border));
     color: rgb(var(--maru-mn-cyan));
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
-    border-radius: 0.25rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 0.3rem;
+    box-shadow: var(--maru-inset-top);
+    user-select: none;
   }
 
-  /* Botones — espejo de btn_primary_style/btn_secondary_style/btn_danger_style */
+  /* Botones premium con gradient interno + inset highlight + hover lift */
   .maru-btn-primary {
     background: linear-gradient(
-      to bottom,
+      180deg,
       rgb(var(--maru-mn-button)) 0%,
       rgb(var(--maru-mn-button-end)) 100%
     );
@@ -369,17 +613,24 @@ select:focus-visible {
     font-weight: 700;
     padding: 0.625rem 1.125rem;
     border-radius: var(--maru-radius-sm);
-    border: none;
+    border: 1px solid rgb(var(--maru-mn-button) / 0.3);
+    box-shadow: var(--maru-elev-1), var(--maru-inset-top-strong);
     transition:
       background var(--maru-dur-fast) var(--maru-ease),
-      box-shadow var(--maru-dur-fast) var(--maru-ease);
+      box-shadow var(--maru-dur-fast) var(--maru-ease),
+      transform var(--maru-dur-fast) var(--maru-ease);
   }
   .maru-btn-primary:hover:not(:disabled) {
     background: linear-gradient(
-      to bottom,
+      180deg,
       rgb(var(--maru-mn-button-hover)) 0%,
       rgb(var(--maru-mn-button)) 100%
     );
+    box-shadow: var(--maru-glow-blue), var(--maru-inset-top-strong);
+    transform: translateY(-1px);
+  }
+  .maru-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
   }
   .maru-btn-primary:disabled {
     background: rgb(var(--maru-bg-elevated));
@@ -389,7 +640,7 @@ select:focus-visible {
 
   .maru-btn-accent {
     background: linear-gradient(
-      to bottom,
+      180deg,
       rgb(var(--maru-accent)) 0%,
       rgb(var(--maru-accent-hover)) 100%
     );
@@ -397,16 +648,21 @@ select:focus-visible {
     font-weight: 700;
     padding: 0.625rem 1.125rem;
     border-radius: var(--maru-radius-sm);
-    border: none;
-    box-shadow: var(--maru-elev-1);
+    border: 1px solid rgb(var(--maru-accent) / 0.3);
+    box-shadow: var(--maru-elev-1), var(--maru-inset-top-strong);
+    transition: all var(--maru-dur-fast) var(--maru-ease);
   }
   .maru-btn-accent:hover:not(:disabled) {
-    box-shadow: var(--maru-glow-accent);
+    box-shadow: var(--maru-glow-accent), var(--maru-inset-top-strong);
+    transform: translateY(-1px);
+  }
+  .maru-btn-accent:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   .maru-btn-danger {
     background: linear-gradient(
-      to right,
+      180deg,
       rgb(var(--maru-accent-red)) 0%,
       rgb(var(--maru-accent-red-dark)) 100%
     );
@@ -414,11 +670,16 @@ select:focus-visible {
     font-weight: 700;
     padding: 0.625rem 1.125rem;
     border-radius: var(--maru-radius-sm);
-    border: none;
+    border: 1px solid rgb(var(--maru-accent-red) / 0.3);
+    box-shadow: var(--maru-elev-1), var(--maru-inset-top-strong);
+    transition: all var(--maru-dur-fast) var(--maru-ease);
   }
   .maru-btn-danger:hover:not(:disabled) {
-    box-shadow: 0 0 0 1px rgb(var(--maru-accent-red) / 0.5),
-      0 8px 24px rgb(var(--maru-accent-red) / 0.25);
+    box-shadow:
+      0 0 0 1px rgb(var(--maru-accent-red) / 0.5),
+      0 8px 24px rgb(var(--maru-accent-red) / 0.25),
+      var(--maru-inset-top-strong);
+    transform: translateY(-1px);
   }
 
   .maru-btn-secondary {
@@ -427,33 +688,43 @@ select:focus-visible {
     border: 1px solid rgb(var(--maru-fg) / 0.1);
     border-radius: var(--maru-radius-sm);
     padding: 0.5rem 1rem;
-    transition:
-      background var(--maru-dur-fast) var(--maru-ease),
-      border-color var(--maru-dur-fast) var(--maru-ease);
+    transition: all var(--maru-dur-fast) var(--maru-ease);
   }
   .maru-btn-secondary:hover:not(:disabled) {
     background: rgb(var(--maru-fg) / 0.12);
     border-color: rgb(var(--maru-fg) / 0.18);
+    transform: translateY(-1px);
+    box-shadow: var(--maru-elev-1);
+  }
+  .maru-btn-secondary:active:not(:disabled) {
+    transform: translateY(0);
   }
 
-  /* Input primitive — espejo de input_style() */
+  /* Input premium con focus ring sutil */
   .maru-input {
     background: rgb(var(--maru-mn-input) / 0.95);
     color: rgb(var(--maru-fg));
     border: 1px solid rgb(var(--maru-mn-input-border));
     border-radius: var(--maru-radius-sm);
     padding: 0.5rem 0.75rem;
-    transition: border-color var(--maru-dur-fast) var(--maru-ease);
+    transition:
+      border-color var(--maru-dur-fast) var(--maru-ease),
+      box-shadow var(--maru-dur-fast) var(--maru-ease),
+      background var(--maru-dur-fast) var(--maru-ease);
+  }
+  .maru-input:hover:not(:disabled) {
+    border-color: rgb(var(--maru-fg) / 0.18);
   }
   .maru-input:focus {
     border-color: rgb(var(--maru-mn-cyan));
     outline: none;
+    box-shadow: 0 0 0 3px rgb(var(--maru-mn-cyan) / 0.15);
   }
   .maru-input::placeholder {
     color: rgb(var(--maru-fg-subtle));
   }
 
-  /* Header gradient — espejo de header_gradient(accent_rgba) */
+  /* Header gradient — espejo de header_gradient */
   .maru-header-gradient {
     background: linear-gradient(
       to right,
@@ -462,81 +733,81 @@ select:focus-visible {
     );
   }
 
-  /* Footer style — espejo de footer_style() */
+  /* Footer style */
   .maru-footer {
     background: rgb(0 0 0 / 0.15);
     border-top: 1px solid rgb(var(--maru-fg) / 0.05);
   }
 
-  /* Glass surface (modales premium) */
+  /* Glass surface premium (modales) */
   .maru-glass {
     background: var(--maru-glass-bg);
     backdrop-filter: var(--maru-glass-blur);
     -webkit-backdrop-filter: var(--maru-glass-blur);
-    border: 1px solid rgb(var(--maru-fg) / 0.06);
+    border: 1px solid rgb(var(--maru-fg) / 0.08);
+    box-shadow: var(--maru-elev-3), var(--maru-inset-top);
   }
 
-  /* Modal backdrop — overlay translúcido + blur */
+  /* Modal backdrop premium */
   .maru-modal-backdrop {
     background: rgb(var(--maru-bg-overlay) / 0.78);
-    backdrop-filter: blur(8px) saturate(120%);
-    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(130%);
+    -webkit-backdrop-filter: blur(10px) saturate(130%);
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * Animations específicas (extras al preset Tailwind)
+ * Animations premium
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 @keyframes maru-pulse-soft {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 @keyframes maru-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 @keyframes maru-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes maru-scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* Pulso del accent — para badges live (TikTok conectado, alertas) */
+@keyframes maru-slide-in-left {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes maru-slide-in-right {
+  from { opacity: 0; transform: translateX(6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes maru-accent-pulse {
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 0 0 rgb(var(--maru-accent-green-light) / 0.5);
   }
   50% {
     box-shadow: 0 0 0 8px rgb(var(--maru-accent-green-light) / 0);
+  }
+}
+
+/* Glow ring que late suave (live indicator) */
+@keyframes maru-live-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(var(--maru-accent-green-light) / 0.5);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgb(var(--maru-accent-green-light) / 0);
+    opacity: 0;
   }
 }
 
@@ -551,4 +822,22 @@ select:focus-visible {
 }
 .animate-accent-pulse {
   animation: maru-accent-pulse 2s var(--maru-ease) infinite;
+}
+.animate-slide-in-left {
+  animation: maru-slide-in-left var(--maru-dur-base) var(--maru-ease);
+}
+.animate-slide-in-right {
+  animation: maru-slide-in-right var(--maru-dur-base) var(--maru-ease);
+}
+.animate-live-ring {
+  animation: maru-live-ring 1.8s ease-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Tabular nums utility (para stats numéricos)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.font-mono,
+[data-tabular] {
+  font-variant-numeric: tabular-nums;
 }
