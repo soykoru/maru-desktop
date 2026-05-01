@@ -49,6 +49,52 @@ const ALL_GROUPS: LogGroup[] = [
   'errores',
 ];
 
+// Persistencia de los filtros del LogPanel en localStorage. Sin esto,
+// cada vez que el user reabría MARU se resetan a "todos activos" y
+// perdía las desmarcas (típicamente quitar `audio` o `sistema`).
+const LS_KEY_ACTIVE = 'maru.logPanel.activeGroups.v2';
+const LS_KEY_TIMESTAMPS = 'maru.logPanel.showTimestamps.v2';
+
+function loadPersistedActive(): Set<LogGroup> {
+  try {
+    const raw = window.localStorage.getItem(LS_KEY_ACTIVE);
+    if (!raw) return new Set<LogGroup>(ALL_GROUPS);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set<LogGroup>(ALL_GROUPS);
+    const valid = new Set<LogGroup>(ALL_GROUPS);
+    return new Set<LogGroup>(
+      parsed.filter((g): g is LogGroup => valid.has(g as LogGroup)),
+    );
+  } catch {
+    return new Set<LogGroup>(ALL_GROUPS);
+  }
+}
+
+function savePersistedActive(s: Set<LogGroup>): void {
+  try {
+    window.localStorage.setItem(LS_KEY_ACTIVE, JSON.stringify(Array.from(s)));
+  } catch {
+    /* swallow — quota / privacy mode */
+  }
+}
+
+function loadPersistedTimestamps(): boolean {
+  try {
+    const raw = window.localStorage.getItem(LS_KEY_TIMESTAMPS);
+    return raw === null ? true : raw === '1';
+  } catch {
+    return true;
+  }
+}
+
+function savePersistedTimestamps(v: boolean): void {
+  try {
+    window.localStorage.setItem(LS_KEY_TIMESTAMPS, v ? '1' : '0');
+  } catch {
+    /* swallow */
+  }
+}
+
 export interface LogSlice {
   logEntries: LogEntry[];
   /** Stats por categoría — incrementadas cada push event. */
@@ -79,11 +125,11 @@ export const createLogSlice: StateCreator<LogSlice, [], [], LogSlice> = (set) =>
   logEntries: [],
   logStats: {},
   logStatsTotal: 0,
-  logActiveGroups: new Set<LogGroup>(ALL_GROUPS),
+  logActiveGroups: loadPersistedActive(),
   logSearch: '',
   logAutoScroll: true,
   logUnreadCount: 0,
-  logShowTimestamps: true,
+  logShowTimestamps: loadPersistedTimestamps(),
 
   setLogEntries: (entries) =>
     set({
@@ -139,10 +185,14 @@ export const createLogSlice: StateCreator<LogSlice, [], [], LogSlice> = (set) =>
       const next = new Set(s.logActiveGroups);
       if (next.has(g)) next.delete(g);
       else next.add(g);
+      savePersistedActive(next);
       return { logActiveGroups: next };
     }),
 
-  setLogActiveGroups: (groups) => set({ logActiveGroups: groups }),
+  setLogActiveGroups: (groups) => {
+    savePersistedActive(groups);
+    set({ logActiveGroups: groups });
+  },
   setLogSearch: (logSearch) => set({ logSearch }),
   setLogAutoScroll: (logAutoScroll) =>
     set((s) => ({
@@ -150,5 +200,8 @@ export const createLogSlice: StateCreator<LogSlice, [], [], LogSlice> = (set) =>
       logUnreadCount: logAutoScroll ? 0 : s.logUnreadCount,
     })),
   resetLogUnread: () => set({ logUnreadCount: 0 }),
-  setShowTimestamps: (logShowTimestamps) => set({ logShowTimestamps }),
+  setShowTimestamps: (logShowTimestamps) => {
+    savePersistedTimestamps(logShowTimestamps);
+    set({ logShowTimestamps });
+  },
 });

@@ -197,6 +197,42 @@ class SimulatorService:
         self._log_event(f"📤 {rank_label}@{user} compartió el live", "share")
         return {"ok": True}
 
+    def emote(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Simula un emote (sticker) del live.
+
+        Params:
+          - user: nombre del usuario simulado.
+          - streamer: nombre de la carpeta de emotes (galería emotes).
+          - emoteId: id del emote (filename sin .png).
+          - imagePath: opcional, path scope=emotes para que el log
+            muestre la imagen real.
+        """
+        user = str(params.get("user") or "tester")
+        streamer = str(params.get("streamer") or "")
+        emote_id = str(params.get("emoteId") or "").strip()
+        image_path = str(params.get("imagePath") or "").strip()
+        ranks = _ranks(params)
+        data: dict[str, Any] = {"emoteId": emote_id, **ranks}
+        if streamer:
+            data["streamer"] = streamer
+        if image_path:
+            data["imagePath"] = image_path
+        _emit(
+            "emote",
+            user,
+            data,
+            target_game=_target(params),
+            user_ranks=ranks if ranks else None,
+        )
+        rank_label = self._rank_label(ranks)
+        self._log_event(
+            f"🎨 {rank_label}@{user} envió emote: {emote_id or '?'}"
+            + (f" (de {streamer})" if streamer else ""),
+            "emote",
+            {"emoteId": emote_id, "streamer": streamer, **ranks},
+        )
+        return {"ok": True}
+
     def subscribe(self, params: dict[str, Any]) -> dict[str, Any]:
         user = str(params.get("user") or "tester")
         ranks = _ranks(params)

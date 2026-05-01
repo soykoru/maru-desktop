@@ -204,6 +204,7 @@ def build_default_registry() -> MethodRegistry:
     reg.register("simulator.comment", simulator_svc.comment)
     reg.register("simulator.command", simulator_svc.command)
     reg.register("simulator.subscribe", simulator_svc.subscribe)
+    reg.register("simulator.emote", simulator_svc.emote)
 
     # donations.*
     reg.register("donations.list", donations_svc.list)

@@ -294,9 +294,33 @@ export function RuleListItem({
       )}
 
       {/* Nombre + meta — nombre en su propia línea (truncate full width)
-          y badges en línea separada para no sobreponerse con la toolbar. */}
+          y badges en línea separada para no sobreponerse con la toolbar.
+          Si rule.name es vacío o el placeholder "Sin nombre" del seed,
+          derivamos un nombre legible del trigger + acción para que la
+          UI no muestre "Sin nombre" en lote. */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-        <p className="text-sm font-medium truncate">{rule.name}</p>
+        <p className="text-sm font-medium truncate">
+          {(() => {
+            const raw = (rule.name ?? '').trim();
+            if (raw && raw.toLowerCase() !== 'sin nombre') return raw;
+            // Fallback inteligente.
+            const tt = rule.trigger_type;
+            const tv = rule.trigger_value;
+            const action = firstAction
+              ? (firstAction.action_value || firstAction.action_type_name || '')
+              : '';
+            let trig = '';
+            if (tt === 'command' && tv) trig = `!${tv}`;
+            else if (tt === 'gift' && tv) trig = `🎁 ${tv}`;
+            else if (tt === 'like' && tv) trig = `❤️ ${tv}+ likes`;
+            else if (tt === 'like_milestone' && tv) trig = `🏆 ${tv} likes`;
+            else if (tt === 'follow') trig = '➕ Follow';
+            else if (tt === 'share') trig = '📤 Share';
+            else if (tt === 'subscribe') trig = '⭐ Sub';
+            else trig = tt || 'evento';
+            return action ? `${trig} → ${action}` : trig;
+          })()}
+        </p>
         {firstAction && (
           <p className="text-[11px] text-fg-subtle truncate font-mono">
             {actionCount > 1

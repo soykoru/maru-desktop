@@ -1,5 +1,109 @@
 # Changelog — maru-desktop
 
+## 1.0.28 — 2026-05-01 · 🪲 9 fixes raíz: game id, sounds cascade, sticker simulator, log persistente, gifts search
+
+### 1) Game ID rechazaba al guardar editando categorías (caso 7_days)
+**Causa raíz**: en EDIT mode el `id` es READ-ONLY (input disabled),
+pero `idValid = ID_RE.test(id)` se evaluaba igual. Como `7_days`
+empieza con número (no matchea `^[a-zA-Z_]...`), `idValid=false` →
+`canSave=false` → bloqueo de save aunque el user solo cambiara el
+nombre de una categoría.
+**Fix**: `idValid = isEdit ? true : ...` — solo validar id en CREATE.
+
+### 2) SoundsDialog: preview no sonaba + tab Regalos tosco
+**Causa raíz preview**: `play_for_gift` siempre buscaba en
+`scope=global`, pero el SoundsDialog asigna sonidos al scope del
+juego activo (selectedGameId). Mismatch silencioso → user asignaba
+sonido, simulaba, no sonaba.
+**Fix**: `play_for_gift` y `play_for_event` ahora resuelven scopes
+en CASCADA: scope explícito → juego activo (config.json:activeGame)
+→ global. Funciona sin importar dónde el user asignó el sonido.
+**Mejoras UX tab Regalos**:
+- Search en tiempo real (también por costo numérico, ej. "100").
+- Sort por: costo / nombre / asignados primero.
+- Botón "asc/desc".
+- Botón "solo con sonido asignado" (filtro rápido).
+- Empty state con descripción específica.
+
+### 3) TikTok API mostraba todo en 0 aunque conectado
+**Causa raíz**: el modal solo leía del RPC `tiktok.status` (snapshot
+único). Si el user abría el modal sin clickear Refresh manualmente,
+los stats quedaban congelados en lo que devolvió el RPC al abrir
+(típicamente 0).
+**Fix**:
+- Modal ahora lee `tiktokStats`/`tiktokStatus`/`tiktokUsername` del
+  STORE (actualizados en tiempo real por push events
+  `tiktok:stats`/`tiktok:status`).
+- Auto-refresh del RPC cada 5s (versión, signKey, lastError).
+- Estado conectado se determina prioritariamente del store live (no
+  del snapshot del RPC).
+
+### 4) Bottom bar TikTok no mostraba nada
+Cubierto por #3: ahora los datos del modal están sincronizados con
+los push events. El bloque TikTok del Sidebar (likes/viewers/diamonds)
+ya leía del store; quien fallaba era el modal "TikTok API". Ambos
+ahora muestran el mismo estado.
+
+### 5) Filtros del LogPanel no persistían entre cierres
+**Causa raíz**: `logActiveGroups` y `logShowTimestamps` se
+inicializaban con valores estáticos en cada arranque del programa.
+Las desmarcas que el user hacía (típicamente quitar `audio`/`sistema`)
+se perdían al reabrir MARU.
+**Fix**: persistencia en `localStorage` (`maru.logPanel.activeGroups.v2`
++ `.showTimestamps.v2`). Carga en lazy init del slice + save en
+cada toggle/setActiveGroups/setShowTimestamps.
+
+### 6) Simulador: nuevo "Sticker" con galería visual
+Antes el simulador no podía generar emote events. Ahora:
+- Nuevo tipo "🎨 Sticker" en EVENT_TYPES.
+- Sección visual: dropdown de streamers (de la galería emotes
+  guardados con `emotes.list-streamers`) → grid de stickers
+  (cards 72px con `<MaruImage scope="emotes">`).
+- Click selecciona, doble-click envía al instante.
+- `simulator.emote({user, streamer, emoteId, imagePath})` nuevo
+  RPC en sidecar — emite `tiktok:event(type=emote)` al bus, llega
+  al log como sticker real.
+- Todos los rangos del usuario se aplican también al sticker.
+
+### 7) Repaso simulador: validación faltante
+Antes el botón "Simular" estaba enabled siempre que `!busy`. Si user
+elegía gift sin seleccionar uno, o emote sin elegir, se enviaba un
+evento con value vacío al sidecar.
+**Fix**: cada tipo valida su input específico antes de habilitar
+el botón. Si está disabled, el `title` explica qué falta. Aplica
+también al botón "Enviar" (burst).
+
+### 8) Reglas mostraban "Sin nombre" en cards de acción
+**Causa raíz**: el sidecar usa "Sin nombre" como placeholder cuando
+una regla seed no tiene nombre. El UI mostraba ese placeholder literal
+en cada card, llenando la pantalla de "Sin nombre" sin info útil.
+**Fix**: `RuleListItem` ahora deriva un nombre legible del trigger +
+acción cuando `rule.name` es vacío o "Sin nombre" — ej.
+`!spawn → 🐗 Boar`, `🎁 Rose → 📦 Iron Sword`, `❤️ 100+ likes → ⚡ Storm`.
+
+### 9) Buscar gifts por costo (galería + simulador)
+Ahora si el query es un número entero puro (ej. "100"), también
+filtra por coins exactos. Mantiene la búsqueda por nombre/id. Aplicado
+tanto en `GiftSelectorDialog` como en el grid del simulador.
+
+### Bonus polish
+- TikTokApiInfoDialog auto-refresh cada 5s mientras está abierto.
+
+### Archivos tocados
+
+- **Renderer**:
+  - `dialogs/games/CustomGameDialog.tsx` (idValid en edit)
+  - `dialogs/sounds/SoundsDialog.tsx` (search/sort/only-assigned)
+  - `dialogs/simulator/SimulatorDialog.tsx` (sticker picker + validación)
+  - `dialogs/gifts/GiftSelectorDialog.tsx` (search por coins)
+  - `dialogs/tiktok/TikTokApiInfoDialog.tsx` (store live + auto-refresh)
+  - `dialogs/rules/RuleListItem.tsx` (fallback nombre)
+  - `lib/store/log-slice.ts` (persistencia localStorage)
+- **Sidecar**:
+  - `backend/sounds.py` (`_resolve_scopes` cascada)
+  - `backend/simulator.py` (RPC `emote`)
+  - `rpc/registry.py` (registro `simulator.emote`)
+
 ## 1.0.27 — 2026-05-01 · 🪲 5 fixes raíz: guardar juegos, sounds reales, niveles dual, super fans sync, TikTok version
 
 ### 1) Guardar en CustomGameDialog no persistía / botón mudo

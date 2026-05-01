@@ -168,7 +168,12 @@ export function CustomGameDialog({
 
   const idDuplicate =
     !isEdit && games.some((g) => g.id.toLowerCase() === id.toLowerCase());
-  const idValid = ID_RE.test(id) && !idDuplicate;
+  // En EDIT mode el id es READ-ONLY (input disabled) → no validar
+  // contra ID_RE. Si el id existente NO matchea el regex (caso real:
+  // "7_days" empieza con número, no con letra), bloquear el save sería
+  // injustificado: el user no puede cambiar el id, está editando otra
+  // cosa (categorías/conexión/nombre). Solo validar id en CREATE.
+  const idValid = isEdit ? true : (ID_RE.test(id) && !idDuplicate);
   const nameValid = name.trim().length > 0;
   const portValid = port >= 1 && port <= 65535;
   const canSave = idValid && nameValid && portValid && !busy;
@@ -207,7 +212,8 @@ export function CustomGameDialog({
     // no pasaba nada, cerraba el dialog y los cambios se perdían sin
     // ningún feedback. Ahora se muestra el primer error encontrado.
     if (!canSave) {
-      const firstError = !idValid
+      // En EDIT no chequeamos id (es read-only). En CREATE sí.
+      const firstError = !isEdit && !idValid
         ? (idDuplicate
             ? `Ya existe un juego con id "${id}". Elegí otro.`
             : 'El Game ID es inválido. Debe empezar con letra/_, 2-32 caracteres alfanuméricos.')

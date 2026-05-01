@@ -183,31 +183,61 @@ class SoundsService:
             log.warning("stop_all falló: %s", exc)
             return {"ok": False, "message": str(exc)}
 
+    def _resolve_scopes(self, explicit_scope: str | None) -> list[str]:
+        """Resuelve la lista de scopes a probar en cascada:
+        scope explícito → juego activo → global. Sin duplicados."""
+        scopes: list[str] = []
+        if explicit_scope and explicit_scope != "global":
+            scopes.append(explicit_scope)
+        # Juego activo desde config.json (mismo formato que rule_dispatcher
+        # usa). Si falla la lectura, no agregamos nada.
+        try:
+            cfg_path = DATA_DIR / "config.json"
+            if cfg_path.exists():
+                cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+                active = cfg.get("activeGame") if isinstance(cfg, dict) else None
+                if isinstance(active, str) and active.strip() and active not in scopes:
+                    scopes.append(active.strip())
+        except Exception:
+            pass
+        if "global" not in scopes:
+            scopes.append("global")
+        return scopes
+
     def play_for_gift(self, gift_id: str, scope: str = "global") -> bool:
         """Llamado desde ChatDispatcher cuando llega un gift. Busca el
-        sonido configurado para ese gift en el scope y lo reproduce."""
-        try:
-            doc = self._read(scope)
-        except Exception:
-            return False
-        gifts = doc.get("gifts") or {}
-        path = gifts.get(gift_id) or gifts.get(gift_id.lower()) or ""
-        if not path:
-            return False
-        return self._play_file(str(path), int(doc.get("volume") or 80))
+        sonido en CASCADA: primero scope dado (si no es global),
+        luego juego activo (config.json:activeGame), luego global.
+        Antes solo intentaba `scope=global` y los sonidos asignados
+        al scope del juego activo nunca sonaban — ahora la asignación
+        funciona sin importar dónde se hizo."""
+        scopes_to_try = self._resolve_scopes(scope)
+        gid_lower = gift_id.lower()
+        for sc in scopes_to_try:
+            try:
+                doc = self._read(sc)
+            except Exception:
+                continue
+            gifts = doc.get("gifts") or {}
+            path = gifts.get(gift_id) or gifts.get(gid_lower)
+            if path:
+                return self._play_file(str(path), int(doc.get("volume") or 80))
+        return False
 
     def play_for_event(self, event_id: str, scope: str = "global") -> bool:
-        """`follow`, `share`, `superfan` — reproduce el sonido asignado."""
+        """`follow`, `share`, `superfan` — reproduce el sonido asignado.
+        Cascada: scope explícito → juego activo → global."""
         if event_id not in EVENTS:
             return False
-        try:
-            doc = self._read(scope)
-        except Exception:
-            return False
-        path = (doc.get("events") or {}).get(event_id) or ""
-        if not path:
-            return False
-        return self._play_file(str(path), int(doc.get("volume") or 80))
+        for sc in self._resolve_scopes(scope):
+            try:
+                doc = self._read(sc)
+            except Exception:
+                continue
+            path = (doc.get("events") or {}).get(event_id) or ""
+            if path:
+                return self._play_file(str(path), int(doc.get("volume") or 80))
+        return False
 
     # ── Persistencia ─────────────────────────────────────────────────────
 

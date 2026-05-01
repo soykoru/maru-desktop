@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Activity, AlertCircle, Check, Key, RefreshCw, Wrench, X } from 'lucide-react';
+import { Activity, AlertCircle, Check, Key, RefreshCw, X } from 'lucide-react';
 import { Badge, Button, Dialog } from '@maru/ui';
 import { rpcCall } from '../../../lib/rpc.js';
 import { useAppStore } from '../../../lib/store/index.js';
@@ -35,6 +35,14 @@ export function TikTokApiInfoDialog() {
   );
   const closeModal = useAppStore((s) => s.closeModal);
   const openModal = useAppStore((s) => s.openModal);
+  // Datos en TIEMPO REAL desde el store del frontend (actualizado por
+  // push events `tiktok:stats` y `tiktok:status`). Antes solo leíamos
+  // del RPC `tiktok.status` que devolvía un snapshot único — si el
+  // user abría el modal sin clickear Refresh, los stats quedaban
+  // congelados aunque el live siguiera generando eventos.
+  const tiktokStatus = useAppStore((s) => s.tiktokStatus);
+  const tiktokUsername = useAppStore((s) => s.tiktokUsername);
+  const tiktokStats = useAppStore((s) => s.tiktokStats);
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<TikTokStatus | null>(null);
@@ -57,9 +65,20 @@ export function TikTokApiInfoDialog() {
   useEffect(() => {
     if (!open) return;
     void refresh();
+    // Auto-refresh cada 5s mientras el dialog está abierto, para
+    // que `version`/`signKey`/`lastError` también se mantengan al
+    // día (los stats vivos vienen del store, los demás del RPC).
+    const id = window.setInterval(() => void refresh(), 5000);
+    return () => window.clearInterval(id);
   }, [open]);
 
   if (!open) return null;
+
+  // Datos efectivos: priorizar el store (push events live) sobre el
+  // snapshot del RPC para los campos de runtime.
+  const isConnected = tiktokStatus === 'connected' || !!status?.connected;
+  const usernameToShow = tiktokUsername || status?.username || null;
+  const statsToShow = tiktokStats || status?.stats || {};
 
   return (
     <Dialog
@@ -80,7 +99,7 @@ export function TikTokApiInfoDialog() {
           </div>
         )}
 
-        {status && (
+        {(status || isConnected) && (
           <>
             {/* Estado conexión */}
             <div className="rounded-xl border border-border bg-bg-elev/40 p-3 space-y-1.5">
@@ -88,18 +107,18 @@ export function TikTokApiInfoDialog() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-fg-subtle">
                   Estado
                 </span>
-                {status.connected ? (
+                {isConnected ? (
                   <Badge variant="success">🟢 Conectado</Badge>
                 ) : (
                   <Badge variant="default">⚪ Desconectado</Badge>
                 )}
               </div>
-              {status.username && (
+              {usernameToShow && (
                 <div className="text-sm">
-                  Usuario: <strong>@{status.username}</strong>
+                  Usuario: <strong>@{usernameToShow}</strong>
                 </div>
               )}
-              {!!status.reconnectAttempts && status.reconnectAttempts > 0 && (
+              {!!status?.reconnectAttempts && status.reconnectAttempts > 0 && (
                 <div className="text-xs text-warning flex items-center gap-1.5">
                   <Activity className="h-3 w-3" />
                   {status.reconnectAttempts} intento(s) de reconexión
@@ -114,7 +133,7 @@ export function TikTokApiInfoDialog() {
                   TikTokLive
                 </div>
                 <div className="text-sm font-mono mt-0.5">
-                  {status.version || '—'}
+                  {status?.version || '—'}
                 </div>
               </div>
               <div className="rounded-xl border border-border bg-bg-elev/40 p-3">
@@ -122,7 +141,7 @@ export function TikTokApiInfoDialog() {
                   API key (eulerstream)
                 </div>
                 <div className="text-sm mt-0.5">
-                  {status.signKeyConfigured ? (
+                  {status?.signKeyConfigured ? (
                     <span className="text-success flex items-center gap-1">
                       <Check className="h-3.5 w-3.5" /> Configurada
                     </span>
@@ -133,39 +152,37 @@ export function TikTokApiInfoDialog() {
               </div>
             </div>
 
-            {/* Stats */}
-            {status.stats && (
-              <div className="rounded-xl border border-border bg-bg-elev/40 p-3">
-                <div className="text-[10px] uppercase tracking-wider text-fg-subtle mb-1.5">
-                  Stats sesión
+            {/* Stats — siempre visibles, vienen del store con push events */}
+            <div className="rounded-xl border border-border bg-bg-elev/40 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-fg-subtle mb-1.5">
+                Stats sesión {isConnected && '(en vivo)'}
+              </div>
+              <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                <div>
+                  <div className="text-fg-subtle text-[10px]">👥</div>
+                  <div className="font-mono">{statsToShow.viewers ?? 0}</div>
                 </div>
-                <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                  <div>
-                    <div className="text-fg-subtle text-[10px]">👥</div>
-                    <div className="font-mono">{status.stats.viewers ?? 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-fg-subtle text-[10px]">❤️</div>
-                    <div className="font-mono">{status.stats.likes ?? 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-fg-subtle text-[10px]">💎</div>
-                    <div className="font-mono">{status.stats.diamonds ?? 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-fg-subtle text-[10px]">➕</div>
-                    <div className="font-mono">{status.stats.followers ?? 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-fg-subtle text-[10px]">📤</div>
-                    <div className="font-mono">{status.stats.shares ?? 0}</div>
-                  </div>
+                <div>
+                  <div className="text-fg-subtle text-[10px]">❤️</div>
+                  <div className="font-mono">{statsToShow.likes ?? 0}</div>
+                </div>
+                <div>
+                  <div className="text-fg-subtle text-[10px]">💎</div>
+                  <div className="font-mono">{statsToShow.diamonds ?? 0}</div>
+                </div>
+                <div>
+                  <div className="text-fg-subtle text-[10px]">➕</div>
+                  <div className="font-mono">{statsToShow.followers ?? 0}</div>
+                </div>
+                <div>
+                  <div className="text-fg-subtle text-[10px]">📤</div>
+                  <div className="font-mono">{statsToShow.shares ?? 0}</div>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Último error */}
-            {status.lastError && (
+            {status?.lastError && (
               <div className="rounded-xl border border-warning/40 bg-warning/5 p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-warning text-xs font-semibold uppercase tracking-wider">
                   <AlertCircle className="h-3.5 w-3.5" />

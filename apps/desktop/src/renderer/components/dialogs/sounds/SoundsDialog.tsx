@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  ArrowDownAZ,
+  ArrowUpAZ,
+  CheckSquare,
   Music,
   Play,
   Plus,
+  Search,
   Square,
   Trash2,
   Volume2,
@@ -332,6 +336,43 @@ function GiftSoundsList({
   onPlay: (path: string) => void;
   disabled: boolean;
 }) {
+  // Búsqueda + sort + filtro "solo asignados". Antes el listado era
+  // PLANO con cientos de gifts, sin search ni orden — encontrar uno
+  // específico era tedioso (era "tosco" como dijo el user).
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'coins' | 'name' | 'assigned'>(
+    'coins',
+  );
+  const [sortDesc, setSortDesc] = useState(true);
+  const [onlyAssigned, setOnlyAssigned] = useState(false);
+
+  const visibleGifts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const qNum = q && /^\d+$/.test(q) ? parseInt(q, 10) : null;
+    let arr = gifts.filter((g) => !g.disabled);
+    if (onlyAssigned) arr = arr.filter((g) => !!assignments[g.id]);
+    if (q) {
+      arr = arr.filter((g) => {
+        const matchesText =
+          g.id.toLowerCase().includes(q) || g.name.toLowerCase().includes(q);
+        const matchesCoins = qNum !== null && g.coins === qNum;
+        return matchesText || matchesCoins;
+      });
+    }
+    const dir = sortDesc ? -1 : 1;
+    arr = arr.slice().sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name) * dir;
+      if (sortBy === 'assigned') {
+        const aa = assignments[a.id] ? 1 : 0;
+        const bb = assignments[b.id] ? 1 : 0;
+        if (aa !== bb) return (bb - aa) * dir;
+        return (b.coins - a.coins) * (sortDesc ? 1 : -1);
+      }
+      return (b.coins - a.coins) * (sortDesc ? 1 : -1);
+    });
+    return arr;
+  }, [gifts, search, sortBy, sortDesc, onlyAssigned, assignments]);
+
   if (gifts.length === 0) {
     return (
       <Empty
@@ -341,12 +382,65 @@ function GiftSoundsList({
       />
     );
   }
-  // Mismo enriquecimiento de iconPath que GiftCard usa para resolver
-  // la ruta relativa al scope `donaciones/`. Sin esto la imagen real
-  // del PNG nunca se cargaba acá y solo veíamos el emoji fallback.
   return (
+    <div className="space-y-2">
+      {/* Toolbar: search + sort + only-assigned */}
+      <div className="flex items-center gap-2 px-1">
+        <Input
+          prefix={<Search className="h-3.5 w-3.5" />}
+          placeholder="Buscar por nombre, id, o costo (ej. 100)..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1"
+          disabled={disabled}
+        />
+        <Select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="w-[150px]"
+          disabled={disabled}
+          title="Ordenar por"
+        >
+          <option value="coins">💎 Por costo</option>
+          <option value="name">🔤 Por nombre</option>
+          <option value="assigned">🔊 Asignados primero</option>
+        </Select>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setSortDesc((v) => !v)}
+          title={sortDesc ? 'Ascendente' : 'Descendente'}
+        >
+          {sortDesc ? (
+            <ArrowDownAZ className="h-3.5 w-3.5" />
+          ) : (
+            <ArrowUpAZ className="h-3.5 w-3.5" />
+          )}
+        </Button>
+        <Button
+          variant={onlyAssigned ? 'primary' : 'ghost'}
+          size="sm"
+          onClick={() => setOnlyAssigned((v) => !v)}
+          title="Mostrar solo gifts con sonido asignado"
+        >
+          <CheckSquare className="h-3.5 w-3.5" />
+          {Object.keys(assignments).length}
+        </Button>
+      </div>
+
+      {visibleGifts.length === 0 ? (
+        <Empty
+          icon={Music}
+          title="Sin coincidencias"
+          description={
+            onlyAssigned
+              ? 'No hay gifts con sonido asignado todavía.'
+              : `No hay gifts que matcheen "${search}".`
+          }
+        />
+      ) : (
     <ul className="divide-y divide-border rounded-lg border border-border bg-bg-elev/30">
-      {gifts.map((g) => {
+      {visibleGifts.map((g) => {
         const path = assignments[g.id] || '';
         const iconRel = g.iconPath?.startsWith('donaciones/')
           ? g.iconPath.slice('donaciones/'.length)
@@ -413,6 +507,8 @@ function GiftSoundsList({
         );
       })}
     </ul>
+      )}
+    </div>
   );
 }
 

@@ -57,14 +57,23 @@ export function GiftSelectorDialog({
   const visible = useMemo(() => {
     const excluded = new Set(excludeIds);
     const q = search.trim().toLowerCase();
+    // Si el query es un número entero puro (ej. "100"), tratamos
+    // también como filtro por coins exactos. Si trae texto, filtramos
+    // por name/id como antes. Esto permite "1" → todas las que valen
+    // 1 diamante, "5000" → las de 5000, etc.
+    const qAsNumber =
+      q && /^\d+$/.test(q) ? parseInt(q, 10) : null;
     let out = allGifts.filter((g) => !excluded.has(g.id));
     if (!showDisabled) out = out.filter((g) => !g.disabled);
     if (q) {
-      out = out.filter(
-        (g) =>
+      out = out.filter((g) => {
+        const matchesText =
           g.name.toLowerCase().includes(q) ||
-          g.id.toLowerCase().includes(q),
-      );
+          g.id.toLowerCase().includes(q);
+        const matchesCoins =
+          qAsNumber !== null && g.coins === qAsNumber;
+        return matchesText || matchesCoins;
+      });
     }
     return out
       .slice()
@@ -93,7 +102,7 @@ export function GiftSelectorDialog({
       <div className="border-b border-border px-5 py-3 bg-bg-elev/30">
         <Input
           prefix={<Search className="h-3.5 w-3.5" />}
-          placeholder="Buscar por nombre, id..."
+          placeholder="Buscar por nombre, id, o costo en diamantes (ej. 100)..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus

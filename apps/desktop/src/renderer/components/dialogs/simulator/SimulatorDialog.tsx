@@ -27,16 +27,30 @@ import { rpcCall } from '../../../lib/rpc.js';
  *   - Single-source events vía sidecar EventBus → llegan al log y
  *     a las reglas como si fueran reales.
  */
-type EventType = 'gift' | 'comment' | 'follow' | 'share' | 'subscribe' | 'like';
+type EventType = 'gift' | 'comment' | 'follow' | 'share' | 'subscribe' | 'like' | 'emote';
 
 const EVENT_TYPES: { id: EventType; label: string; emoji: string }[] = [
   { id: 'gift', label: 'Regalo', emoji: '🎁' },
   { id: 'comment', label: 'Comentario', emoji: '💬' },
+  { id: 'emote', label: 'Sticker', emoji: '🎨' },
   { id: 'follow', label: 'Follow', emoji: '➕' },
   { id: 'share', label: 'Compartir', emoji: '📤' },
   { id: 'subscribe', label: 'Super Fan', emoji: '⭐' },
   { id: 'like', label: 'Like', emoji: '❤️' },
 ];
+
+interface EmoteStreamer {
+  username: string;
+  displayName: string;
+  avatar: string | null;
+  emoteCount: number;
+}
+
+interface EmoteItem {
+  emoteId: string;
+  path: string;
+  name: string;
+}
 
 type Preset = {
   emoji: string;
@@ -152,6 +166,25 @@ async function dispatchEvent(
         count: parseInt(value || '1', 10) || 1,
       });
       break;
+    case 'emote': {
+      // value es JSON string `{streamer, emoteId, imagePath}` empacado
+      // por el handler de simulación de stickers.
+      let info: { streamer?: string; emoteId?: string; imagePath?: string } = {};
+      try {
+        info = value ? JSON.parse(value) : {};
+      } catch {
+        info = {};
+      }
+      await rpcCall('simulator.emote', {
+        ...target,
+        ...ranks,
+        user: u,
+        streamer: info.streamer ?? '',
+        emoteId: info.emoteId ?? '',
+        imagePath: info.imagePath ?? '',
+      });
+      break;
+    }
   }
 }
 
@@ -176,6 +209,12 @@ export function SimulatorDialog() {
   const [status, setStatus] = useState<string>('Listo para simular');
   // Rangos del usuario simulado (se aplican solo a comment/command).
   const [ranks, setRanks] = useState<UserRanks>({});
+  // Sticker picker state (event=emote).
+  const [streamers, setStreamers] = useState<EmoteStreamer[]>([]);
+  const [selectedStreamer, setSelectedStreamer] = useState<string>('');
+  const [streamerEmotes, setStreamerEmotes] = useState<EmoteItem[]>([]);
+  const [emotesLoading, setEmotesLoading] = useState(false);
+  const [selectedEmote, setSelectedEmote] = useState<EmoteItem | null>(null);
   function toggleRank(key: keyof UserRanks) {
     setRanks((r) => ({ ...r, [key]: !r[key] }));
   }
@@ -191,16 +230,46 @@ export function SimulatorDialog() {
     }
   }, [open]);
 
+  // Cargar lista de streamers cuando se abre el dialog (para sticker picker).
+  useEffect(() => {
+    if (!open) return;
+    void rpcCall('emotes.list-streamers', {})
+      .then((r) => {
+        const list = (r.streamers ?? []) as EmoteStreamer[];
+        setStreamers(list);
+        if (list.length && !selectedStreamer) {
+          setSelectedStreamer(list[0].username);
+        }
+      })
+      .catch(() => setStreamers([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Cargar emotes del streamer elegido.
+  useEffect(() => {
+    if (!open || !selectedStreamer || eventType !== 'emote') return;
+    setEmotesLoading(true);
+    void rpcCall('emotes.list', { streamer: selectedStreamer })
+      .then((r) => {
+        setStreamerEmotes((r.emotes ?? []) as EmoteItem[]);
+      })
+      .catch(() => setStreamerEmotes([]))
+      .finally(() => setEmotesLoading(false));
+  }, [open, selectedStreamer, eventType]);
+
   if (!open) return null;
 
   const visibleGifts = useMemo(() => {
     const q = giftSearch.trim().toLowerCase();
+    const qNum = q && /^\d+$/.test(q) ? parseInt(q, 10) : null;
     let arr = allGifts.filter((g) => !g.disabled);
     if (q) {
-      arr = arr.filter(
-        (g) =>
-          g.id.toLowerCase().includes(q) || g.name.toLowerCase().includes(q),
-      );
+      arr = arr.filter((g) => {
+        const matchesText =
+          g.id.toLowerCase().includes(q) || g.name.toLowerCase().includes(q);
+        const matchesCoins = qNum !== null && g.coins === qNum;
+        return matchesText || matchesCoins;
+      });
     }
     arr.sort((a, b) => (sortDesc ? b.coins - a.coins : a.coins - b.coins));
     return arr;
@@ -215,6 +284,14 @@ export function SimulatorDialog() {
     if (eventType === 'gift') return selectedGift?.id ?? '';
     if (eventType === 'comment') return commentText;
     if (eventType === 'like') return String(likeCount);
+    if (eventType === 'emote') {
+      if (!selectedEmote) return '';
+      return JSON.stringify({
+        streamer: selectedStreamer,
+        emoteId: selectedEmote.emoteId,
+        imagePath: selectedEmote.path,
+      });
+    }
     return '';
   }
 
@@ -531,14 +608,135 @@ export function SimulatorDialog() {
           </fieldset>
         )}
 
+        {/* Sección condicional: emote/sticker */}
+        {eventType === 'emote' && (
+          <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
+            <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+              🎨 Stickers / Emotes
+            </legend>
+            {streamers.length === 0 ? (
+              <Empty
+                icon={Search}
+                title="Sin streamers/users con emotes guardados"
+                description="Los emotes se guardan automáticamente al detectarlos del live (chat → ventana de Emotes)."
+              />
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-fg-muted shrink-0">
+                    Streamer:
+                  </span>
+                  <Select
+                    value={selectedStreamer}
+                    onChange={(e) => {
+                      setSelectedStreamer(e.target.value);
+                      setSelectedEmote(null);
+                    }}
+                    disabled={busy}
+                    className="flex-1"
+                  >
+                    {streamers.map((s) => (
+                      <option key={s.username} value={s.username}>
+                        {s.displayName} ({s.emoteCount} emotes)
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                {emotesLoading ? (
+                  <p className="text-xs text-fg-subtle italic px-2 py-3 text-center">
+                    Cargando emotes…
+                  </p>
+                ) : streamerEmotes.length === 0 ? (
+                  <p className="text-xs text-fg-subtle italic px-2 py-3 text-center">
+                    Sin emotes guardados para este streamer.
+                  </p>
+                ) : (
+                  <div
+                    className="grid gap-2 max-h-[260px] overflow-y-auto p-1 rounded-md bg-bg-base/30"
+                    style={{
+                      gridTemplateColumns:
+                        'repeat(auto-fill, minmax(72px, 1fr))',
+                    }}
+                  >
+                    {streamerEmotes.map((em) => {
+                      const sel = selectedEmote?.emoteId === em.emoteId;
+                      const rel = em.path.startsWith('emotes/')
+                        ? em.path.slice('emotes/'.length)
+                        : em.path;
+                      return (
+                        <button
+                          key={em.emoteId}
+                          type="button"
+                          onClick={() => setSelectedEmote(em)}
+                          onDoubleClick={() => {
+                            setSelectedEmote(em);
+                            void simulate();
+                          }}
+                          className={[
+                            'flex flex-col items-center gap-1 rounded-md p-2 border transition-all',
+                            sel
+                              ? 'border-accent ring-2 ring-accent/40 bg-accent/10'
+                              : 'border-border bg-bg-surface hover:border-fg-muted',
+                          ].join(' ')}
+                          title={em.name || em.emoteId}
+                        >
+                          <MaruImage
+                            scope="emotes"
+                            path={rel}
+                            alt={em.name || em.emoteId}
+                            width={48}
+                            height={48}
+                            fallback="🎨"
+                            className="object-contain max-w-[48px] max-h-[48px]"
+                          />
+                          <span className="text-[9px] text-fg-subtle truncate w-full text-center">
+                            {em.name || em.emoteId}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-[10px] text-fg-subtle">
+                  Click para seleccionar · doble-click para enviar al
+                  instante. El sticker llega al log como emote real.
+                </p>
+              </>
+            )}
+          </fieldset>
+        )}
+
         {/* Action row + burst */}
+        {/* Validación: cada tipo de evento necesita su input específico
+            antes de poder simular. Sin esto, el botón disparaba con
+            value="" y producía gifts/emotes vacíos en el log. */}
+        {(() => {
+          const valid = (() => {
+            if (eventType === 'gift') return !!selectedGift;
+            if (eventType === 'comment') return commentText.trim().length > 0;
+            if (eventType === 'like') return likeCount > 0;
+            if (eventType === 'emote') return !!selectedEmote;
+            return true; // follow/share/subscribe no necesitan value
+          })();
+          const reason = !valid
+            ? eventType === 'gift'
+              ? 'Elegí un regalo de la galería primero.'
+              : eventType === 'comment'
+                ? 'Escribí un comentario primero.'
+                : eventType === 'emote'
+                  ? 'Elegí un sticker de la galería primero.'
+                  : 'Falta input requerido.'
+            : '';
+          return (
         <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="primary"
             size="sm"
             onClick={() => void simulate()}
-            disabled={busy}
+            disabled={busy || !valid}
+            title={reason || 'Simular este evento'}
             className="flex-1"
           >
             <Play className="h-3.5 w-3.5" />
@@ -561,13 +759,19 @@ export function SimulatorDialog() {
             variant="secondary"
             size="sm"
             onClick={() => void burst()}
-            disabled={busy || repeat < 2}
-            title="Enviar N eventos con stagger 200ms"
+            disabled={busy || repeat < 2 || !valid}
+            title={
+              repeat < 2
+                ? 'Subí Repetir a >=2 para usar burst'
+                : reason || 'Enviar N eventos con stagger 200ms'
+            }
           >
             <Send className="h-3.5 w-3.5" />
             Enviar
           </Button>
         </div>
+          );
+        })()}
 
         {/* Presets */}
         <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
