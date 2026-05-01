@@ -208,7 +208,6 @@ export function TikTokApiInfoDialog() {
               </div>
             )}
         </>
-        )}
       </div>
 
       <footer className="flex items-center justify-between gap-2 border-t border-border px-5 py-3 mt-4 -mx-5 -mb-4 bg-bg-base/50">
