@@ -155,8 +155,49 @@ class SpotifyService:
         self._poll_task: asyncio.Task[None] | None = None
         self._social_svc: Any = None
         self._last_pushed_track: str | None = None
+        self._bus_subscribed: bool = False
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self._config = self._read_config()
+        # Suscribirse al bus para capturar comment-enriched de
+        # CUALQUIER fuente — worker real Y simulator. Antes
+        # `notify_super_fan` solo se invocaba desde
+        # `tiktok._cache_ranks` que solo corre con la señal del
+        # worker → al simular un super fan desde el simulador,
+        # la lista PlayFan no se actualizaba.
+        self._install_bus_listener()
+
+    def _install_bus_listener(self) -> None:
+        if self._bus_subscribed:
+            return
+        try:
+            bus = get_event_bus()
+            bus.subscribe(
+                "tiktok:comment-enriched", self._on_comment_enriched_bus,
+            )
+            self._bus_subscribed = True
+        except Exception:
+            log.exception("spotify._install_bus_listener fallo")
+
+    def _on_comment_enriched_bus(self, payload: dict[str, Any]) -> None:
+        """Listener del bus — captura comment-enriched de simulator y
+        worker. Llama notify_super_fan SOLO cuando is_super_fan está
+        EXPLÍCITO en el payload (True o False). Idempotente +
+        throttled internamente."""
+        if not isinstance(payload, dict):
+            return
+        if "is_super_fan" not in payload:
+            return
+        user = str(payload.get("user") or "").strip()
+        if not user or user == "?":
+            return
+        try:
+            self.notify_super_fan(
+                user,
+                bool(payload.get("is_super_fan")),
+                str(payload.get("nickname") or payload.get("display_name") or user),
+            )
+        except Exception:
+            log.exception("spotify._on_comment_enriched_bus fallo")
 
     def attach_social(self, social_svc: Any) -> None:
         """Cablea SocialService para que después de `connect`/`config_set`

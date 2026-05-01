@@ -385,6 +385,7 @@ def build_default_registry() -> MethodRegistry:
     reg.register("sounds.assign-event", sounds_svc.assign_event)
     reg.register("sounds.set-volume", sounds_svc.set_volume)
     reg.register("sounds.resolve-path", sounds_svc.resolve_path)
+    reg.register("sounds.play", sounds_svc.play)
     reg.register("sounds.stop-all", sounds_svc.stop_all)
 
     # fortunes.* — sistema de Fortuna/Suerte

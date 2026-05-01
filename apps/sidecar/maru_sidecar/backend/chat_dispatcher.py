@@ -187,6 +187,15 @@ class ChatDispatcher:
 
     def _handle_comment(self, user: str, data: dict[str, Any]) -> None:
         text = str(data.get("text") or data.get("comment") or "").strip()
+        # Si el comment trae el flag is_super_fan=True, dispara el sonido
+        # de "superfan" configurado (paridad MARU original donde un super
+        # fan que comenta sonaba una notificación distinta). Idempotente
+        # por el mixer pygame; si no hay sonido asignado, no hace nada.
+        if data.get("is_super_fan") and self._sounds is not None:
+            try:
+                self._sounds.play_for_event("superfan")
+            except Exception:
+                log.exception("sounds.play_for_event(superfan) fallo")
         if not text:
             return
 

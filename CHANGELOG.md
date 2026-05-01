@@ -1,5 +1,96 @@
 # Changelog — maru-desktop
 
+## 1.0.27 — 2026-05-01 · 🪲 5 fixes raíz: guardar juegos, sounds reales, niveles dual, super fans sync, TikTok version
+
+### 1) Guardar en CustomGameDialog no persistía / botón mudo
+**Causa raíz**: `handleSubmit` empezaba con `if (!canSave) return;`
+SILENCIOSO. Si el name estaba vacío, port inválido, etc., el user
+clickeaba Guardar, no pasaba nada, cerraba el dialog → cambios se
+perdían sin ningún feedback. Adicional: el `initialSnapshotRef.current`
+se seteaba en `useEffect` post-paint → en el primer render del dialog
+`dirty=false` (snapshot vacío) → botón disabled hasta el siguiente
+render.
+**Fix**:
+- `handleSubmit` muestra el primer error de validación con
+  `setError(...)` claro: "El nombre no puede estar vacío", "El puerto
+  debe estar entre 1 y 65535", "Ya existe un juego con id X", etc.
+- Cambio `useEffect` → `useLayoutEffect` para que el snapshot esté
+  listo ANTES del primer paint visible. Sin más race del primer
+  render.
+- Botón Save: `disabled={busy || !dirty}` (no depende de canSave).
+  Si dirty + canSave → amarillo. Si dirty + !canSave → rojo (señala
+  errores). Click en cualquier estado dirty muestra error específico
+  o procede.
+- Footer ahora muestra `⚠ <error específico>` cuando hay validation
+  fail (en vez de solo "● Cambios sin guardar").
+
+### 2) Sounds: stickers no sonaban + no se podía detener
+**Causa raíz**: `playLocal` del renderer usaba `new Audio('file:///...')`.
+En Electron empaquetado, las restricciones de file:// + CSP + sandbox
+hacían que la mayoría de los archivos no sonaran. Y no había manera
+de cortar un sticker que durara demasiado.
+**Fixes**:
+- Nuevo RPC `sounds.play({path, volume})` en sidecar — usa el mismo
+  pygame.mixer que ya funciona en producción (`play_for_gift` /
+  `play_for_event`). Sin sandbox, sin CSP.
+- `useSounds.playLocal` ahora delega al RPC del sidecar (vs Audio
+  del renderer). Los previews del SoundsDialog SUENAN en empaquetado.
+- `useSounds.stopAll()` (alias de stopLocal) llama `sounds.stop-all`
+  RPC → `pygame.mixer.stop()` → corta todos los sonidos en
+  reproducción del sidecar (incluye stickers/gifts en vivo).
+- Botón **"⏹️ Detener"** agregado al header del SoundsDialog.
+- `chat_dispatcher._handle_comment` ahora dispara
+  `sounds.play_for_event("superfan")` cuando el comment trae
+  `is_super_fan=true` (sonido de notificación super fan paridad MARU).
+
+### 3) Simulador: nivel fan + nivel donador no se veían los dos
+**Causa raíz**: `simulator._rank_label` solo concatenaba
+`member_level` (L#). El `gifter_level` (G#) se extraía en `_ranks()`
+pero NO se mostraba en el badge label → si el user simulaba con
+ambos niveles, en el log y comment-enriched solo aparecía uno (L3).
+**Fix**: `_rank_label` ahora también incluye `G#` después de `L#`.
+Resultado visual `[⭐SF L3 G2] @TestUser`.
+
+### 4) Spotify Super Fans no se actualizaba desde simulador
+**Causa raíz**: `notify_super_fan` solo se invocaba desde
+`tiktok._cache_ranks` que se ejecuta como handler del SIGNAL del
+worker real (PyQt). Los events del simulador publican
+`tiktok:comment-enriched` al BUS (`get_event_bus()`) pero nadie del
+lado de Spotify lo escuchaba → simular un super fan en el simulador
+NO actualizaba la lista PlayFan.
+**Fix**: `SpotifyService.__init__` se suscribe al bus
+`tiktok:comment-enriched` con `_on_comment_enriched_bus`. Cuando el
+payload trae `is_super_fan` explícito (true o false), llama a
+`notify_super_fan(user, bool, displayName)`. Idempotente con throttle
+5min interno → no escribe el JSON con cada comment de un super fan
+activo. Funciona tanto para events del worker real como del simulador.
+
+### 5) TikTok API mostraba `<module 'TikTokLive.__version__'>`
+**Causa raíz**: TikTokLive 6.6+ tiene `TikTokLive.__version__` como
+**SUBMÓDULO** (`TikTokLive/__version__.py`), no como string.
+`getattr(_tl, "__version__", "")` devolvía el repr del módulo →
+la card "TIKTOKLIVE" del modal mostraba literal:
+`<module 'TikTokLive.__version__' from 'C:\\...\\__version__.py'>`.
+**Fix**: prioriza `importlib.metadata.version("TikTokLive")` (devuelve
+string limpio "6.6.5"). Si falla, intenta extraer `.version` o
+`.__version__` del submódulo. Sanitización defensiva final descarta
+cualquier resultado con "<module" o length > 32 chars.
+
+### Archivos tocados
+
+- **Renderer**:
+  - `dialogs/games/CustomGameDialog.tsx` — useLayoutEffect, handleSubmit
+    con error específico, footer con error, botón color por estado.
+  - `dialogs/sounds/SoundsDialog.tsx` — botón Detener + handlePlay async.
+  - `lib/use-sounds.ts` — playLocal vía RPC sidecar, stopAll.
+- **Sidecar**:
+  - `backend/sounds.py` — RPC `play(path, volume)` nuevo.
+  - `backend/chat_dispatcher.py` — sound superfan en _handle_comment.
+  - `backend/simulator.py` — `_rank_label` incluye G# (gifter_level).
+  - `backend/spotify.py` — bus listener `tiktok:comment-enriched`.
+  - `backend/tiktok.py` — version detection robusta para TikTokLive 6.6+.
+  - `rpc/registry.py` — `sounds.play` registrado.
+
 ## 1.0.26 — 2026-05-01 · 🪲 8 fixes: dirty stable, Validar/TikTok-API/sounds gallery, simulador con roles, sin minijuegos
 
 ### 1) Spotify suffix "canciones" rompía visualmente

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { Button, Dialog, Input, Label, Select, Switch } from '@maru/ui';
 import type {
@@ -89,7 +89,13 @@ export function CustomGameDialog({
   // hasta cerrar/reabrir.
   const initialSnapshotRef = useRef<string>('');
 
-  useEffect(() => {
+  // useLayoutEffect (no useEffect) para que el snapshot + state local
+  // estén listos ANTES del primer paint visible. Sin esto, el primer
+  // render del dialog tenía dirty=false (snapshot vacío) y el botón
+  // Save quedaba disabled hasta el siguiente render — si el user
+  // editaba muy rápido o el effect se demoraba, parecía que "no
+  // funcionaba" y los cambios no se podían guardar.
+  useLayoutEffect(() => {
     if (!open) return;
     let next: {
       id: string;
@@ -196,7 +202,23 @@ export function CustomGameDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSave) return;
+    // Si hay errores de validación, MOSTRARLOS — antes el handler salía
+    // silencioso (`if (!canSave) return;`), el user clickeaba Guardar,
+    // no pasaba nada, cerraba el dialog y los cambios se perdían sin
+    // ningún feedback. Ahora se muestra el primer error encontrado.
+    if (!canSave) {
+      const firstError = !idValid
+        ? (idDuplicate
+            ? `Ya existe un juego con id "${id}". Elegí otro.`
+            : 'El Game ID es inválido. Debe empezar con letra/_, 2-32 caracteres alfanuméricos.')
+        : !nameValid
+          ? 'El nombre no puede estar vacío.'
+          : !portValid
+            ? `El puerto debe estar entre 1 y 65535 (actual: ${port}).`
+            : 'Hay errores de validación.';
+      setError(firstError);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -532,10 +554,14 @@ export function CustomGameDialog({
         </div>
 
         <footer className="flex items-center justify-between gap-2 border-t border-border px-5 py-3 bg-bg-base/50">
-          <div className="text-xs text-fg-subtle">
-            {dirty && !error && (
+          <div className="text-xs flex-1 truncate">
+            {error ? (
+              <span className="text-danger" title={error}>
+                ⚠ {error}
+              </span>
+            ) : dirty ? (
               <span className="text-warning">● Cambios sin guardar</span>
-            )}
+            ) : null}
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>
@@ -547,16 +573,18 @@ export function CustomGameDialog({
               size="sm"
               disabled={busy || !dirty}
               className={
-                dirty && canSave
-                  ? '!bg-warning hover:!bg-warning/90 !text-bg'
+                dirty
+                  ? canSave
+                    ? '!bg-warning hover:!bg-warning/90 !text-bg'
+                    : '!bg-danger hover:!bg-danger/90 !text-fg'
                   : ''
               }
               title={
                 !dirty
                   ? 'No hay cambios para guardar'
                   : !canSave
-                    ? 'Hay errores de validación (id/nombre/puerto)'
-                    : ''
+                    ? 'Hay errores de validación — click para ver el detalle'
+                    : 'Click para guardar (cambios pendientes)'
               }
             >
               {isEdit ? 'Guardar cambios' : '✅ Crear juego'}

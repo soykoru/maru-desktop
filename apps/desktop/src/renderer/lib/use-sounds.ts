@@ -91,26 +91,22 @@ export function useSounds(scope: string, options?: { autoLoad?: boolean }) {
   );
 
   /**
-   * Reproduce un sonido localmente (renderer Web Audio).
-   * Usa el `maru://` protocol no es necesario porque los paths son
-   * absolutos al filesystem — los pasamos como `file:///...` a HTMLAudio.
+   * Reproduce un sonido vía pygame del sidecar (RPC `sounds.play`).
+   * Antes esto usaba `new Audio('file:///...')` desde el renderer,
+   * pero en Electron empaquetado las restricciones de file:// + CSP
+   * + sandbox hacían que la mayoría de los archivos no sonaran.
+   * Ahora delegamos al sidecar que ya maneja audio confiablemente
+   * con pygame (mismo motor que play_for_gift / play_for_event en
+   * producción).
    */
   const playLocal = useCallback(
-    (path: string, volume?: number) => {
+    async (path: string, volume?: number) => {
       if (!path) return;
       try {
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        const audio = new Audio(
-          path.startsWith('file:') ? path : `file:///${path}`,
-        );
-        audio.volume = Math.max(
-          0,
-          Math.min(1, (volume ?? data.volume) / 100),
-        );
-        void audio.play().catch(() => undefined);
-        audioRef.current = audio;
+        await rpcCall('sounds.play', {
+          path,
+          volume: volume ?? data.volume,
+        });
       } catch {
         /* swallow */
       }
@@ -118,12 +114,25 @@ export function useSounds(scope: string, options?: { autoLoad?: boolean }) {
     [data.volume],
   );
 
-  const stopLocal = useCallback(() => {
+  /** Parar local — alias de stopAll del sidecar (pygame.mixer.stop). */
+  const stopLocal = useCallback(async () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
+    try {
+      await rpcCall('sounds.stop-all', {});
+    } catch {
+      /* swallow */
+    }
   }, []);
+
+  /**
+   * Detener TODOS los sonidos en reproducción (sidecar pygame +
+   * cualquier audio del renderer). Útil para el botón "⏹️ Detener
+   * todo" del dialog y para cortar stickers que duran demasiado.
+   */
+  const stopAll = stopLocal;
 
   return {
     scope,
@@ -140,5 +149,6 @@ export function useSounds(scope: string, options?: { autoLoad?: boolean }) {
     setVolume,
     playLocal,
     stopLocal,
+    stopAll,
   };
 }

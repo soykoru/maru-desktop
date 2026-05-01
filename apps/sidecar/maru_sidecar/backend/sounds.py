@@ -149,6 +149,26 @@ class SoundsService:
             log.warning("sounds.play falló (%s): %s", path_str, exc)
             return False
 
+    def play(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Reproduce un sonido arbitrario por su path absoluto, vía
+        pygame en el sidecar (no usa Web Audio del renderer que en
+        Electron empaquetado tiene restricciones de file:// y a veces
+        no suena). Útil para preview desde el SoundsDialog.
+
+        Params:
+          - path: ruta absoluta al archivo (.mp3/.wav/.ogg/.m4a/.flac).
+          - volume: 0-100 (default 80).
+        """
+        path = str(params.get("path") or "").strip()
+        if not path:
+            return {"ok": False, "message": "path requerido"}
+        try:
+            volume = max(0, min(100, int(params.get("volume") or 80)))
+        except (TypeError, ValueError):
+            volume = 80
+        ok = self._play_file(path, volume)
+        return {"ok": ok, "message": "" if ok else "No se pudo reproducir"}
+
     def stop_all(self, _params: Any = None) -> dict[str, Any]:
         """Detiene TODOS los sonidos en reproducción. Útil para el botón
         '⏸ Detener' del preview de emotes (cuando el usuario eligió un

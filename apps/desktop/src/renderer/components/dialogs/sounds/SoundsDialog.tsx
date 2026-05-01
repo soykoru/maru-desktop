@@ -3,6 +3,7 @@ import {
   Music,
   Play,
   Plus,
+  Square,
   Trash2,
   Volume2,
   X,
@@ -60,7 +61,7 @@ export function SoundsDialog() {
 
   function handlePlay(path: string) {
     if (!path) return;
-    sounds.playLocal(path);
+    void sounds.playLocal(path);
   }
 
   async function handleAddFiles() {
@@ -161,6 +162,16 @@ export function SoundsDialog() {
             {sounds.volume}%
           </span>
         </div>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => void sounds.stopAll()}
+          title="Detener todos los sonidos en reproducción (incluye stickers en vivo)"
+        >
+          <Square className="h-3.5 w-3.5" />
+          Detener
+        </Button>
       </div>
 
       {/* Tab bar */}

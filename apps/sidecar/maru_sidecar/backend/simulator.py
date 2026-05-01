@@ -253,8 +253,15 @@ class SimulatorService:
 
     @staticmethod
     def _rank_label(ranks: dict[str, Any]) -> str:
-        """Prefijo visual para identificar rango en el log."""
-        badges = []
+        """Prefijo visual para identificar rango en el log.
+
+        Muestra TODOS los rangos activos (super fan + mod + top gifter +
+        follower + nivel fan L# + nivel gifter G#). Antes solo mostraba
+        member_level y `gifter_level` se perdía silenciosamente — si el
+        user simulaba con ambos niveles, solo veía uno en el log y en
+        los badges del comment-enriched.
+        """
+        badges: list[str] = []
         if ranks.get("is_super_fan"):
             badges.append("⭐SF")
         if ranks.get("is_moderator"):
@@ -266,4 +273,7 @@ class SimulatorService:
         ml = ranks.get("member_level")
         if ml:
             badges.append(f"L{ml}")
+        gl = ranks.get("gifter_level")
+        if gl:
+            badges.append(f"G{gl}")
         return f"[{' '.join(badges)}] " if badges else ""

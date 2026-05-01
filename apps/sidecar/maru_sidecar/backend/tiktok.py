@@ -154,19 +154,36 @@ class TikTokService:
         return ""
 
     def status(self, _params: dict[str, Any]) -> dict[str, Any]:
-        # Versión de TikTokLive instalada en el sidecar — útil para que el
-        # user pueda diagnosticar si el cliente está al día. Si no se
-        # puede importar, devolvemos versión vacía sin crashear.
+        # Versión de TikTokLive instalada — debe ser un STRING como
+        # "6.6.5", no el repr de un módulo. En TikTokLive 6.6+ el
+        # atributo `__version__` es un SUBMÓDULO (TikTokLive/__version__.py)
+        # con el string adentro como atributo `version`/`__version__`.
+        # Por eso `getattr(TikTokLive, "__version__")` devolvía
+        # `<module 'TikTokLive.__version__' from '...'>` literal en la UI.
         version = ""
         try:
             import importlib.metadata as _md
-            version = _md.version("TikTokLive") or ""
+            version = str(_md.version("TikTokLive") or "")
         except Exception:
             try:
                 import TikTokLive as _tl  # type: ignore
-                version = str(getattr(_tl, "__version__", "") or "")
+                v_attr = getattr(_tl, "__version__", None)
+                # Si v_attr es un módulo, intentar extraer el string
+                # interno (.version o .__version__ del submódulo).
+                if hasattr(v_attr, "version"):
+                    version = str(v_attr.version)
+                elif hasattr(v_attr, "__version__"):
+                    version = str(v_attr.__version__)
+                elif isinstance(v_attr, str):
+                    version = v_attr
+                else:
+                    version = ""
             except Exception:
                 version = ""
+        # Sanitizar: si el resultado contiene "<module" significa que
+        # algo del flow dejó pasar el repr — descartarlo silenciosamente.
+        if "<module" in version or len(version) > 32:
+            version = ""
         # Reconectando + último error visible para el botón "TikTok API"
         # del sidebar (sin esto el alert solo decía "Conectado/
         # Desconectado" y el user no podía diagnosticar nada).
