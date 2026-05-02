@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Button, GroupBox, StatusDot, CountUp } from '@maru/ui';
+import { Button, GroupBox, StatusDot, CountUp, VolumeSlider } from '@maru/ui';
 import {
   Plug,
   Settings as SettingsIcon,
@@ -575,24 +575,13 @@ export function Sidebar(): ReactNode {
           </select>
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          <Volume2 className="h-3.5 w-3.5 text-fg-muted" />
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={tts.config.volume_chat}
-            onChange={(e) =>
-              patchTtsConfig({
-                volume_chat: parseInt(e.target.value, 10) || 0,
-              })
-            }
-            className="flex-1 accent-accent"
-          />
-          <span className="w-9 text-right text-[11px] text-fg-subtle">
-            {tts.config.volume_chat}%
-          </span>
-        </div>
+        <VolumeSlider
+          className="mt-2"
+          icon={<Volume2 className="h-3.5 w-3.5" />}
+          value={tts.config.volume_chat}
+          onChange={(v) => patchTtsConfig({ volume_chat: v })}
+          aria-label="Volumen TTS chat"
+        />
 
         <input
           className="mt-2 maru-input w-full text-xs"
@@ -734,22 +723,13 @@ export function Sidebar(): ReactNode {
           </select>
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          <Volume2 className="h-3.5 w-3.5 text-fg-muted" />
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={fortunesConfig.volume_pct}
-            onChange={(e) =>
-              patchFortunes({ volume_pct: parseInt(e.target.value, 10) || 0 })
-            }
-            className="flex-1 accent-accent"
-          />
-          <span className="w-9 text-right text-[11px] text-fg-subtle">
-            {fortunesConfig.volume_pct}%
-          </span>
-        </div>
+        <VolumeSlider
+          className="mt-2"
+          icon={<Volume2 className="h-3.5 w-3.5" />}
+          value={fortunesConfig.volume_pct}
+          onChange={(v) => patchFortunes({ volume_pct: v })}
+          aria-label="Volumen Fortuna"
+        />
 
         <Button
           variant="secondary"

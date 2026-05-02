@@ -16,6 +16,7 @@ export { Tooltip } from './Tooltip.js';
 export { Badge, type BadgeProps } from './Badge.js';
 export { Skeleton, SkeletonGrid, type SkeletonProps } from './Skeleton.js';
 export { CountUp, type CountUpProps } from './CountUp.js';
+export { VolumeSlider, type VolumeSliderProps } from './VolumeSlider.js';
 export { Empty } from './Empty.js';
 export { Spinner } from './Spinner.js';
 export { IconButton, type IconButtonProps } from './IconButton.js';

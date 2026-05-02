@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { Trash2, Volume2 } from 'lucide-react';
-import { Button, Label, Switch } from '@maru/ui';
+import { Button, Label, Switch, VolumeSlider } from '@maru/ui';
 import type { TtsConfig, TtsVoice, TtsVoiceMode } from '@maru/shared';
 import { VoiceSelector } from './VoiceSelector.js';
 
@@ -85,22 +85,17 @@ export function TtsConfigPanel({
           const enabled = config[c.enabledKey] && config.enabled;
           return (
             <div key={c.key} className="flex items-center gap-2">
-              <Volume2 className="h-3.5 w-3.5 text-fg-muted shrink-0" />
               <span className="text-xs text-fg-muted shrink-0 w-14">{c.label}</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
+              <VolumeSlider
+                icon={<Volume2 className="h-3.5 w-3.5" />}
                 value={config[c.key]}
-                onChange={(e) =>
-                  patch({ [c.key]: parseInt(e.target.value, 10) || 0 } as Partial<TtsConfig>)
+                onChange={(v) =>
+                  patch({ [c.key]: v } as Partial<TtsConfig>)
                 }
                 disabled={disabled || !enabled}
-                className="flex-1 accent-accent"
+                aria-label={`Volumen ${c.label}`}
+                className="flex-1"
               />
-              <span className="w-12 text-right text-[11px] font-mono text-fg-subtle">
-                {config[c.key]}%
-              </span>
             </div>
           );
         })}

@@ -12,7 +12,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
-import { Button, Dialog, Empty, Input, MaruImage, Select, Spinner } from '@maru/ui';
+import { Button, Dialog, Empty, Input, MaruImage, Select, Spinner, VolumeSlider } from '@maru/ui';
 import type { DonationGift, SoundEvent, SoundLibraryItem } from '@maru/shared';
 import { useAppStore } from '../../../lib/store/index.js';
 import { useGames } from '../../../lib/use-games.js';
@@ -149,22 +149,14 @@ export function SoundsDialog() {
           </Select>
         </div>
 
-        <div className="flex-1 flex items-center gap-2">
-          <Volume2 className="h-3.5 w-3.5 text-fg-muted" />
-          <input
-            type="range"
-            min={0}
-            max={100}
+        <div className="flex-1 max-w-[260px]">
+          <VolumeSlider
+            icon={<Volume2 className="h-3.5 w-3.5" />}
             value={sounds.volume}
-            onChange={(e) =>
-              void sounds.setVolume(parseInt(e.target.value, 10) || 0)
-            }
-            className="flex-1 accent-accent max-w-[220px]"
+            onChange={(v) => void sounds.setVolume(v)}
             disabled={busy}
+            aria-label="Volumen sonidos"
           />
-          <span className="w-10 text-right text-xs font-mono text-fg-subtle">
-            {sounds.volume}%
-          </span>
         </div>
 
         <Button

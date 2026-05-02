@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Volume2 } from 'lucide-react';
-import { Button, Input, Label, Switch } from '@maru/ui';
+import { Button, Input, Label, Switch, VolumeSlider } from '@maru/ui';
 import type { SocialConfig } from '@maru/shared';
 import { rpcCall } from '../../../lib/rpc.js';
 import { useTts } from '../../../lib/use-tts.js';
@@ -120,23 +120,13 @@ export function GeneralTab({
           Audio (canal social)
         </legend>
 
-        <div className="flex items-center gap-2">
-          <Volume2 className="h-4 w-4 text-fg-muted" />
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={config.volume}
-            onChange={(e) =>
-              patch({ volume: parseInt(e.target.value, 10) || 0 })
-            }
-            disabled={disabled}
-            className="flex-1 accent-accent"
-          />
-          <span className="w-12 text-right text-xs font-mono text-fg-subtle">
-            {config.volume}%
-          </span>
-        </div>
+        <VolumeSlider
+          icon={<Volume2 className="h-4 w-4" />}
+          value={config.volume}
+          onChange={(v) => patch({ volume: v })}
+          disabled={disabled}
+          aria-label="Volumen canal social"
+        />
 
         <div>
           <div className="flex items-end gap-2">

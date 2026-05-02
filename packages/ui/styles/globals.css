@@ -762,6 +762,74 @@ select:focus-visible {
     backdrop-filter: blur(10px) saturate(130%);
     -webkit-backdrop-filter: blur(10px) saturate(130%);
   }
+
+  /* ── VolumeSlider premium ──────────────────────────────────────────
+   * Track con gradient proporcional al valor (set via inline style).
+   * Thumb con glow al hover/drag, sin sub-pixel jitter (translateZ).
+   * Compatible con webkit (Chromium/Electron) + Firefox.
+   */
+  .maru-volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+    transition: opacity var(--maru-dur-fast) var(--maru-ease);
+    /* background del track viene del style inline (gradient proporcional) */
+  }
+  .maru-volume-slider:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Thumb (webkit) */
+  .maru-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid rgb(var(--maru-accent));
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.35),
+                0 0 0 0 rgb(var(--maru-accent) / 0.0);
+    transform: translateZ(0);
+    transition:
+      transform var(--maru-dur-fast) var(--maru-ease-spring),
+      box-shadow var(--maru-dur-fast) var(--maru-ease);
+  }
+  .maru-volume-slider:hover::-webkit-slider-thumb {
+    transform: scale(1.2) translateZ(0);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.4),
+                0 0 0 6px rgb(var(--maru-accent) / 0.15);
+  }
+  .maru-volume-slider:active::-webkit-slider-thumb {
+    transform: scale(1.3) translateZ(0);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.5),
+                0 0 0 8px rgb(var(--maru-accent) / 0.25);
+  }
+  .maru-volume-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.4),
+                0 0 0 4px rgb(var(--maru-accent-blue) / 0.5);
+  }
+
+  /* Track Firefox */
+  .maru-volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid rgb(var(--maru-accent));
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+    transition: transform var(--maru-dur-fast) var(--maru-ease-spring);
+  }
+  .maru-volume-slider:hover::-moz-range-thumb {
+    transform: scale(1.2);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

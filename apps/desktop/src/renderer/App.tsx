@@ -57,20 +57,59 @@ export function App() {
     return wireSidecarEvents();
   }, []);
 
-  // Warmup en idle: precargar caches pesados (gifts, voices) cuando el
-  // browser tenga tiempo libre, sin bloquear el primer paint. Cuando el
-  // user abra el modal de gifts o voices, ya está listo. Cero impacto
-  // en boot porque corre DESPUÉS de que la UI ya pintó.
+  // Warmup en idle: precargar caches del store cuando el browser tenga
+  // tiempo libre, sin bloquear el primer paint.
+  //
+  // Estrategia v1.0.35:
+  //  1. Para hooks con auto-load (gifts, voices), poblamos el STORE
+  //     directamente vía setGifts/setVoices/etc. Esto setea
+  //     status='ready' y el hook no dispara refresh al montar el modal.
+  //  2. Para configs (social, spotify, ia, tts), un rpcCall simple
+  //     calienta el cache del sidecar Python — la 2da vez es instantáneo.
+  //
+  // Stagger 80ms entre warmups para no saturar el sidecar.
   useEffect(() => {
-    ric(() => {
-      void rpcCall('gifts.list', {}).catch(() => undefined);
+    type Warmup = () => Promise<void>;
+
+    const warmups: Warmup[] = [
+      // Gifts → store
+      async () => {
+        try {
+          const r = (await rpcCall('donations.list', {
+            includeDisabled: true,
+          })) as { gifts?: unknown[] };
+          const s = useAppStore.getState();
+          if (r?.gifts && s.giftsStatus === 'idle') {
+            s.setGifts(r.gifts as never);
+          }
+        } catch { /* sidecar no listo, el hook reintenta cuando se abra */ }
+      },
+      // TTS voices → calienta el cache del sidecar
+      async () => {
+        try { await rpcCall('tts.list-voices', {}); } catch { /* */ }
+      },
+      // Resto: solo calienta cache del sidecar
+      async () => { try { await rpcCall('games.list', {}); } catch {} },
+      async () => { try { await rpcCall('sounds.list', { scope: 'global' }); } catch {} },
+      async () => { try { await rpcCall('social.config.get', {}); } catch {} },
+      async () => { try { await rpcCall('spotify.config.get', {}); } catch {} },
+      async () => { try { await rpcCall('ia.config.get', {}); } catch {} },
+      async () => { try { await rpcCall('tts.config.get', {}); } catch {} },
+      async () => { try { await rpcCall('tts.user-voices.list', {}); } catch {} },
+      async () => { try { await rpcCall('spotify.accounts.list', {}); } catch {} },
+      async () => { try { await rpcCall('profiles.list', {}); } catch {} },
+    ];
+
+    const timers: number[] = [];
+    warmups.forEach((fn, i) => {
+      const t = window.setTimeout(() => {
+        ric(() => { void fn(); });
+      }, i * 80);
+      timers.push(t);
     });
-    ric(() => {
-      void rpcCall('tts.voices.list', {}).catch(() => undefined);
-    });
-    ric(() => {
-      void rpcCall('sounds.list', {}).catch(() => undefined);
-    });
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t));
+    };
   }, []);
 
   useGlobalShortcuts();

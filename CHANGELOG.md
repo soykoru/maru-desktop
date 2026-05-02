@@ -1,5 +1,98 @@
 # Changelog — maru-desktop
 
+## 1.0.35 — 2026-05-01 · 🎚️ FASE 4: VolumeSlider premium + warmup que pobla store
+
+Ataca dos issues reportados por user:
+1. Sliders de volumen no eran fluidos (lag visible al arrastrar).
+2. Modales mostraban "Cargando…" la primera vez que abrías.
+
+### 1) VolumeSlider premium con state local + debounce
+
+**Problema raíz**: cada `onChange` del slider disparaba un RPC al
+sidecar inmediatamente. Al arrastrar el slider eso era 60+ RPCs/seg
+→ spam de red, lag visible en la UI, tracker behind del valor real.
+
+**Fix**: nuevo componente `@maru/ui/VolumeSlider` con:
+- **State local instantáneo** (`localValue`): la UI se actualiza a
+  60fps sin esperar respuesta del sidecar.
+- **Commit debounced 150ms**: solo persiste al sidecar después de que
+  el user paró de mover. Si suelta antes (`onMouseUp`/`onTouchEnd`/
+  `onKeyUp`), commit inmediato sin esperar el debounce.
+- **Track con gradient proporcional** al valor (premium look) — la
+  parte rellena con `accent` del tema, la parte vacía neutro sutil.
+- **Thumb premium** con glow expansivo al hover (`scale(1.2)`) y al
+  drag (`scale(1.3)` + ring 8px). Spring easing en el scale.
+- **GPU layer** (`translateZ(0) + backface-visibility:hidden`) para
+  eliminar sub-pixel jitter en Windows.
+- **Tabular nums** en el badge del % para que no "salte" el ancho
+  cuando cambia 99→100.
+- Compatible webkit (Chromium/Electron) + Firefox.
+
+**Aplicado en los 5 lugares con sliders de volumen**:
+- `Sidebar.tsx` → TTS Chat (volume_chat)
+- `Sidebar.tsx` → Fortuna (volume_pct)
+- `SoundsDialog.tsx` → Sonidos (sounds.volume)
+- `social/GeneralTab.tsx` → Canal social (config.volume)
+- `tts/TtsConfigPanel.tsx` → Chat / Social / Fortuna (volume_chat,
+  volume_social, volume_fortune) — 3 sliders en uno
+
+Resultado: mover los sliders es 100% fluido, sin lag, sin spam de
+RPCs. El sidecar recibe SOLO el valor final cuando el user suelta o
+deja de mover 150ms.
+
+### 2) Cache warmup que POBLA el store (no solo el sidecar)
+
+**Problema raíz**: el warmup de v1.0.34 hacía `rpcCall('gifts.list')`
+directo, lo cual calentaba el cache del sidecar Python pero dejaba el
+store del renderer en `status: 'idle'`. Cuando el user abría el modal
+de Gifts, el hook leía `status === 'idle'` y disparaba `refresh()`
+otra vez → spinner "Cargando…".
+
+**Fix**: el warmup ahora **pobla el store directamente** con
+`useAppStore.getState().setGifts(r.gifts)`, lo cual setea
+`status: 'ready'` automáticamente. Cuando el modal abre, el hook ve
+status='ready' y NO refresca.
+
+Para configs (social, spotify, ia, tts) un `rpcCall` simple alcanza
+porque el sidecar Python cachea internamente — la 2da llamada es
+instantánea.
+
+11 warmups con stagger 80ms para no saturar el sidecar:
+- `donations.list` → store gifts (con setGifts)
+- `tts.list-voices` (warmup sidecar)
+- `games.list`
+- `sounds.list`
+- `social.config.get`
+- `spotify.config.get`
+- `ia.config.get`
+- `tts.config.get`
+- `tts.user-voices.list`
+- `spotify.accounts.list`
+- `profiles.list`
+
+Resultado: cuando el user abre cualquier modal (Gifts, Voces,
+Sonidos, Spotify, Social, IA, TTS), no hay spinner. Datos ya en
+store o cacheados en sidecar.
+
+### Garantías técnicas (intactas)
+
+- ✅ Sidecar Python ni se mira (los RPCs son los mismos).
+- ✅ Main process Electron ni se mira.
+- ✅ Push events bus, store Zustand intactos.
+- ✅ Regex de logs con emojis intactas.
+- ✅ Anti-flicker `.maru-bg-shell` mantenido.
+- ✅ Auto-update electron-updater 6.3.9.
+
+### Métricas
+
+- CSS bundle: ~65.15 → ~66.5 KB (+1.35 KB volume slider styles).
+- JS bundle: 117.52 → 119.19 KB (+1.67 KB warmup + VolumeSlider).
+- Build limpio en 1.87s.
+- Mover slider: 0 RPC/seg durante drag, 1 RPC al soltar (era 60+/seg).
+- Modal abre: instantáneo en lugar de 200-500ms con spinner.
+
+---
+
 ## 1.0.34 — 2026-05-01 · 🎬 FASE 2 + 3: microinteracciones + boot ultra rápido + bug fix LogPanel
 
 Combinación de FASE 2 (microinteracciones premium) y FASE 3 (boot ultra
