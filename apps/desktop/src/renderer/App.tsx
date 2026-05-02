@@ -9,6 +9,14 @@ import { useAppStore } from './lib/store/index.js';
 import { THEME_LIST, type ThemeId } from './lib/store/ui-slice.js';
 import { rpcCall } from './lib/rpc.js';
 
+/** requestIdleCallback con fallback a setTimeout(0) para Electron 33+. */
+const ric: (cb: () => void) => number =
+  typeof window !== 'undefined' && 'requestIdleCallback' in window
+    ? (cb) => (window as Window & {
+        requestIdleCallback: (cb: () => void) => number;
+      }).requestIdleCallback(cb)
+    : (cb) => window.setTimeout(cb, 1);
+
 /**
  * App root — ventana única.
  *
@@ -47,6 +55,22 @@ export function App() {
 
   useEffect(() => {
     return wireSidecarEvents();
+  }, []);
+
+  // Warmup en idle: precargar caches pesados (gifts, voices) cuando el
+  // browser tenga tiempo libre, sin bloquear el primer paint. Cuando el
+  // user abra el modal de gifts o voices, ya está listo. Cero impacto
+  // en boot porque corre DESPUÉS de que la UI ya pintó.
+  useEffect(() => {
+    ric(() => {
+      void rpcCall('gifts.list', {}).catch(() => undefined);
+    });
+    ric(() => {
+      void rpcCall('tts.voices.list', {}).catch(() => undefined);
+    });
+    ric(() => {
+      void rpcCall('sounds.list', {}).catch(() => undefined);
+    });
   }, []);
 
   useGlobalShortcuts();

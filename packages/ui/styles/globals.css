@@ -841,6 +841,67 @@ select:focus-visible {
   animation: maru-live-ring 1.8s ease-out infinite;
 }
 
+/* ── Connect button states premium ────────────────────────────────────
+ * success-flash: anillo verde que se expande+desvanece al conectarse OK.
+ * error-shake:   sacudida horizontal sutil al fallo.
+ * connecting-pulse: glow oscilante mientras se intenta conectar.
+ */
+@keyframes maru-success-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgb(46 204 113 / 0.6),
+                0 0 0 0 rgb(46 204 113 / 0.4);
+  }
+  60% {
+    box-shadow: 0 0 0 8px rgb(46 204 113 / 0),
+                0 0 0 16px rgb(46 204 113 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(46 204 113 / 0),
+                0 0 0 0 rgb(46 204 113 / 0);
+  }
+}
+.animate-success-flash {
+  animation: maru-success-flash 1.4s var(--maru-ease) 1;
+}
+
+@keyframes maru-error-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+.animate-error-shake {
+  animation: maru-error-shake 0.5s var(--maru-ease) 1;
+}
+
+@keyframes maru-connecting-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgb(var(--maru-accent-blue) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(var(--maru-accent-blue) / 0);
+  }
+}
+.animate-connecting-pulse {
+  animation: maru-connecting-pulse 1.6s var(--maru-ease) infinite;
+}
+
+/* ── Spring physics premium para switches/dropdowns ───────────────── */
+.transition-spring {
+  transition-timing-function: var(--maru-ease-spring);
+}
+
+/* ── GPU promotion utility ────────────────────────────────────────────
+ * Para elementos que se animan frecuentemente. Forza layer compositor
+ * permanente y elimina sub-pixel jitter (problema típico en Windows
+ * cuando se anima translate sin GPU layer).
+ */
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * Tabular nums utility (para stats numéricos)
  * ═══════════════════════════════════════════════════════════════════════════ */
@@ -876,4 +937,15 @@ select:focus-visible {
   content-visibility: auto;
   contain-intrinsic-size: 1px 120px;
   contain: layout paint;
+}
+
+/* Scroll containers premium: overscroll-behavior contain evita que el
+ * scroll del log "rebote" en el padre. Smooth scroll opt-in via
+ * data-smooth-scroll. */
+[data-scroll-area] {
+  overscroll-behavior: contain;
+}
+
+[data-smooth-scroll] {
+  scroll-behavior: smooth;
 }

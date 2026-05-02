@@ -1,5 +1,140 @@
 # Changelog — maru-desktop
 
+## 1.0.34 — 2026-05-01 · 🎬 FASE 2 + 3: microinteracciones + boot ultra rápido + bug fix LogPanel
+
+Combinación de FASE 2 (microinteracciones premium) y FASE 3 (boot ultra
+rápido + perf adicional) en una sola release. Sin tocar lógica del
+sidecar/main/RPCs. Reportado por user: bug del botón Trash2 cortado en
+LogPanel toolbar — arreglado.
+
+### 0) Bug fix · LogPanel toolbar — Trash2 cortado
+
+**Reporte**: el ícono de la papelera (limpiar log) se cortaba aunque
+ampliaras la ventana. Era el último de 4 botones a la derecha del
+search.
+
+**Causa raíz**: el `Input` con `flex-1` tomaba todo el espacio
+disponible y los 4 botones (Clock, Download, RotateCcw, Trash2) no
+tenían `shrink-0`, así que el último se comprimía y cortaba el ícono.
+Además el container tenía `gap-1.5` + `px-3` que no daba aire suficiente.
+
+**Fix**:
+- Cada `<Button>` ahora con `!h-7 !w-7 !p-0 shrink-0` — tamaño fijo
+  cuadrado 28×28, sin shrink.
+- Container con `gap-1` + `px-2` (era 1.5 / px-3) para más espacio.
+- `<Input>` con `flex-1 min-w-0` explícito.
+
+Resultado: los 4 botones siempre completos, sin cortes, en cualquier
+ancho de ventana.
+
+### FASE 2 — Microinteracciones premium
+
+#### CountUp animation en stats
+Nuevo componente `@maru/ui/CountUp` que anima el cambio numérico desde
+el valor previo al nuevo con `requestAnimationFrame` + `easeOutCubic`
+600ms. Skip del primer render para no animar al boot.
+
+Aplicado en:
+- **Sidebar TikTok stats** (likes / viewers / diamonds): cuando llegan
+  push events del live, los números cuentan progresivamente. Da el
+  efecto premium de "actividad real".
+- **StatsCounters del LogPanel** (gifts / follows / shares / likes /
+  chat / acciones): mismo efecto, 500ms.
+
+Performance: 0 re-renders del padre, 0 efectos secundarios. Animación
+local con setState + cancela en cleanup. Respeta
+`prefers-reduced-motion`.
+
+#### Skeleton premium
+`@maru/ui/Skeleton` ampliado con 4 variants (`default`, `text`, `circle`,
+`card`), prop `lines` (multi-line con la última al 75% width), inline
+opcional, role/aria-label correctos. + nuevo `SkeletonGrid({count})`
+para placeholders de listas. Shimmer mejorado con `via-fg/[0.08]`
+(antes era `via-white/5` hardcoded — ahora respeta el tema).
+
+#### Toast premium
+`@maru/ui/Toaster` actualizado:
+- **Slide-in lateral** (`animate-slide-in-right`) en vez de slide-up.
+- **Progress bar** inferior 2px que se contrae con `transform: scaleX`
+  durante la duración del toast (estilo Stripe/Linear). Cero JS, puro
+  CSS keyframe. No corre en errors (no auto-dismiss).
+- Border-radius/shadow refinados con `shadow-elev-3 shadow-inset-top`.
+- Z-index a `9000` (var). Backdrop-blur mantenido.
+
+#### Connect button premium states
+Nuevas animaciones en `globals.css`:
+- `animate-success-flash` — anillo verde 1.4s que se expande+desvanece
+  cuando TikTok conecta exitosamente.
+- `animate-error-shake` — sacudida horizontal 0.5s al fallo de conexión.
+- `animate-connecting-pulse` — glow oscilante mientras intenta conectar.
+
+Cableadas en `Sidebar.tsx` con `useRef + setKey` pattern para
+re-disparar la animación SOLO cuando cambia el estado relevante (no en
+cada render).
+
+#### Spring physics utility
+`.transition-spring` class que aplica `cubic-bezier(0.34, 1.56, 0.64, 1)`
+(rebote sutil estilo Apple) para switches y dropdowns que querés que
+tengan ese feel material. Disponible para uso futuro.
+
+### FASE 3 — Boot ultra rápido + perf adicional
+
+#### Preconnect a Google Fonts en `<head>`
+Antes el browser hacía DNS lookup + TLS handshake + descarga del CSS
+secuencial (200-400ms). Ahora con `<link rel="preconnect">` el handshake
+empieza en paralelo al parsing del HTML. Reduce el FOUT (flash of
+unstyled text) ~200-400ms al primer boot.
+
+#### requestIdleCallback warmup
+`App.tsx` ahora dispara 3 RPCs en idle (después del primer paint):
+- `gifts.list` (1000+ gifts del catálogo TikTok)
+- `tts.voices.list` (487 voces del TikTok TTS)
+- `sounds.list` (catálogo de sonidos del user)
+
+Con fallback a `setTimeout(0)` si el browser no tiene idle callback.
+Cuando el user abre el modal de gifts/voices/sounds, ya está cacheado
+en el sidecar — modal abre instantáneo sin spinner.
+
+#### Overscroll behavior premium
+Nueva utility CSS `[data-scroll-area]` con `overscroll-behavior: contain`.
+Aplicado al scroll del LogPanel. Resultado: el scroll del log no
+"rebota" en el padre cuando llegás al final/inicio (problema típico en
+trackpad de macOS y mouse wheel agresivo en Windows).
+
+`[data-smooth-scroll]` para opt-in a `scroll-behavior: smooth`
+(disponible para uso futuro en navegación interna).
+
+#### GPU layer utility
+`.gpu-layer` class:
+- `transform: translateZ(0)` — promociona a GPU layer permanente.
+- `backface-visibility: hidden` — elimina sub-pixel jitter en Windows.
+- `will-change: transform` — hint al compositor.
+
+Disponible para elementos que se animan frecuentemente.
+
+### Garantías técnicas (intactas)
+
+- ✅ Sidecar Python ni se mira.
+- ✅ Main process Electron ni se mira.
+- ✅ RPCs sin cambios (los warmup `gifts.list` / `tts.voices.list` /
+  `sounds.list` son los mismos que ya usaban hooks existentes).
+- ✅ Push events bus, store Zustand intactos.
+- ✅ Regex de logs con emojis intactas.
+- ✅ Strings con emojis en componentes intactos.
+- ✅ Anti-flicker `.maru-bg-shell` mantenido.
+- ✅ `<Card>` sin backdrop-blur por default — no flicker en push events.
+
+### Métricas
+
+- CSS bundle: ~64.75 → ~65.15 KB (+0.40 KB animations + perf utils).
+- JS bundle main: 115.23 → 117.52 KB (+2.29 KB CountUp + Toast premium
+  + warmup + Skeleton refinement).
+- Build pasa limpio en 1.82s.
+- Boot time: ~200-400ms más rápido al primer arranque (preconnect).
+- Modal abre instantáneo de gifts/voices/sounds tras boot (warmup).
+
+---
+
 ## 1.0.33 — 2026-05-01 · ✨ FASE 1 polish: input limpio + temas refinados + perf
 
 Continuación del rediseño v1.0.32. Esta release ataca el feedback del

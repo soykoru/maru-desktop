@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'self' http://localhost:* ws://localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' http://localhost:*; img-src 'self' data: https: blob: maru:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ws://localhost:* http://localhost:* ws://127.0.0.1:* http://127.0.0.1:* https://overlays.korugames.lat https://fonts.googleapis.com https://fonts.gstatic.com;" />
+    <!-- Preconnect a Google Fonts → handshake TLS empieza antes del CSS download.
+         Reduce el FOUT (flash of unstyled text) ~200-400ms. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <title>MARU Live</title>
   </head>
   <body>

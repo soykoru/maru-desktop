@@ -177,20 +177,26 @@ export function LogPanel(): ReactNode {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 border-b border-border px-3 py-1.5 bg-bg-elev/20">
+        {/* Toolbar — search + 4 botones de acción.
+            Bug fix v1.0.34: el Trash2 se cortaba porque los botones no
+            tenían `shrink-0` y el Input con `flex-1` les robaba espacio.
+            Ahora cada botón tiene shrink-0 + el Input min-w-0 explícito,
+            container con px-2 (era px-3) y gap-1 (era 1.5) para que
+            quepa todo aún en ventanas estrechas. */}
+        <div className="flex items-center gap-1 border-b border-border px-2 py-1.5 bg-bg-elev/20">
           <Input
             prefix={<Search className="h-3 w-3" />}
             placeholder="Buscar en log..."
             value={log.search}
             onChange={(e) => log.setSearch(e.target.value)}
-            className="flex-1 h-7 text-xs"
+            className="flex-1 min-w-0 h-7 text-xs"
           />
           <Button
             variant="ghost"
             size="sm"
             onClick={() => log.setShowTimestamps(!log.showTimestamps)}
             title={log.showTimestamps ? 'Ocultar timestamps' : 'Mostrar timestamps'}
-            className="!h-7 !px-2"
+            className="!h-7 !w-7 !p-0 shrink-0"
           >
             <Clock className="h-3 w-3" />
           </Button>
@@ -200,7 +206,7 @@ export function LogPanel(): ReactNode {
             onClick={() => void log.exportLog()}
             disabled={log.entries.length === 0}
             title="Exportar log a TXT"
-            className="!h-7 !px-2"
+            className="!h-7 !w-7 !p-0 shrink-0"
           >
             <Download className="h-3 w-3" />
           </Button>
@@ -209,7 +215,7 @@ export function LogPanel(): ReactNode {
             size="sm"
             onClick={() => void log.resetStatsRemote()}
             title="Resetear contadores"
-            className="!h-7 !px-2"
+            className="!h-7 !w-7 !p-0 shrink-0"
           >
             <RotateCcw className="h-3 w-3" />
           </Button>
@@ -218,7 +224,7 @@ export function LogPanel(): ReactNode {
             size="sm"
             onClick={() => void log.clearRemote()}
             title="Limpiar log"
-            className="!h-7 !px-2"
+            className="!h-7 !w-7 !p-0 shrink-0"
           >
             <Trash2 className="h-3 w-3" />
           </Button>
@@ -227,6 +233,7 @@ export function LogPanel(): ReactNode {
         <div
           ref={scrollRef}
           onScroll={onScroll}
+          data-scroll-area
           className="flex-1 min-h-0 overflow-y-auto px-2 py-1 bg-bg-base/30"
         >
           {log.visible.length === 0 ? (

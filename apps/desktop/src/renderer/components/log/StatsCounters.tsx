@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
+import { CountUp } from '@maru/ui';
 import type { LogEntry } from '@maru/shared';
 
 /**
  * `StatsCounters` — 6 contadores compactos del MARU original.
  *
- * Cuenta DIRECTO desde las entries del buffer del log (más confiable
- * que un counter incremental que podía quedarse out-of-sync con el
- * server-side stats del sidecar). Esto significa que los stats
- * reflejan EXACTAMENTE lo que el user ve en el panel — si limpias
- * el log, vuelven a 0; si llega un evento, incrementa al instante.
+ * Cuenta DIRECTO desde las entries del buffer del log. Premium polish
+ * v1.0.34: cada número anima con CountUp (ease-out cubic 600ms) cuando
+ * cambia. Skipea la primera render para no animar al boot.
  */
 export interface StatsCountersProps {
   /** Entries actuales del log buffer (max 500). */
@@ -44,7 +43,7 @@ export function StatsCounters({ entries }: StatsCountersProps) {
         const total = c.cats.reduce((acc, k) => acc + (counts[k] ?? 0), 0);
         return (
           <div key={c.title} className={c.color} title={c.title}>
-            {c.emoji} {total}
+            {c.emoji} <CountUp value={total} durationMs={500} />
           </div>
         );
       })}

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Button, GroupBox, StatusDot } from '@maru/ui';
+import { Button, GroupBox, StatusDot, CountUp } from '@maru/ui';
 import {
   Plug,
   Settings as SettingsIcon,
@@ -17,7 +17,7 @@ import {
   Bot,
   Music,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import logoSrc from '../assets/logo.png';
 import { useAppStore } from '../lib/store/index.js';
 import { useGames } from '../lib/use-games.js';
@@ -206,6 +206,25 @@ export function Sidebar(): ReactNode {
   const isConnected = tiktokStatus === 'connected';
   const isConnecting = tiktokStatus === 'connecting' || connecting;
 
+  // Connect button visual states (v1.0.34 polish):
+  // - Al conectar exitoso: flash anillo verde 1.4s una vez.
+  // - Al fallar: shake horizontal 0.5s una vez.
+  // Se gatean con keys efímeros para no re-disparar en cada render.
+  const [successFlashKey, setSuccessFlashKey] = useState(0);
+  const [errorShakeKey, setErrorShakeKey] = useState(0);
+  const prevConnectedRef = useRef(false);
+  useEffect(() => {
+    if (isConnected && !prevConnectedRef.current) {
+      setSuccessFlashKey((k) => k + 1);
+    }
+    prevConnectedRef.current = isConnected;
+  }, [isConnected]);
+  useEffect(() => {
+    if (tiktokError) {
+      setErrorShakeKey((k) => k + 1);
+    }
+  }, [tiktokError]);
+
   // Restaurar último username al boot (paridad MARU original que persiste
   // en config.json `tiktok_last_username`).
   useEffect(() => {
@@ -319,13 +338,13 @@ export function Sidebar(): ReactNode {
         <div className="mt-1 grid grid-cols-3 gap-1 text-[11px] font-mono">
           <div className="text-accent-red flex items-center gap-1">
             <Heart className="h-3 w-3" />
-            {tiktokStats.likes.toLocaleString()}
+            <CountUp value={tiktokStats.likes} durationMs={500} />
           </div>
           <div className="text-info" title="Viewers">
-            👁 {tiktokStats.viewers.toLocaleString()}
+            👁 <CountUp value={tiktokStats.viewers} durationMs={500} />
           </div>
           <div className="text-warning" title="Diamonds">
-            💎 {tiktokStats.diamonds.toLocaleString()}
+            💎 <CountUp value={tiktokStats.diamonds} durationMs={500} />
           </div>
         </div>
 
@@ -366,12 +385,14 @@ export function Sidebar(): ReactNode {
           </div>
         ) : (
           <Button
+            key={`connect-${successFlashKey}-${errorShakeKey}`}
             variant={isConnected ? 'secondary' : 'primary'}
             className={[
               'mt-2 w-full transition-all duration-200',
               isConnected
-                ? 'shadow-[0_0_0_1px_rgb(46_213_115/0.3)]'
+                ? 'shadow-[0_0_0_1px_rgb(46_213_115/0.3)] animate-success-flash'
                 : '',
+              tiktokError && !isConnected ? 'animate-error-shake' : '',
             ].join(' ')}
             title={
               isConnected
@@ -392,7 +413,7 @@ export function Sidebar(): ReactNode {
         )}
 
         {tiktokError && (
-          <div className="mt-2 rounded-md border border-danger/40 bg-danger/10 px-2 py-1 text-[10px] text-danger">
+          <div className="mt-2 rounded-md border border-danger/40 bg-danger/10 px-2 py-1 text-[10px] text-danger animate-fade-in">
             ⚠ {tiktokError}
           </div>
         )}
