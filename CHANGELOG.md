@@ -1,5 +1,69 @@
 # Changelog — maru-desktop
 
+## 1.0.52 — 2026-05-03 · 🛠️ Roles sin emojis + bug header sticky raíz + clipboard real + avatar en taps
+
+### A1+A6 — Roles sin emojis, solo color
+- v1.0.51 mantenía emojis (⭐ 🛡 🏆 🪙 🎙) en los chips. El user pidió
+  "como nombres de usuario pero con un color cada uno". Rediseño:
+  - SIN emojis. Solo texto en minúsculas (`fan`, `mod`, `top`, `L3`,
+    `host`, `sigue`).
+  - Punto de color a la izquierda (`::before` con currentColor + glow
+    para super fan).
+  - Color saturado por tipo: dorado (super fan), azul cyan (mod),
+    púrpura (top gifter), verde (member), accent (gifter/host).
+  - Look "etiqueta de chat" — consistente visual con username.
+- Nuevas utilities `.maru-role-chip--{superfan,mod,top,member,
+  gifter,streamer,follower,misc}`.
+
+### A2 — Bug raíz: header sticky se sobreponía al scrollear
+- En v1.0.51 ya cambié a `border-separate` + sticky en cada `<th>`,
+  pero el bug seguía. Causa raíz REAL: el wrapper de la tabla tenía
+  `overflow-x-auto max-h-[280px]` SIN `overflow-y-auto`. El scroll
+  vertical pasaba al padre del `SocialConfigDialog`
+  (`overflow-y-auto px-5 py-4`), por lo que el `position: sticky` del
+  thead se referenciaba contra ese padre incorrecto. Resultado: el
+  header quedaba clavado en la posición del padre y los `<td>` de la
+  tabla pasaban por debajo.
+- Fix: agregar `overflow-y-auto` al wrapper. Ahora el wrapper es su
+  propio scrollport vertical → el sticky se referencia correctamente
+  contra la tabla.
+- Aplicado también en TapsTab (mismo bug, copiado del mismo template).
+
+### A3 — Avatar en TapsTab + super fan dorado
+- `TapsRankingEntry` extendido con `avatar` y `is_super_fan`.
+- Backend `social.taps_top` resuelve `get_avatar` y
+  `_is_super_fan_now` por cada user del ranking.
+- UI TapsTab: avatar 24×24 + chip dorado `fan` cuando es Super Fan +
+  fila con tinte dorado a la izquierda (igual que UsersTab).
+
+### A4 — Avatar SOLO en comments y gifts del log
+- v1.0.51 mostraba avatar en CUALQUIER `log:entry` con `meta.avatar`.
+  Eso incluía likes / joins / sounds / system → ruido visual.
+- Ahora `LogEntryRow` filtra por categoría: solo `comment`, `command`
+  y `gift` muestran avatar. Likes / joins / system mantienen el
+  emoji genérico de la categoría.
+
+### A5 — Bug raíz: doble click NO copia al clipboard real
+- En v1.0.51 el feedback verde aparecía pero el clipboard quedaba
+  vacío — el user no podía pegar.
+- Causa raíz: `navigator.clipboard.writeText` en Electron falla
+  silenciosamente cuando la ventana no está estrictamente focused o
+  no tiene permission `ClipboardWrite` (default false). El `.catch`
+  silenciaba el error y el flash visual seguía corriendo.
+- Fix de raíz:
+  1. Nuevo IPC handler `clipboard:write` en main process usando
+     `clipboard.writeText` nativa de Electron (no falla por foco).
+  2. Preload expone `window.maruApi.clipboard.write(text)`.
+  3. `LogPanel.copyEntry` llama IPC primero, luego
+     `navigator.clipboard` como fallback, luego `execCommand('copy')`
+     con textarea oculto como triple fallback.
+- Resultado: el doble click siempre copia, independiente del foco.
+
+### A7 — Auditoría SocialDialog
+- TapsTab obtuvo el mismo fix raíz de header.
+- StatsTab no tiene tablas grandes — sin cambios.
+- Confirmado: avatares se cargan tanto en UsersTab como TapsTab.
+
 ## 1.0.51 — 2026-05-03 · 🎨 Roles bonitos + suerte al log + avatares + super fan dorado + bug header social
 
 ### F1 — Likes sin prefijo de rol

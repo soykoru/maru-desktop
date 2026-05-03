@@ -1136,6 +1136,8 @@ class SocialService:
                     "username": str(username),
                     "taps": taps,
                     "lastActive": last,
+                    "avatar": self.get_avatar(str(username)) or None,
+                    "is_super_fan": self._is_super_fan_now(str(username)),
                 }
             )
             total_taps += taps

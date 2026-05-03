@@ -556,6 +556,10 @@ export interface TapsRankingEntry {
   username: string;
   taps: number;
   lastActive: string | number | null;
+  /** URL persistente del avatar (CDN TikTok). v1.0.52. */
+  avatar?: string | null;
+  /** Si es Super Fan en este live. v1.0.52. */
+  is_super_fan?: boolean;
 }
 
 export type RelationshipType = 'novios' | 'amigo' | 'rival';

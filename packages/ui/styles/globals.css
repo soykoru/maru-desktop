@@ -2207,6 +2207,70 @@ a:focus-visible {
     0 0 0 2px rgba(255, 215, 0, 0.7),
     0 0 8px rgba(255, 215, 0, 0.3);
 }
+
+/* ── Role chips (v1.0.52) — etiquetas de chat estilo Twitch/YouTube ─
+ * Diseño solicitado por el user: SIN EMOJIS, solo texto con color
+ * saturado por tipo + un punto de color a la izquierda. Look limpio
+ * tipo "username badge", consistente con el font del @user. */
+.maru-role-chip {
+  position: relative;
+  padding-left: 0.55rem !important;
+}
+.maru-role-chip::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 4px currentColor;
+}
+
+.maru-role-chip--superfan {
+  color: #f5c542;
+  background: rgba(245, 197, 66, 0.1);
+  text-shadow: 0 0 8px rgba(245, 197, 66, 0.35);
+}
+.maru-role-chip--mod {
+  color: rgb(var(--maru-accent-blue));
+  background: rgb(var(--maru-accent-blue) / 0.12);
+}
+.maru-role-chip--top {
+  color: rgb(var(--maru-accent-purple));
+  background: rgb(var(--maru-accent-purple) / 0.12);
+}
+.maru-role-chip--member {
+  color: rgb(var(--maru-accent-green));
+  background: rgb(var(--maru-accent-green) / 0.12);
+}
+.maru-role-chip--gifter {
+  color: rgb(var(--maru-accent));
+  background: rgb(var(--maru-accent) / 0.12);
+}
+.maru-role-chip--streamer {
+  color: rgb(var(--maru-accent));
+  background: rgb(var(--maru-accent) / 0.18);
+  font-weight: 800;
+}
+.maru-role-chip--follower {
+  color: rgb(var(--maru-fg-muted));
+  background: rgb(var(--maru-fg) / 0.06);
+}
+.maru-role-chip--follower::before {
+  background: rgb(var(--maru-fg-muted));
+  box-shadow: none;
+}
+.maru-role-chip--misc {
+  color: rgb(var(--maru-fg-subtle));
+  background: rgb(var(--maru-fg) / 0.06);
+}
+.maru-role-chip--misc::before {
+  background: rgb(var(--maru-fg-subtle));
+  box-shadow: none;
+}
 .maru-role-badge--top {
   background: rgb(var(--maru-accent-purple) / 0.14);
   color: rgb(var(--maru-accent-purple));

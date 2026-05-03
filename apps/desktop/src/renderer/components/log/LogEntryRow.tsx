@@ -71,45 +71,57 @@ function chipKind(raw: string):
   return 'misc';
 }
 
+/**
+ * Estética de chips — diseño v1.0.52: SIN EMOJIS. Solo texto en
+ * pequeño con color saturado por tipo + un punto de color a la
+ * izquierda. Look "etiqueta de username de chat".
+ */
 function chipClass(raw: string): string {
   const base =
-    'inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[9px] font-semibold tracking-wide leading-none border';
+    'maru-role-chip inline-flex items-center gap-1 rounded-[3px] px-1 py-px text-[9.5px] font-bold tracking-wider uppercase leading-none';
   switch (chipKind(raw)) {
     case 'superfan':
-      return `${base} bg-warning/15 text-warning border-warning/35`;
+      return `${base} maru-role-chip--superfan`;
     case 'mod':
-      return `${base} bg-accent-blue/18 text-accent-blue border-accent-blue/35`;
+      return `${base} maru-role-chip--mod`;
     case 'top':
-      return `${base} bg-accent-purple/18 text-accent-purple border-accent-purple/35`;
+      return `${base} maru-role-chip--top`;
     case 'member':
-      return `${base} bg-accent-green/18 text-accent-green border-accent-green/35`;
+      return `${base} maru-role-chip--member`;
     case 'gifter':
-      return `${base} bg-accent/15 text-accent border-accent/35`;
+      return `${base} maru-role-chip--gifter`;
     case 'streamer':
-      return `${base} bg-accent/20 text-accent border-accent/45`;
+      return `${base} maru-role-chip--streamer`;
     case 'follower':
-      return `${base} bg-fg/8 text-fg-muted border-border`;
+      return `${base} maru-role-chip--follower`;
     default:
-      return `${base} bg-fg/10 text-fg-subtle border-border`;
+      return `${base} maru-role-chip--misc`;
   }
 }
 
 /**
- * Para chips conocidos mostramos un emoji + label compacto.
- * Para los demás respetamos el texto raw del backend.
+ * Label limpio sin emojis. v1.0.52: el usuario pidió "como nombres
+ * de usuario pero con un color cada uno".
  */
 function chipLabel(raw: string): string {
   const t = raw.toLowerCase().trim();
-  if (t === 'superfan') return '⭐ FAN';
-  if (t.startsWith('superfan')) return raw.toUpperCase().replace('SUPERFAN', '⭐');
-  if (t === 'mod' || t === 'admin') return '🛡 MOD';
-  if (t === 'topgifter') return '🏆 TOP';
-  if (/^top\d+$/.test(t)) return '🏆 ' + raw.replace(/^top/i, '#');
-  if (t.startsWith('member ')) return '🪙 ' + raw.toUpperCase().replace('MEMBER ', '');
+  if (t === 'superfan') return 'fan';
+  if (t.startsWith('superfan ')) {
+    // 'superfan L3' o similar → conservar el nivel.
+    return raw.replace(/superfan/i, 'fan');
+  }
+  if (t === 'mod' || t === 'admin') return 'mod';
+  if (t === 'topgifter') return 'top';
+  if (/^top\d+$/.test(t)) return raw.replace(/^top/i, 'top ');
+  if (t.startsWith('member ')) {
+    // 'member L3' → 'L3' solo.
+    return raw.replace(/member\s*/i, '');
+  }
   if (t === 'follower') return 'sigue';
-  if (t === 'streamer' || t === 'anchor') return '🎙 HOST';
-  if (t === 'new') return '🆕 NEW';
+  if (t === 'streamer' || t === 'anchor') return 'host';
+  if (t === 'new') return 'nuevo';
   if (t === 'friend') return 'amigo';
+  if (t === '✓') return 'verif';
   return raw;
 }
 
@@ -197,8 +209,18 @@ export const LogEntryRow = memo(function LogEntryRow({
   const meta = categoryMeta(entry.category);
   const levelBadge = LEVEL_BADGE[entry.level] ?? null;
   const { chips, who, what } = partitionMessage(entry.message);
+  // El avatar solo aplica a mensajes "del usuario" (comments, comandos
+  // y regalos). Likes / joins / system / sound / etc. NO traen foto —
+  // sería ruido visual y rompería el ritmo del log.
+  const AVATAR_CATEGORIES = new Set([
+    'comment',
+    'command',
+    'gift',
+  ]);
   const avatar =
-    typeof entry.meta?.avatar === 'string' && entry.meta.avatar.startsWith('http')
+    AVATAR_CATEGORIES.has(entry.category) &&
+    typeof entry.meta?.avatar === 'string' &&
+    entry.meta.avatar.startsWith('http')
       ? (entry.meta.avatar as string)
       : null;
 

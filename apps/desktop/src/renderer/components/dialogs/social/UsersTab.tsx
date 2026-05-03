@@ -243,17 +243,16 @@ export function UsersTab({
             }
           />
         ) : (
-          <div className="overflow-x-auto max-h-[280px] relative">
+          // Bug raíz v1.0.52: el wrapper SOLO tenía `overflow-x-auto
+          // max-h-[280px]` — sin `overflow-y-auto`, el scroll vertical
+          // pasaba al padre del SocialConfigDialog, y el `position: sticky
+          // top-0` del thead se referenciaba contra el padre INCORRECTO.
+          // Fix: hacer el wrapper su propio scrollport vertical.
+          // Tabla con `border-separate` + sticky en cada `<th>` con bg
+          // opaco (en `border-collapse: collapse` default Tailwind, el
+          // bg del thead/tr no se aplica al sticky en Chrome/Edge).
+          <div className="overflow-y-auto overflow-x-auto max-h-[280px] relative">
             <table className="w-full text-xs border-separate border-spacing-0">
-              {/*
-                Bug raíz F9: el `thead.sticky top-0 bg-bg-elev` se veía
-                transparente al scrollear (los `td` se sobreponían). En
-                tablas con `border-collapse: collapse` (default), el
-                background del THEAD/TR no aplica al sticky en muchos
-                navegadores — solo el de los TH individuales sí. Fix:
-                `border-separate` + bg explícito en cada TH + sticky en
-                cada TH (no en thead).
-              */}
               <thead>
                 <tr className="text-left text-fg-subtle">
                   <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Usuario</th>

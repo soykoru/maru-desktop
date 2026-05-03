@@ -157,36 +157,86 @@ export function TapsTab({
             description="Cuando los viewers presionen el corazón aparecerán acá."
           />
         ) : (
-          <div className="overflow-x-auto max-h-[280px]">
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-bg-elev z-10">
-                <tr className="border-b border-border text-left text-fg-subtle">
-                  <th className="px-3 py-2 font-medium w-12">#</th>
-                  <th className="px-2 py-2 font-medium">Usuario</th>
-                  <th className="px-2 py-2 font-medium text-right w-20">Taps</th>
-                  <th className="px-2 py-2 font-medium text-right w-24">Última act.</th>
+          // Wrapper con scroll vertical PROPIO (overflow-y-auto) — sin
+          // esto, el sticky se referencia contra el padre del dialog y
+          // el header se sobrepone a las filas al scrollear (mismo bug
+          // raíz que se arregló en UsersTab).
+          <div className="overflow-y-auto overflow-x-auto max-h-[280px] relative">
+            <table className="w-full text-xs border-separate border-spacing-0">
+              <thead>
+                <tr className="text-left text-fg-subtle">
+                  <th className="sticky top-0 z-20 bg-bg-elev px-3 py-2 font-medium w-12 border-b border-border">#</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Usuario</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-right w-20 border-b border-border">Taps</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-right w-24 border-b border-border">Última act.</th>
                 </tr>
               </thead>
               <tbody>
-                {ranking.map((r, i) => (
-                  <tr
-                    key={r.username}
-                    className="border-b border-border/50 hover:bg-fg/5"
-                  >
-                    <td className={`px-3 py-1.5 font-bold ${MEDAL_COLOR[i] ?? 'text-fg-subtle'}`}>
-                      {MEDAL[i] ?? `#${i + 1}`}
-                    </td>
-                    <td className="px-2 py-1.5 truncate max-w-[180px]" title={r.username}>
-                      {r.username}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-mono text-accent-red">
-                      {r.taps.toLocaleString()}
-                    </td>
-                    <td className="px-2 py-1.5 text-right text-fg-muted text-[11px]">
-                      {formatLastActive(r.lastActive)}
-                    </td>
-                  </tr>
-                ))}
+                {ranking.map((r, i) => {
+                  const isSF = !!r.is_super_fan;
+                  return (
+                    <tr
+                      key={r.username}
+                      className={[
+                        'transition-colors',
+                        isSF ? 'maru-super-fan-row hover:bg-warning/8' : 'hover:bg-fg/5',
+                      ].join(' ')}
+                    >
+                      <td className={`px-3 py-1.5 font-bold border-b border-border/50 ${MEDAL_COLOR[i] ?? 'text-fg-subtle'}`}>
+                        {MEDAL[i] ?? `#${i + 1}`}
+                      </td>
+                      <td className="px-2 py-1.5 border-b border-border/50" title={r.username}>
+                        <div className="flex items-center gap-2 max-w-[200px]">
+                          {r.avatar ? (
+                            <img
+                              src={r.avatar}
+                              alt=""
+                              loading="lazy"
+                              decoding="async"
+                              referrerPolicy="no-referrer"
+                              className={[
+                                'h-6 w-6 rounded-full object-cover flex-shrink-0',
+                                isSF ? 'maru-super-fan-avatar-ring' : 'border border-border',
+                              ].join(' ')}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span
+                              className={[
+                                'h-6 w-6 rounded-full grid place-items-center text-[10px] font-bold flex-shrink-0',
+                                isSF
+                                  ? 'maru-super-fan-avatar-ring bg-warning/15 text-warning'
+                                  : 'bg-fg/10 text-fg-muted',
+                              ].join(' ')}
+                              aria-hidden="true"
+                            >
+                              {r.username.slice(0, 1).toUpperCase()}
+                            </span>
+                          )}
+                          <span className="truncate flex items-center gap-1">
+                            {r.username}
+                            {isSF && (
+                              <span
+                                className="maru-role-chip maru-role-chip--superfan"
+                                title="Super Fan del live"
+                              >
+                                fan
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-2 py-1.5 text-right font-mono text-accent-red border-b border-border/50">
+                        {r.taps.toLocaleString()}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-fg-muted text-[11px] border-b border-border/50">
+                        {formatLastActive(r.lastActive)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

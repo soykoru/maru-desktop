@@ -8,7 +8,7 @@
  * - Renderer ↔ updater: state, checkNow, installAndRestart, disable.
  */
 
-import { app, ipcMain, shell, type BrowserWindow } from 'electron';
+import { app, clipboard, ipcMain, shell, type BrowserWindow } from 'electron';
 import type { RpcClient } from './rpc-client.js';
 import type { AutoUpdater } from './auto-updater.js';
 import { maybeNotifyPushEvent } from './notifications.js';
@@ -145,4 +145,19 @@ export function installIpcHandlers(
   });
   ipcMain.handle('updater:install-and-restart', () => updater.installAndRestart());
   ipcMain.handle('updater:disable', () => updater.disable('user disabled from UI'));
+
+  // Clipboard write — `navigator.clipboard.writeText` en el renderer
+  // de Electron falla silenciosamente cuando la ventana no está
+  // estrictamente focused o si la sesión no tiene permission para
+  // ClipboardWrite (default false). El IPC al main usa la API nativa
+  // `clipboard.writeText` que SIEMPRE funciona desde main process.
+  ipcMain.handle('clipboard:write', (_evt, text: unknown) => {
+    if (typeof text !== 'string' || !text) return false;
+    try {
+      clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  });
 }

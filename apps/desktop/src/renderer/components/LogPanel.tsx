@@ -58,10 +58,46 @@ export function LogPanel(): ReactNode {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const copyTimerRef = useRef<number | null>(null);
   const copyEntry = useCallback((id: string, text: string) => {
+    // Bug raíz v1.0.51: `navigator.clipboard.writeText` en Electron
+    // falla silenciosamente si la ventana no está estrictamente focused
+    // o si no hay user-gesture trackeada en el handler. El feedback
+    // verde aparecía pero el clipboard quedaba vacío. Fix: pasar al
+    // main process via IPC (`clipboard.writeText` nativa) y usar
+    // navigator.clipboard solo como fallback. También un fallback
+    // execCommand por si IPC falla en algún edge case.
+    let didCopy = false;
+    const tryIpc = window.maruApi?.clipboard?.write;
+    if (typeof tryIpc === 'function') {
+      void tryIpc(text)
+        .then((ok) => {
+          didCopy = ok;
+        })
+        .catch(() => {
+          didCopy = false;
+        });
+    }
+    // Doble fallback para garantizar copy aunque IPC todavía no
+    // esté disponible (transición de versiones, etc).
     try {
-      void navigator.clipboard.writeText(text).catch(() => undefined);
+      void navigator.clipboard?.writeText(text).catch(() => undefined);
     } catch {
-      /* swallow — clipboard puede fallar si la ventana no tiene foco */
+      /* swallow */
+    }
+    if (!didCopy) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {
+        /* swallow */
+      }
     }
     setCopiedId(id);
     if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);

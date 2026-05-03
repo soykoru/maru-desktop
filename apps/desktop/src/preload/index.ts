@@ -59,6 +59,14 @@ const api = {
       return ipcRenderer.invoke('shell:open-external', url);
     },
   },
+  clipboard: {
+    /** Escribe `text` al clipboard del SO usando la API nativa del
+     * main (más confiable que navigator.clipboard en Electron, que
+     * puede silenciar fallar sin foco). */
+    write(text: string): Promise<boolean> {
+      return ipcRenderer.invoke('clipboard:write', text);
+    },
+  },
   /**
    * Devuelve el path absoluto en disco de un `File` seleccionado por
    * el user (`<input type="file">` o drag-and-drop).
