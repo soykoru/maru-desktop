@@ -195,9 +195,42 @@ class SpotifyService:
             bus.subscribe(
                 "tiktok:comment-enriched", self._on_comment_enriched_bus,
             )
+            # NUEVO v1.0.44: warm-start de Spotify cuando se conecta el live.
+            # Antes había que esperar al scheduler de 8s post-boot o que el
+            # user clickeara "Conectar Spotify" manual. Ahora, apenas el
+            # streamer arranca el live, si hay credenciales guardadas en
+            # spotify.json el cliente intenta auto-connect en background.
+            bus.subscribe(
+                "tiktok:status", self._on_tiktok_status_bus,
+            )
             self._bus_subscribed = True
         except Exception:
             log.exception("spotify._install_bus_listener fallo")
+
+    def _on_tiktok_status_bus(self, payload: dict[str, Any]) -> None:
+        """Cuando TikTok pasa a connected, intenta warm-start de Spotify
+        (no-op si ya está conectado o si no hay credenciales). Se ejecuta
+        en thread del bus → usamos un thread aparte para no bloquear el
+        loop con un posible HTTP del OAuth refresh."""
+        if not isinstance(payload, dict):
+            return
+        if not payload.get("connected"):
+            return
+        # Si ya tenemos cliente conectado, no hay nada que hacer.
+        if self._client is not None and getattr(self._client, "is_connected", False):
+            return
+        # Solo intentamos si hay credenciales persistidas (sino el
+        # `_ensure_client` no podrá conectar y solo gastará un HTTP en vano).
+        if not self._config.get("client_id") or not self._config.get("client_secret"):
+            return
+
+        def _warm() -> None:
+            try:
+                self._ensure_client()
+            except Exception:
+                log.exception("spotify warm-start tras tiktok:connected fallo")
+
+        threading.Thread(target=_warm, name="spotify-warmup", daemon=True).start()
 
     def _on_comment_enriched_bus(self, payload: dict[str, Any]) -> None:
         """Listener del bus — captura comment-enriched de simulator y

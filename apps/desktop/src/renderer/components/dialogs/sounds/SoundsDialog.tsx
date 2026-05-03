@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
@@ -15,6 +15,7 @@ import {
 import { Button, Dialog, Empty, Input, MaruImage, Select, Spinner, VolumeSlider } from '@maru/ui';
 import type { DonationGift, SoundEvent, SoundLibraryItem } from '@maru/shared';
 import { useAppStore } from '../../../lib/store/index.js';
+import { rpcCall } from '../../../lib/rpc.js';
 import { useGames } from '../../../lib/use-games.js';
 import { useGifts } from '../../../lib/use-gifts.js';
 import { useSounds } from '../../../lib/use-sounds.js';
@@ -55,6 +56,29 @@ export function SoundsDialog() {
 
   const [scope, setScope] = useState<string>(selectedGameId ?? 'global');
   const sounds = useSounds(scope, { autoLoad: open });
+
+  // v1.0.44: cargar el scope preferido del sidecar al abrir el dialog
+  // (el user eligió uno previamente). Sin esto, cada apertura volvía
+  // al juego activo y "perdía" la preferencia.
+  useEffect(() => {
+    if (!open) return;
+    void rpcCall('sounds.scope.get', {})
+      .then((r) => {
+        const s = (r as { scope?: string }).scope;
+        if (typeof s === 'string' && s.trim()) {
+          setScope(s);
+        }
+      })
+      .catch(() => undefined);
+  }, [open]);
+
+  // Al cambiar el scope desde el dropdown, persistir en el sidecar para
+  // que cuando lleguen gifts/events en vivo, el resolver use ESTE scope
+  // y no el del juego activo (que cambia cuando el user pasa de juego).
+  function handleScopeChange(next: string) {
+    setScope(next);
+    void rpcCall('sounds.scope.set', { scope: next }).catch(() => undefined);
+  }
 
   const [tab, setTab] = useState<Tab>('library');
   const [search, setSearch] = useState('');
@@ -136,9 +160,10 @@ export function SoundsDialog() {
           <span className="text-xs text-fg-muted">Scope:</span>
           <Select
             value={scope}
-            onChange={(e) => setScope(e.target.value)}
+            onChange={(e) => handleScopeChange(e.target.value)}
             className="w-[180px]"
             disabled={busy}
+            title="Perfil de sonidos a usar EN VIVO. Independiente del juego activo — si elegís Global, los sonidos quedan en Global aunque cambies de juego."
           >
             <option value="global">🌐 Global</option>
             {games.map((g) => (

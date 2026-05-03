@@ -23,6 +23,10 @@ const KIND_LABEL: Record<string, { sing: string; plur: string }> = {
   like: { sing: 'like', plur: 'likes' },
   gift: { sing: 'regalo', plur: 'regalos' },
   share: { sing: 'compartido', plur: 'compartidos' },
+  follow: { sing: 'follow', plur: 'follows' },
+  comment: { sing: 'comentario', plur: 'comentarios' },
+  command: { sing: 'comando', plur: 'comandos' },
+  sound: { sing: 'sonido', plur: 'sonidos' },
 };
 
 function fmtTime(ms: number): string {

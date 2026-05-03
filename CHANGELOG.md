@@ -1,5 +1,63 @@
 # Changelog — maru-desktop
 
+## 1.0.44 — 2026-05-04 · 🔧 7 bugs raíz: versión 0.0.0 + Spotify auto + sounds scope + taps 500 + NowPlaying clicks + log groupings
+
+### Versión "0.0.0" en header
+**Bug raíz**: el handler IPC `app:get-version` usaba
+`process.env['npm_package_version']` que solo existe bajo `pnpm run`.
+En el .exe empaquetado ese env no está → fallback "0.0.0".
+
+**Fix**: usar `app.getVersion()` (de electron). Lee package.json embebido
+en el asar, funciona en dev y prod.
+
+### Spotify auto-load al iniciar live
+**Antes**: había que clickear "Conectar Spotify" cada vez (o esperar al
+scheduler post-boot de 8s).
+
+**Fix**: `SpotifyService` se subscribe al bus event `tiktok:status`. Cuando
+el live arranca y hay credenciales persistidas en `spotify.json`, se
+dispara warm-start en thread aparte (no bloquea el sidecar).
+
+### Sounds: profile manual independiente del juego activo
+**Bug raíz**: `_resolve_scopes` priorizaba `activeGame` del config. El
+user no podía elegir un perfil de sonidos y mantenerlo — al cambiar
+de juego, el perfil cambiaba sin querer.
+
+**Fix**: nuevo campo `soundsScope` en config.json (persiste el scope
+elegido por el user). El resolver lo usa con prioridad sobre
+`activeGame`. RPCs nuevos: `sounds.scope.get` y `sounds.scope.set`.
+El SoundsDialog persiste cada cambio del dropdown automáticamente
+y carga el preferido al abrir.
+
+### Sounds: log entry agrupable cuando se reproduce
+- Cada `play_for_gift` y `play_for_event` emite `log:entry`
+  category=sound con `meta.gift_id` o `meta.event_id`.
+- El log-grouping ahora agrupa eventos `sound` consecutivos con el
+  mismo gift/event id (10 rosas seguidas → bucket "🔔 sonido rosa × 10").
+
+### NowPlayingCard: botones play/pause/skip no funcionaban
+**Bug raíz**: `.maru-np-controls` y `.maru-np-content` ambos tenían
+`z-index: 2`. Como `np-content` viene después en el DOM y tiene
+`height: 100%`, su área cubre los botones de la esquina superior
+derecha y secuestra los clicks.
+
+**Fix**: `z-index: 3` en los controles. Bonus: el botón de la izquierda
+ahora abre Spotify config (más útil que un skip-back duplicado).
+
+### Log groupings ampliados
+- Antes solo agrupaba `like/gift/share`. Ahora también `follow`,
+  `comment`, `command`, `sound`.
+- Para sonidos sin user definido, el agrupador usa `meta.gift_id` /
+  `meta.event_id` como discriminador.
+
+### Taps: contar precisos al recibir 500 likes
+**Bug raíz**: en `tiktok_client.on_like` el cap `0 < new_likes < 500`
+truncaba a 1 cualquier ráfaga de exactamente 500 o más. Por eso "500
+taps reales" se contaba como 1.
+
+**Fix**: cap subido a `<= 5000` (un único event con 5000+ likes nuevos
+es señal de mala calibración, no de tráfico real).
+
 ## 1.0.43 — 2026-05-03 · 🔴 Bugs raíz: TTS dice "usuario" en vez de números + autoscroll + audios encimados
 
 Sesión de fix raíz a 6 bugs reportados por user. Cero parches.

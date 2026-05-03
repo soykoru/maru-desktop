@@ -112,6 +112,29 @@ class SoundsService:
         self._play_queue: queue.Queue[tuple[str, int]] = queue.Queue(maxsize=50)
         self._play_worker: threading.Thread | None = None
         self._play_worker_lock = threading.Lock()
+        # Logs service opcional — cableado vía `attach_logs` para que cada
+        # sonido reproducido emita un `log:entry` category=sound (útil
+        # para auditar en vivo cuántos sonidos suenan y agruparlos).
+        self._logs: Any = None
+
+    def attach_logs(self, logs: Any) -> None:
+        self._logs = logs
+
+    def _log_sound(
+        self, message: str, *, kind: str = "play", meta: dict[str, Any] | None = None
+    ) -> None:
+        if self._logs is None:
+            return
+        try:
+            self._logs.publish(
+                f"🔔 {message}",
+                level="INFO",
+                source="sounds",
+                category="sound",
+                meta={"kind": kind, **(meta or {})},
+            )
+        except Exception:
+            pass
 
     # ── Playback server-side (paridad MARU original con pygame) ──────────
 
@@ -283,25 +306,95 @@ class SoundsService:
             return {"ok": False, "message": str(exc)}
 
     def _resolve_scopes(self, explicit_scope: str | None) -> list[str]:
-        """Resuelve la lista de scopes a probar en cascada:
-        scope explícito → juego activo → global. Sin duplicados."""
+        """Resuelve la lista de scopes a probar en cascada.
+
+        Prioridad (v1.0.44):
+          1. `explicit_scope` si vino por parámetro y es != global.
+          2. `soundsScope` configurado por el user (NUEVO) — desliga el
+             perfil de sonidos del juego activo. Antes el cambio de juego
+             cambiaba la librería de sonidos sin querer. Ahora el user
+             elige explícitamente: 'global' o un perfil específico.
+          3. `activeGame` (fallback histórico — solo si NO hay
+             `soundsScope` configurado, para no romper a usuarios viejos).
+          4. 'global' siempre al final (catch-all).
+        """
         scopes: list[str] = []
         if explicit_scope and explicit_scope != "global":
             scopes.append(explicit_scope)
-        # Juego activo desde config.json (mismo formato que rule_dispatcher
-        # usa). Si falla la lectura, no agregamos nada.
         try:
             cfg_path = DATA_DIR / "config.json"
             if cfg_path.exists():
                 cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
-                active = cfg.get("activeGame") if isinstance(cfg, dict) else None
-                if isinstance(active, str) and active.strip() and active not in scopes:
-                    scopes.append(active.strip())
+                if isinstance(cfg, dict):
+                    user_scope = cfg.get("soundsScope")
+                    if isinstance(user_scope, str) and user_scope.strip():
+                        s = user_scope.strip()
+                        if s != "global" and s not in scopes:
+                            scopes.append(s)
+                    else:
+                        # Fallback al juego activo solo si el user nunca
+                        # eligió un scope explícito.
+                        active = cfg.get("activeGame")
+                        if isinstance(active, str) and active.strip() and active not in scopes:
+                            scopes.append(active.strip())
         except Exception:
             pass
         if "global" not in scopes:
             scopes.append("global")
         return scopes
+
+    # ── RPC: scope manual de sonidos ─────────────────────────────────────
+
+    def scope_get(self, _params: dict[str, Any]) -> dict[str, Any]:
+        """Devuelve el scope manual configurado y la lista de scopes
+        disponibles (= archivos `sounds_*.json` que existan)."""
+        scope = "global"
+        try:
+            cfg_path = DATA_DIR / "config.json"
+            if cfg_path.exists():
+                cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+                if isinstance(cfg, dict):
+                    s = cfg.get("soundsScope")
+                    if isinstance(s, str) and s.strip():
+                        scope = s.strip()
+        except Exception:
+            pass
+        # Listar perfiles existentes en disco.
+        available: list[str] = ["global"]
+        try:
+            for p in DATA_DIR.glob("sounds_*.json"):
+                name = p.stem.removeprefix("sounds_")
+                if name and name != "global" and name not in available:
+                    available.append(name)
+        except Exception:
+            pass
+        return {"scope": scope, "available": available}
+
+    def scope_set(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Persiste el scope elegido por el user en `config.json`. Acepta
+        'global' o un gameId existente. Atómico (write-rename)."""
+        scope = str(params.get("scope") or "global").strip() or "global"
+        # Validamos contra _GID_RE — protección contra valores inyectados.
+        if not _GID_RE.match(scope):
+            return {"ok": False, "message": f"scope inválido: {scope!r}"}
+        try:
+            cfg_path = DATA_DIR / "config.json"
+            cfg: dict[str, Any] = {}
+            if cfg_path.exists():
+                try:
+                    raw = json.loads(cfg_path.read_text(encoding="utf-8"))
+                    if isinstance(raw, dict):
+                        cfg = raw
+                except Exception:
+                    cfg = {}
+            cfg["soundsScope"] = scope
+            tmp = cfg_path.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8")
+            tmp.replace(cfg_path)
+            return {"ok": True, "scope": scope}
+        except Exception as exc:
+            log.exception("sounds.scope_set fallo")
+            return {"ok": False, "message": str(exc)}
 
     def _lookup_gift_path(
         self, gifts: dict[str, Any], gift_id: str
@@ -345,9 +438,16 @@ class SoundsService:
             gifts = doc.get("gifts") or {}
             path = self._lookup_gift_path(gifts, gift_id)
             if path:
-                return self._play_queued(
+                ok = self._play_queued(
                     str(path), int(doc.get("volume") or 80)
                 )
+                if ok:
+                    self._log_sound(
+                        f"sonido de gift '{gift_id}' (scope: {sc})",
+                        kind="gift",
+                        meta={"gift_id": gift_id, "scope": sc},
+                    )
+                return ok
         return False
 
     def play_for_event(self, event_id: str, scope: str = "global") -> bool:
@@ -363,9 +463,16 @@ class SoundsService:
                 continue
             path = (doc.get("events") or {}).get(event_id) or ""
             if path:
-                return self._play_queued(
+                ok = self._play_queued(
                     str(path), int(doc.get("volume") or 80)
                 )
+                if ok:
+                    self._log_sound(
+                        f"sonido de evento '{event_id}' (scope: {sc})",
+                        kind=event_id,
+                        meta={"event_id": event_id, "scope": sc},
+                    )
+                return ok
         return False
 
     # ── Persistencia ─────────────────────────────────────────────────────

@@ -8,7 +8,7 @@
  * - Renderer ↔ updater: state, checkNow, installAndRestart, disable.
  */
 
-import { ipcMain, shell, type BrowserWindow } from 'electron';
+import { app, ipcMain, shell, type BrowserWindow } from 'electron';
 import type { RpcClient } from './rpc-client.js';
 import type { AutoUpdater } from './auto-updater.js';
 import { maybeNotifyPushEvent } from './notifications.js';
@@ -111,8 +111,11 @@ export function installIpcHandlers(
   });
 
   ipcMain.handle('app:get-version', () => {
-    const win = getWindow();
-    return win ? { version: process.env['npm_package_version'] ?? '0.0.0' } : null;
+    // Bug raíz: `npm_package_version` solo existe cuando la app corre
+    // bajo `pnpm run`. En el .exe empaquetado ese env no está → caía
+    // al fallback "0.0.0". `app.getVersion()` lee el package.json
+    // embebido en el asar y funciona TANTO en dev como en prod.
+    return { version: app.getVersion() };
   });
 
   // Abre URL externa en el navegador del usuario. Filtramos http/https

@@ -120,6 +120,9 @@ def build_default_registry() -> MethodRegistry:
     install_logs_bridge(logs_svc)
     images_svc = ImagesService()
     sounds_svc = SoundsService()
+    # Logs cableado para que cada sound.play emita un log:entry
+    # category=sound (visible en LogPanel + agrupable como likes/gifts).
+    sounds_svc.attach_logs(logs_svc)
     fortunes_svc = FortunesService(settings=settings_svc, tts=tts_svc)
     emotes_svc = EmotesService()
     emotes_svc.attach_sounds(sounds_svc)
@@ -391,6 +394,9 @@ def build_default_registry() -> MethodRegistry:
     reg.register("sounds.resolve-path", sounds_svc.resolve_path)
     reg.register("sounds.play", sounds_svc.play)
     reg.register("sounds.stop-all", sounds_svc.stop_all)
+    # Scope manual del perfil de sonidos (independiente del juego activo).
+    reg.register("sounds.scope.get", sounds_svc.scope_get)
+    reg.register("sounds.scope.set", sounds_svc.scope_set)
 
     # fortunes.* — sistema de Fortuna/Suerte
     reg.register("fortunes.config.get", fortunes_svc.config_get)

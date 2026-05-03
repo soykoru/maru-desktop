@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
-import { Pause, Play, SkipBack, SkipForward } from 'lucide-react';
+import { ListMusic, Pause, Play, SkipForward } from 'lucide-react';
 import { useAppStore } from '../lib/store/index.js';
 import { rpcCall } from '../lib/rpc.js';
 
@@ -47,9 +47,11 @@ export function NowPlayingCard(): ReactNode {
       ? Math.min(100, Math.max(0, (now.track.positionMs / now.track.durationMs) * 100))
       : 0;
 
+  const openModal = useAppStore((s) => s.openModal);
   const handleSkip = () => void rpcCall('spotify.skip', {}).catch(() => undefined);
   const handleToggle = () =>
     void rpcCall('spotify.toggle-playback', {}).catch(() => undefined);
+  const handleOpenSpotify = () => openModal('spotify-config');
 
   return (
     <div
@@ -73,10 +75,10 @@ export function NowPlayingCard(): ReactNode {
         <button
           type="button"
           className="maru-np-btn"
-          title="Saltar al final / siguiente en cola"
-          onClick={handleSkip}
+          title="Abrir configuración de Spotify (cola, super fans, dispositivos)"
+          onClick={handleOpenSpotify}
         >
-          <SkipBack className="h-3.5 w-3.5" aria-hidden="true" />
+          <ListMusic className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -93,7 +95,7 @@ export function NowPlayingCard(): ReactNode {
         <button
           type="button"
           className="maru-np-btn"
-          title="Siguiente"
+          title="Siguiente canción"
           onClick={handleSkip}
         >
           <SkipForward className="h-3.5 w-3.5" aria-hidden="true" />

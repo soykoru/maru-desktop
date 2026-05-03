@@ -23,10 +23,17 @@
 
 import type { LogCategory, LogEntry } from '@maru/shared';
 
+// Categorías agrupables — eventos que típicamente llegan en ráfaga del
+// MISMO usuario. Comments y commands del mismo user en menos de 60s
+// también colapsan (caso real: spam de "hola" o ráfaga de !ia).
 const GROUPABLE: ReadonlySet<LogCategory> = new Set<LogCategory>([
   'like',
   'gift',
   'share',
+  'follow',
+  'comment',
+  'command',
+  'sound',
 ]);
 
 /** Distancia máxima entre eventos consecutivos para seguir en el mismo bucket. */
@@ -67,9 +74,17 @@ function entryUser(e: LogEntry): string {
   const meta = (e.meta ?? {}) as Record<string, unknown>;
   const u = typeof meta.user === 'string' ? meta.user : '';
   if (u) return u.toLowerCase();
-  // Fallback: primer @user que aparezca en el mensaje.
+  // Fallback 1: primer @user que aparezca en el mensaje.
   const m = /@([a-z0-9._]{2,30})/i.exec(e.message);
-  return m && m[1] ? m[1].toLowerCase() : '';
+  if (m && m[1]) return m[1].toLowerCase();
+  // Fallback 2: para categorías sin user (ej. sounds), usamos un
+  // "discriminator" derivado del gift/event que disparó el sonido —
+  // así dos rosas seguidas se agrupan en un bucket "rosa × N".
+  const giftId = typeof meta.gift_id === 'string' ? meta.gift_id : '';
+  if (giftId) return `gift:${giftId.toLowerCase()}`;
+  const eventId = typeof meta.event_id === 'string' ? meta.event_id : '';
+  if (eventId) return `event:${eventId.toLowerCase()}`;
+  return '';
 }
 
 /**
