@@ -157,12 +157,9 @@ export function TapsTab({
             description="Cuando los viewers presionen el corazón aparecerán acá."
           />
         ) : (
-          // Wrapper con scroll vertical PROPIO (overflow-y-auto) — sin
-          // esto, el sticky se referencia contra el padre del dialog y
-          // el header se sobrepone a las filas al scrollear (mismo bug
-          // raíz que se arregló en UsersTab).
-          <div className="overflow-y-auto overflow-x-auto max-h-[280px] relative">
-            <table className="w-full text-xs border-separate border-spacing-0">
+          // v1.0.53 — mismo fix definitivo que UsersTab.
+          <div className="overflow-y-auto overflow-x-auto max-h-[280px] relative isolate">
+            <table className="maru-sticky-table w-full text-xs border-separate border-spacing-0">
               <thead>
                 <tr className="text-left text-fg-subtle">
                   <th className="sticky top-0 z-20 bg-bg-elev px-3 py-2 font-medium w-12 border-b border-border">#</th>

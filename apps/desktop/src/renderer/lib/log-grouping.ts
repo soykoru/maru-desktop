@@ -36,6 +36,9 @@ const GROUPABLE: ReadonlySet<LogCategory> = new Set<LogCategory>([
   'follow',
   'command',
   'sound',
+  // v1.0.53: agrupar joins también — en lives grandes entran 50+/min
+  // del mismo viewer y sin agrupar el log se vuelve ilegible.
+  'join',
 ]);
 
 /** Distancia máxima entre eventos consecutivos para seguir en el mismo bucket. */

@@ -2208,67 +2208,111 @@ a:focus-visible {
     0 0 8px rgba(255, 215, 0, 0.3);
 }
 
+/* ── Sticky-table robusto (v1.0.53) ────────────────────────────────────
+ * Garantiza que el thead sticky NUNCA se vea translúcido encima de
+ * las filas al scrollear. Aplica bg sólido + opacidad absoluta a TODO
+ * `<th>` dentro de la tabla. Necesario porque en Chrome/Edge ciertos
+ * efectos del padre (filter, backdrop-filter, transform) pueden
+ * "atravesar" al sticky child con bg semitransparente. Forzamos un
+ * surface bg sólido derivado del bg-elev del tema.
+ */
+.maru-sticky-table thead th {
+  background-color: rgb(var(--maru-bg-surface)) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  /* Sombra fina inferior para SIEMPRE separar visualmente del primer
+   * tr de body, incluso si el bg del scrolport coincide con el thead. */
+  box-shadow: 0 1px 0 0 rgb(var(--maru-border));
+}
+
 /* ── Role chips (v1.0.52) — etiquetas de chat estilo Twitch/YouTube ─
  * Diseño solicitado por el user: SIN EMOJIS, solo texto con color
  * saturado por tipo + un punto de color a la izquierda. Look limpio
  * tipo "username badge", consistente con el font del @user. */
 .maru-role-chip {
   position: relative;
-  padding-left: 0.55rem !important;
+  padding-left: 0.7rem !important;
+  padding-right: 0.45rem !important;
+  border: 1px solid currentColor;
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
 }
 .maru-role-chip::before {
   content: '';
   position: absolute;
-  left: 4px;
+  left: 5px;
   top: 50%;
   transform: translateY(-50%);
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   border-radius: 999px;
   background: currentColor;
-  box-shadow: 0 0 4px currentColor;
+  box-shadow: 0 0 6px currentColor;
 }
 
+/* v1.0.53: colores saturados al máximo + diferenciados claramente.
+ * Cada rol tiene su HEX directo (sin tokens semánticos compartidos)
+ * para garantizar distinción visual en TODOS los temas. */
+
 .maru-role-chip--superfan {
-  color: #f5c542;
-  background: rgba(245, 197, 66, 0.1);
-  text-shadow: 0 0 8px rgba(245, 197, 66, 0.35);
-}
-.maru-role-chip--mod {
-  color: rgb(var(--maru-accent-blue));
-  background: rgb(var(--maru-accent-blue) / 0.12);
-}
-.maru-role-chip--top {
-  color: rgb(var(--maru-accent-purple));
-  background: rgb(var(--maru-accent-purple) / 0.12);
-}
-.maru-role-chip--member {
-  color: rgb(var(--maru-accent-green));
-  background: rgb(var(--maru-accent-green) / 0.12);
-}
-.maru-role-chip--gifter {
-  color: rgb(var(--maru-accent));
-  background: rgb(var(--maru-accent) / 0.12);
-}
-.maru-role-chip--streamer {
-  color: rgb(var(--maru-accent));
-  background: rgb(var(--maru-accent) / 0.18);
+  /* Dorado real (no warning) — SuperFan signature */
+  color: #ffc83d;
+  background: rgba(255, 200, 61, 0.16);
+  border-color: rgba(255, 200, 61, 0.55);
+  text-shadow: 0 0 8px rgba(255, 200, 61, 0.45);
   font-weight: 800;
 }
+.maru-role-chip--mod {
+  /* Cyan brillante — moderador */
+  color: #5cd0ff;
+  background: rgba(92, 208, 255, 0.16);
+  border-color: rgba(92, 208, 255, 0.55);
+  text-shadow: 0 0 6px rgba(92, 208, 255, 0.35);
+}
+.maru-role-chip--top {
+  /* Rosa-magenta vivo — top gifter (distinto del púrpura mod) */
+  color: #ff6cb5;
+  background: rgba(255, 108, 181, 0.16);
+  border-color: rgba(255, 108, 181, 0.55);
+  text-shadow: 0 0 6px rgba(255, 108, 181, 0.35);
+}
+.maru-role-chip--member {
+  /* Verde lima — miembro fans club */
+  color: #6ce687;
+  background: rgba(108, 230, 135, 0.16);
+  border-color: rgba(108, 230, 135, 0.55);
+  text-shadow: 0 0 6px rgba(108, 230, 135, 0.3);
+}
+.maru-role-chip--gifter {
+  /* Naranja vivo — gifter level */
+  color: #ff9f4d;
+  background: rgba(255, 159, 77, 0.16);
+  border-color: rgba(255, 159, 77, 0.55);
+  text-shadow: 0 0 6px rgba(255, 159, 77, 0.35);
+}
+.maru-role-chip--streamer {
+  /* Rojo signature — el host */
+  color: #ff5e5e;
+  background: rgba(255, 94, 94, 0.18);
+  border-color: rgba(255, 94, 94, 0.6);
+  text-shadow: 0 0 6px rgba(255, 94, 94, 0.4);
+  font-weight: 900;
+}
 .maru-role-chip--follower {
-  color: rgb(var(--maru-fg-muted));
-  background: rgb(var(--maru-fg) / 0.06);
+  /* Gris claro — follower (sin glow para no competir) */
+  color: #a8b0c0;
+  background: rgba(168, 176, 192, 0.1);
+  border-color: rgba(168, 176, 192, 0.35);
 }
 .maru-role-chip--follower::before {
-  background: rgb(var(--maru-fg-muted));
   box-shadow: none;
 }
 .maru-role-chip--misc {
   color: rgb(var(--maru-fg-subtle));
   background: rgb(var(--maru-fg) / 0.06);
+  border-color: rgb(var(--maru-fg-subtle) / 0.3);
 }
 .maru-role-chip--misc::before {
-  background: rgb(var(--maru-fg-subtle));
   box-shadow: none;
 }
 .maru-role-badge--top {

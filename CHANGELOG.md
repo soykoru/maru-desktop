@@ -1,5 +1,91 @@
 # Changelog — maru-desktop
 
+## 1.0.53 — 2026-05-03 · 🛠️ Simulador con chips reales + colores saturados + categoría join real + avatar TTL + racha display + header sticky definitivo + joins por user
+
+### B1 — Simulador: chips iguales al log real
+- Bug raíz: `SimulatorService._rank_label` generaba un único
+  `[⭐SF 🛡️MOD]` con espacios y emojis → el `partitionMessage` del
+  frontend (regex `(?:\[[^\]]+\])+`) no podía partirlo en chips
+  individuales y el simulador mostraba todo el rango como UN solo
+  badge feo.
+- Fix: ahora usa el formato canónico `[mod][superfan][L3]` con
+  términos lowercase sin emojis — idéntico a `tiktok.py:_rank_prefix`.
+  Resultado: simular con roles emite el MISMO visual que un comment
+  real, con chips de colores correctos.
+
+### B2 — Chips de roles con colores saturados/distintos
+- Cada rol ahora tiene su HEX directo (no tokens semánticos
+  compartidos) para garantizar diferenciación en TODOS los temas:
+  - **fan** (super) → `#ffc83d` dorado real con glow
+  - **mod** → `#5cd0ff` cyan brillante
+  - **top** → `#ff6cb5` rosa-magenta vivo (distinto del púrpura)
+  - **L3** (member) → `#6ce687` verde lima
+  - **G5** (gifter) → `#ff9f4d` naranja vivo
+  - **host** → `#ff5e5e` rojo signature (bold 900)
+  - **sigue** (follower) → `#a8b0c0` gris claro sin glow
+- Border + bg + text-shadow + dot a la izquierda — look saturado y
+  consistente.
+
+### B3 — Bug raíz: joins con icono música, no entraban al pill "Joins"
+- `LogsService.publish` valida la categoría contra `VALID_CATEGORIES`.
+  Si no está en la tupla, cae al `detect_category(...)` heurístico.
+- v1.0.51 agregó la categoría `join` (y `fortune`) a `LogCategory` del
+  shared types Y a `log-meta.ts`, PERO se olvidó agregarlas a
+  `VALID_CATEGORIES` del sidecar (`logs.py`). Resultado:
+  `publish(category="join")` cae al detector que retorna `tiktok` o
+  `music` (por palabras como `entró`, `live`, etc.), por eso el
+  icono salía mal y los joins NO entraban al filtro "Joins".
+- Fix: agregadas `join` y `fortune` a `VALID_CATEGORIES`.
+- Bonus: agregado `join` al set `GROUPABLE` del log-grouping del
+  frontend → joins del mismo user dentro de 60s se agrupan en bucket
+  `@user × N` igual que likes/gifts.
+
+### B4 — Avatar refresh con TTL (24h)
+- v1.0.52 cacheaba `{username: url}` simple — sin manera de detectar
+  cambios. Si un user cambiaba foto en TikTok, la antigua quedaba.
+- v1.0.53: nuevo formato `{username: {url, fetchedAt: ms}}` con TTL
+  de 24h. Migración automática del formato legacy.
+- En cada comment del user: si pasaron >24h desde `fetchedAt`, se
+  refresca con la nueva URL y se actualiza `fetchedAt`. Idempotente
+  cuando la URL no cambió o el cache es fresco.
+
+### B5 — Racha automática display compacto (no se corta)
+- Antes la celda Racha mostraba `551 (28` con corte (la columna era
+  w-20 y el texto sufijo "(N)" no entraba).
+- Ahora: input solo lleva el número editable (sin sufijo), y un
+  BADGE separado a la derecha con el indicador:
+  - `AUTO` dorado para `kind=super_fan`.
+  - `28d` accent para `kind=manual` con días restantes.
+- Tooltip explicativo en cada badge.
+- Columna Racha ampliada de `w-20` a `w-28`.
+
+### B6 — Bug header sticky DEFINITIVO
+- A pesar del fix v1.0.52, en algunos casos el header todavía se
+  mostraba translúcido sobre las filas. Causa: efectos del padre
+  (filter/backdrop-filter) atravesaban al sticky child.
+- Fix v1.0.53 robusto:
+  1. Wrapper con `isolation: isolate` (impide z-index leaks).
+  2. Tabla con clase `.maru-sticky-table` que aplica al `thead th`:
+     - `background-color: rgb(var(--maru-bg-surface)) !important`
+     - `position: sticky !important; top: 0; z-index: 30 !important`
+     - `box-shadow: 0 1px 0 0 rgb(var(--maru-border))` (separación
+       siempre visible del primer body row).
+- Aplicado en UsersTab y TapsTab.
+
+### B7 — Detección de TODOS los joins (throttle por usuario)
+- v1.0.48 introdujo throttle global de 1.5s en el log de joins
+  ("`now - self._last_join_log_ts > 1.5`") para evitar inundar el
+  log al iniciar un live. Bug: este throttle perdía joins de
+  USUARIOS DISTINTOS que entraran dentro de 1.5s — se loguea solo el
+  primero, los siguientes se descartan.
+- Fix v1.0.53: throttle POR USUARIO con cooldown 30s. Cada user que
+  entra aparece UNA vez en 30s, evitando spam de re-joins del MISMO
+  user pero capturando TODOS los users distintos.
+- Cap de 1000 entradas en el dict (housekeeping cada 30s) para no
+  crecer en lives largos.
+- El RuleEngine sigue recibiendo el 100% de los joins (el bus
+  `tiktok:event` se publica ANTES del throttle del log).
+
 ## 1.0.52 — 2026-05-03 · 🛠️ Roles sin emojis + bug header sticky raíz + clipboard real + avatar en taps
 
 ### A1+A6 — Roles sin emojis, solo color

@@ -114,10 +114,14 @@ class TikTokService:
         # "TikTok API" del sidebar). Se refresca con cada error fatal del
         # worker (`_on_error` / `_on_log_message` con SignAPIError).
         self._last_error: str = ""
-        # Throttle del log de joins (v1.0.48) — al iniciar el live llegan
-        # decenas de joins por segundo. Mantenemos el evento (para reglas)
-        # pero solo publicamos UN log entry cada 1.5s.
-        self._last_join_log_ts: float = 0.0
+        # Throttle del log de joins POR USUARIO (v1.0.53) — antes era
+        # un throttle global de 1.5s que perdía joins de DISTINTOS
+        # users. Ahora cada user tiene su propio cooldown de 30s,
+        # evitando spam de re-joins del MISMO user pero capturando
+        # TODOS los users distintos que entren. La detección a nivel
+        # de evento (RuleEngine) sigue recibiendo el 100%.
+        self._join_log_user_ts: dict[str, float] = {}
+        self._JOIN_LOG_USER_COOLDOWN_S: float = 30.0
 
     def attach_donations(self, donations: Any) -> None:
         self._donations = donations
@@ -379,6 +383,9 @@ class TikTokService:
             # sesiones (privacidad + ahorro de RAM/disco). Se borran
             # acá al disconnect.
             self._user_avatar_cache.clear()
+            # Cooldowns de log de joins se vacían — al reconectar
+            # queremos que TODOS los joins se loguen una vez.
+            self._join_log_user_ts.clear()
             # Limpiar el set de users diagnosticados (DIAG @user) — vuelve
             # a emitir DIAG en el próximo connect si algo cambió.
             try:
@@ -688,16 +695,28 @@ class TikTokService:
                 except Exception:
                     pass
 
-            # Joins (v1.0.48) — un viewer entra al live. En lives grandes
-            # llegan en avalancha al inicio; emitimos solo si pasaron >2s
-            # desde el último join logueado para no inundar. La regla
-            # `join` igual sigue disparando para todos los joins (eso lo
-            # decide el RuleEngine, no el log).
+            # Joins (v1.0.53) — throttle POR USUARIO, no global. Cada
+            # user que entra al live aparece UNA vez en el log dentro
+            # del cooldown (30s). Sin esto el throttle global perdía
+            # joins de viewers distintos que llegaban dentro de 1.5s.
+            # El RuleEngine sigue recibiendo el 100% (eso pasa en el
+            # bus.publish de arriba, ANTES del log).
             if event_type == "join" and self._logs is not None:
                 import time as _t
                 now = _t.time()
-                if now - self._last_join_log_ts > 1.5:
-                    self._last_join_log_ts = now
+                user_lc = user.lower()
+                last = self._join_log_user_ts.get(user_lc, 0.0)
+                if now - last > self._JOIN_LOG_USER_COOLDOWN_S:
+                    self._join_log_user_ts[user_lc] = now
+                    # Cap de tamaño del dict — un live de 6h con miles
+                    # de viewers podría crecer indefinidamente. Si pasa
+                    # de 1000, recortamos los más viejos.
+                    if len(self._join_log_user_ts) > 1000:
+                        cutoff = now - self._JOIN_LOG_USER_COOLDOWN_S
+                        self._join_log_user_ts = {
+                            k: v for k, v in self._join_log_user_ts.items()
+                            if v > cutoff
+                        }
                     nick = str(data.get("nickname") or user)
                     # `merged` ya incluye los rangos cacheados desde
                     # comment-enriched. _rank_prefix maneja "" si no hay

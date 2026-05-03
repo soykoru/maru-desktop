@@ -333,27 +333,36 @@ class SimulatorService:
 
     @staticmethod
     def _rank_label(ranks: dict[str, Any]) -> str:
-        """Prefijo visual para identificar rango en el log.
+        """Prefijo visual para identificar rango en el log — formato
+        CANÓNICO `[mod][superfan][L3]` separados, igual que el path real
+        en `tiktok.py:_rank_prefix`. Sin esto, partitionMessage del
+        frontend no podía dividir un único `[⭐SF 🛡️MOD]` en chips
+        individuales y el simulador mostraba todo en uno solo (feo).
 
-        Muestra TODOS los rangos activos (super fan + mod + top gifter +
-        follower + nivel fan L# + nivel gifter G#). Antes solo mostraba
-        member_level y `gifter_level` se perdía silenciosamente — si el
-        user simulaba con ambos niveles, solo veía uno en el log y en
-        los badges del comment-enriched.
+        Términos en lowercase sin emojis para que `chipKind` del
+        frontend los clasifique con sus colores correctos.
         """
         badges: list[str] = []
-        if ranks.get("is_super_fan"):
-            badges.append("⭐SF")
         if ranks.get("is_moderator"):
-            badges.append("🛡️MOD")
+            badges.append("mod")
+        if ranks.get("is_super_fan"):
+            badges.append("superfan")
         if ranks.get("is_top_gifter"):
-            badges.append("🏆TOP")
-        if ranks.get("is_follower"):
-            badges.append("➕FOL")
+            rank = ranks.get("top_gifter_rank")
+            badges.append(
+                f"top{rank}" if isinstance(rank, int) and rank > 0 else "topgifter"
+            )
         ml = ranks.get("member_level")
-        if ml:
-            badges.append(f"L{ml}")
+        if isinstance(ml, int) and ml > 0:
+            if not ranks.get("is_super_fan"):
+                badges.append(f"member L{ml}")
+            else:
+                badges.append(f"L{ml}")
         gl = ranks.get("gifter_level")
-        if gl:
+        if isinstance(gl, int) and gl > 0:
             badges.append(f"G{gl}")
-        return f"[{' '.join(badges)}] " if badges else ""
+        if ranks.get("is_follower") and not ranks.get("is_super_fan"):
+            badges.append("follower")
+        if not badges:
+            return ""
+        return "".join(f"[{b}]" for b in badges) + " "

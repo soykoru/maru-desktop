@@ -243,21 +243,19 @@ export function UsersTab({
             }
           />
         ) : (
-          // Bug raíz v1.0.52: el wrapper SOLO tenía `overflow-x-auto
-          // max-h-[280px]` — sin `overflow-y-auto`, el scroll vertical
-          // pasaba al padre del SocialConfigDialog, y el `position: sticky
-          // top-0` del thead se referenciaba contra el padre INCORRECTO.
-          // Fix: hacer el wrapper su propio scrollport vertical.
-          // Tabla con `border-separate` + sticky en cada `<th>` con bg
-          // opaco (en `border-collapse: collapse` default Tailwind, el
-          // bg del thead/tr no se aplica al sticky en Chrome/Edge).
-          <div className="overflow-y-auto overflow-x-auto max-h-[280px] relative">
-            <table className="w-full text-xs border-separate border-spacing-0">
+          // v1.0.53 — fix definitivo y robusto del header sticky:
+          // 1. wrapper con overflow-y-auto explícito (scrollport propio).
+          // 2. table.maru-sticky-table aplica bg sólido fuerte al thead/tr/th
+          //    con !important para garantizar opacidad absoluta.
+          // 3. isolation: isolate impide que z-index del thead "sangre"
+          //    fuera del wrapper.
+          <div className="overflow-y-auto overflow-x-auto max-h-[280px] relative isolate">
+            <table className="maru-sticky-table w-full text-xs border-separate border-spacing-0">
               <thead>
                 <tr className="text-left text-fg-subtle">
                   <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Usuario</th>
                   <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-center w-10 border-b border-border">Reg</th>
-                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium w-20 border-b border-border">Racha</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium w-28 border-b border-border">Racha</th>
                   <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-center w-14 border-b border-border">Récord</th>
                   <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Casado/a</th>
                   <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Novio/a</th>
@@ -272,13 +270,14 @@ export function UsersTab({
                   const isSelected = u.username === selectedUsername;
                   const rachaCellKey = cellKey(u.username, 'racha');
                   const isAutoSF = u.auto_racha?.kind === 'super_fan';
+                  // v1.0.53: display compacto que NO se corta. Ya no
+                  // metemos el "(N)" como sufijo string del input — el
+                  // input solo lleva el número (lo que queremos que sea
+                  // editable). El badge del estado auto-racha lo
+                  // mostramos en una columna SEPARADA con su propio
+                  // pill de color.
                   const rachaText =
-                    editingCells[rachaCellKey] ??
-                    (u.auto_racha?.active
-                      ? isAutoSF
-                        ? `⭐${u.racha}`
-                        : `⚡${u.racha} (${u.auto_racha.remaining_days})`
-                      : String(u.racha));
+                    editingCells[rachaCellKey] ?? String(u.racha);
                   const isSuperFan = !!u.is_super_fan;
                   return (
                     <tr
@@ -348,29 +347,51 @@ export function UsersTab({
                         className="px-2 py-1.5 border-b border-border/50"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <input
-                          type="text"
-                          value={rachaText}
-                          onChange={(e) =>
-                            setEditingCells((s) => ({
-                              ...s,
-                              [rachaCellKey]: e.target.value,
-                            }))
-                          }
-                          onBlur={(e) => {
-                            const raw = e.target.value;
-                            const numeric = raw.match(/\d+/)?.[0] ?? '';
-                            if (numeric && parseInt(numeric, 10) !== u.racha) {
-                              void handleEditCellRacha(u.username, numeric);
+                        {/* v1.0.53: input + badge separado para que el
+                            indicador de auto-racha no compita con el
+                            número editable y NO se corte. */}
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={rachaText}
+                            onChange={(e) =>
+                              setEditingCells((s) => ({
+                                ...s,
+                                [rachaCellKey]: e.target.value,
+                              }))
                             }
-                            setEditingCells((s) => {
-                              const next = { ...s };
-                              delete next[rachaCellKey];
-                              return next;
-                            });
-                          }}
-                          className="w-full bg-transparent border-b border-transparent hover:border-border focus:border-accent text-xs font-mono outline-none"
-                        />
+                            onBlur={(e) => {
+                              const raw = e.target.value;
+                              const numeric = raw.match(/\d+/)?.[0] ?? '';
+                              if (numeric && parseInt(numeric, 10) !== u.racha) {
+                                void handleEditCellRacha(u.username, numeric);
+                              }
+                              setEditingCells((s) => {
+                                const next = { ...s };
+                                delete next[rachaCellKey];
+                                return next;
+                              });
+                            }}
+                            className="min-w-0 flex-1 bg-transparent border-b border-transparent hover:border-border focus:border-accent text-xs font-mono outline-none"
+                          />
+                          {u.auto_racha?.active && (
+                            isAutoSF ? (
+                              <span
+                                className="maru-super-fan-gold inline-flex items-center rounded px-1 py-0.5 text-[8px] font-bold tracking-wider leading-none flex-shrink-0"
+                                title="Racha automática Super Fan — activa hasta finalizar suscripción"
+                              >
+                                AUTO
+                              </span>
+                            ) : (
+                              <span
+                                className="inline-flex items-center rounded px-1 py-0.5 text-[8px] font-bold tracking-wider leading-none flex-shrink-0 bg-accent/15 text-accent border border-accent/35"
+                                title={`Racha automática manual — ${u.auto_racha.remaining_days}/${u.auto_racha.total_days} días restantes`}
+                              >
+                                {u.auto_racha.remaining_days}d
+                              </span>
+                            )
+                          )}
+                        </div>
                       </td>
                       <td className="px-2 py-1.5 text-center text-fg-muted border-b border-border/50">
                         {u.record_racha}

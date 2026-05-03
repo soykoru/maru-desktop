@@ -347,7 +347,14 @@ class SocialService:
         # o por inactividad. Ahorra requests al CDN — un avatar
         # cacheado el primer día sigue siendo válido para el log de
         # social/registrados N días después.
-        self._avatars: dict[str, str] = {}
+        # Formato v1.0.53: {username_lower: {url: str, fetchedAt: int_ms}}.
+        # `fetchedAt` permite TTL — refresh la URL si el avatar tiene
+        # más de N horas (el user pudo cambiar foto en TikTok).
+        self._avatars: dict[str, dict[str, Any]] = {}
+        # TTL en ms para refrescar avatar al próximo comment del user.
+        # 24h por default — equilibrio entre frescura y ahorro de
+        # escrituras a disco.
+        self._AVATAR_TTL_MS: int = 24 * 60 * 60 * 1000
         self._avatars_path: Any = None
         self._avatars_dirty: bool = False
         self._avatars_save_timer: threading.Timer | None = None
@@ -375,7 +382,12 @@ class SocialService:
     # ── Avatares persistentes ────────────────────────────────────────────
     def _avatars_init(self) -> None:
         """Carga el archivo `social_avatars.json` desde data/. Idempotente.
-        Llamar solo después de tener `_sys` (con `data_dir`)."""
+        Llamar solo después de tener `_sys` (con `data_dir`).
+
+        v1.0.53: Cambia el formato de `dict[username, url]` a
+        `dict[username, {url, fetchedAt}]` para soportar TTL. Migra
+        automáticamente del formato antiguo.
+        """
         if self._avatars_path is not None:
             return
         try:
@@ -386,14 +398,24 @@ class SocialService:
                 with open(self._avatars_path, "r", encoding="utf-8") as fh:
                     raw = _json.load(fh)
                 if isinstance(raw, dict):
-                    # Sanitizar: solo URLs válidas, claves lower.
                     for k, v in raw.items():
-                        if (
-                            isinstance(k, str)
-                            and isinstance(v, str)
-                            and v.startswith("http")
-                        ):
-                            self._avatars[k.lower()] = v
+                        if not isinstance(k, str):
+                            continue
+                        if isinstance(v, str) and v.startswith("http"):
+                            # Formato legacy → marcar fetchedAt=0 para
+                            # que se refresque al próximo comment.
+                            self._avatars[k.lower()] = {"url": v, "fetchedAt": 0}
+                        elif isinstance(v, dict):
+                            url = v.get("url")
+                            ts = v.get("fetchedAt") or 0
+                            if isinstance(url, str) and url.startswith("http"):
+                                try:
+                                    ts_i = int(ts)
+                                except (TypeError, ValueError):
+                                    ts_i = 0
+                                self._avatars[k.lower()] = {
+                                    "url": url, "fetchedAt": ts_i,
+                                }
                 log.info("social_avatars cargados: %d entries", len(self._avatars))
         except Exception:
             log.exception("social_avatars init fallo (continúo con dict vacío)")
@@ -425,15 +447,33 @@ class SocialService:
 
     def remember_avatar(self, username: str, url: str) -> None:
         """Llamada externa (bus tiktok:comment-enriched) para persistir
-        el avatar de un user. Idempotente — no escribe si ya existía con
-        la misma URL."""
+        el avatar de un user.
+
+        Lógica v1.0.53:
+          1. Si NO había avatar para este user → guardar inmediatamente
+             (primera vez que comenta).
+          2. Si la URL es la MISMA y se guardó hace menos del TTL →
+             no escribimos (idempotente, ahorra disco).
+          3. Si la URL es DISTINTA o pasaron >TTL ms → actualizar y
+             marcar nuevo `fetchedAt` (el user puede haber cambiado de
+             foto en TikTok).
+        """
         if not username or not url or not url.startswith("http"):
             return
         self._avatars_init()
+        import time as _t
+        now_ms = int(_t.time() * 1000)
         key = username.lower()
-        if self._avatars.get(key) == url:
-            return
-        self._avatars[key] = url
+        existing = self._avatars.get(key)
+        if isinstance(existing, dict):
+            old_url = existing.get("url")
+            old_ts = existing.get("fetchedAt") or 0
+            same_url = old_url == url
+            stale = (now_ms - int(old_ts)) > self._AVATAR_TTL_MS
+            if same_url and not stale:
+                # No-op: ya teníamos esta URL fresca.
+                return
+        self._avatars[key] = {"url": url, "fetchedAt": now_ms}
         self._avatars_schedule_save()
 
     def forget_avatar(self, username: str) -> None:
@@ -448,7 +488,11 @@ class SocialService:
         if not username:
             return ""
         self._avatars_init()
-        return self._avatars.get(username.lower(), "")
+        entry = self._avatars.get(username.lower())
+        if isinstance(entry, dict):
+            url = entry.get("url")
+            return url if isinstance(url, str) else ""
+        return ""
 
     def _is_super_fan_now(self, username: str) -> bool:
         """Lee del cache de rangos del TikTokService si el user está

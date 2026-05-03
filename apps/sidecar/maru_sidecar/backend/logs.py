@@ -113,6 +113,12 @@ VALID_CATEGORIES: tuple[str, ...] = (
     "tts",
     "sound",
     "profile",
+    # v1.0.53 — categorías agregadas que faltaban en VALID_CATEGORIES.
+    # Sin esto, `LogsService.publish(category="join"|"fortune")` caía
+    # al detector heurístico y devolvía "music"/"tiktok"/etc — por eso
+    # el icono salía mal y los joins NO entraban al pill "Joins".
+    "fortune",
+    "join",
     "error",
     "warn",
     "debug",
