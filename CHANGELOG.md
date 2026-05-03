@@ -1,5 +1,110 @@
 # Changelog — maru-desktop
 
+## 1.0.51 — 2026-05-03 · 🎨 Roles bonitos + suerte al log + avatares + super fan dorado + bug header social
+
+### F1 — Likes sin prefijo de rol
+- Revertido el cambio en likes: `❤️ @user dio N likes` (sin `[mod]` ni
+  `[superfan]`). Razón: 200+ likes/seg saturan el log; el rol no es
+  útil acá. Roles se mantienen en gift, comment y join.
+
+### F2 — Roles visualmente lindos en log (sin emojis apretados)
+- `LogEntryRow.partitionMessage` ya extraía chips `[mod][superfan L3]`,
+  pero los pintaba todos en color accent uniforme y feo.
+- Ahora cada chip se clasifica por tipo (`chipKind`) y se pinta con
+  semántica:
+  - ⭐ **FAN** → dorado/warning con halo
+  - 🛡 **MOD** → azul cyan
+  - 🏆 **TOP** → púrpura
+  - 🪙 **L3** (member) → verde
+  - **G5** (gifter) → accent
+  - 🎙 **HOST** → accent fuerte
+  - **sigue** (follower) → muted sobrio
+- Tooltips explicativos en cada chip.
+
+### F3 — Suerte/fortuna al log
+- Cuando `!suerte` activa la lectura TTS, se emite ahora un log:entry
+  con el TEXTO COMPLETO que se le leyó al user. Antes solo iba al TTS
+  y el streamer no sabía qué se reprodujo.
+- Nueva categoría dedicada `fortune` (emoji 🔮, color púrpura).
+- Nuevo grupo de filtro `fortune` (label "Suerte").
+- Nuevo grupo `joins` también — antes los joins iban al pill genérico
+  "Sistema".
+
+### F4 — Auditoría JoinEvent en TikTokLive 6.6.5
+- Confirmado: `JoinEvent` (proto_events.py:728) hereda
+  `WebcastMemberMessage` con `user: User` (badge_list, fans_club,
+  subscribe_info), `is_top_user`, `top_user_no`, `enter_type`. NO
+  tiene `user_identity` (eso es exclusivo de CommentEvent).
+- `_extract_ranks` cubría `badge_list/fans_club/subscribe_info` ya
+  desde v1.0.50 — F4 confirma que esa cobertura es correcta.
+- Refuerzo: el handler `_on_join_enriched` ahora también lee
+  `is_top_user`/`top_user_no` del propio JoinEvent y los marca como
+  `is_top_gifter`/`top_gifter_rank`. Antes no los aprovechaba.
+- Cambio adicional: el handler ahora re-emite SIEMPRE si hay
+  `avatar_url` (incluso sin roles especiales), para alimentar el cache
+  de avatares por sesión.
+
+### F5 — Avatar de comentaristas cacheado por sesión
+- Nuevo `_user_avatar_cache: dict[user_lower, url]` en `TikTokService`
+  (memoria, max 500 entries, FIFO eviction). Se llena desde
+  `_cache_ranks(info)` cuando llega `avatar_url` del comment-enriched.
+- Se vacía en disconnect/reconnect — privacidad + ahorro RAM.
+- Cada log:entry de comment/gift/join ahora incluye `meta.avatar` con
+  la URL del CDN TikTok.
+- `LogEntryRow` pinta `<img>` 28×28 con fallback automático al emoji
+  si la URL falla (`onError`). `loading=lazy` + `decoding=async` para
+  no bloquear el scroll.
+- Nueva clase `.maru-event-avatar` con border + object-fit cover.
+
+### F6 — Avatares persistentes en sistema social
+- Nuevo storage `data/social_avatars.json` administrado por
+  `SocialService` (`remember_avatar`, `forget_avatar`, `get_avatar`).
+- Persistencia con debounce 3s (Timer) — agrupa muchos updates en 1
+  escritura.
+- Subscripción en bootstrap: `bus.subscribe("tiktok:comment-enriched",
+  _on_enriched_for_avatar)` → llama `social_svc.remember_avatar()`.
+- DTO `_user_to_dto` ahora incluye `avatar` (string|null) y
+  `is_super_fan` (boolean) — leídos respectivamente del storage
+  persistente y del cache de rangos vivo del TikTokService.
+- En `UsersTab`: avatar 24×24 redondo en la columna Usuario, con
+  fallback a inicial mayúscula.
+
+### F7 — Racha automática manual + Super Fan dorado
+- RPC `social.users.activate-auto-racha` extendido: nuevo param
+  `kind?: "manual" | "super_fan"`.
+- "manual" (default): N días que el streamer define.
+- "super_fan": vincula la racha al rol Super Fan del live. Dura
+  mientras `is_super_fan=True`. Cuando el user pierde el rol, el
+  hook `sync_super_fan_status` desactiva la racha automáticamente.
+- Marker `data/super_fan_rachas.json` (set de usernames con racha SF).
+- `TikTokService._cache_ranks` ahora también notifica a
+  `social_svc.sync_super_fan_status(user, is_super_fan)` además de
+  Spotify.
+- UI `AutoRachaModal`: 2 botones (⚡ Manual / ⭐ Super Fan) — el
+  segundo se pinta con `.maru-super-fan-gold` (gradient dorado).
+- Cuando hay racha activa kind=super_fan, el banner del modal y el
+  detalle del user dicen "Activa hasta que finalice la suscripción".
+- Nuevas utilities CSS:
+  - `.maru-super-fan-gold` — badge dorado con halo.
+  - `.maru-super-fan-row` — fila con tinte dorado a la izquierda.
+  - `.maru-super-fan-avatar-ring` — halo dorado alrededor del avatar.
+
+### F8 — SocialDialog redesign visual
+- Tabla de usuarios ahora muestra avatar real + chip ⭐ FAN dorado
+  para super fans del live.
+- Filas de super fans con tinte dorado a la izquierda
+  (`.maru-super-fan-row`).
+- Detalle del user seleccionado: badge dorado + texto explicativo
+  cuando la racha es kind=super_fan.
+
+### F9 — Bug raíz: header de tabla se sobreponía al scrollear
+- En `UsersTab.tsx` el `<thead className="sticky top-0 bg-bg-elev">`
+  con `border-collapse: collapse` (default Tailwind) pierde el bg al
+  scrollear en Chrome/Edge — los `<td>` se ven a través del thead.
+- Fix raíz: `border-separate border-spacing-0` + `position: sticky`
+  movido a cada `<th>` individual con `bg-bg-elev` + z-index 20.
+  Ahora cada celda del header lleva su propio fondo opaco.
+
 ## 1.0.50 — 2026-05-03 · 🎨 EmoteTrigger sin live + roles en join (raíz) + simulador join + temas legibles + polish premium
 
 ### EmoteTriggerPanel desacoplado del live (F1)

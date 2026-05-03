@@ -15,6 +15,12 @@ from typing import Any
 
 Handler = Callable[[dict[str, Any]], "Awaitable[Any] | Any"]
 
+# Referencia global al TikTokService — se setea durante register_all.
+# SocialService la consume para preguntar `is_super_fan` en vivo sin
+# necesidad de inyectarlo en su constructor.
+_GLOBAL_TIKTOK_SVC: Any = None
+_GLOBAL_SOCIAL_SVC: Any = None
+
 
 class RpcErrorCode(enum.IntEnum):
     PARSE_ERROR = -32700
@@ -166,6 +172,40 @@ def build_default_registry() -> MethodRegistry:
     # trae el flag `is_super_fan` → la lista de PlayFan se mantiene
     # sincronizada en vivo con el rol real del live, sin gestión manual.
     tiktok_svc.attach_spotify(spotify_svc)
+    # Expone tiktok_svc al módulo registry para que SocialService pueda
+    # consultar el cache de rangos vivo (`_is_super_fan_now`) sin
+    # romper su contrato de constructor.
+    global _GLOBAL_TIKTOK_SVC, _GLOBAL_SOCIAL_SVC  # type: ignore[name-defined]
+    _GLOBAL_TIKTOK_SVC = tiktok_svc  # type: ignore[name-defined]
+    _GLOBAL_SOCIAL_SVC = social_svc  # type: ignore[name-defined]
+
+    # Avatares persistentes del social: subscribe al bus de
+    # comment-enriched. Cada vez que un viewer comenta/entra/dona, si
+    # trae `avatar_url`, lo persistimos en data/social_avatars.json
+    # (con debounce). Esos avatares se usan para pintar las tablas de
+    # registrados / ranking / likes en el SocialDialog.
+    try:
+        from ..event_bus import get_event_bus
+        _bus = get_event_bus()
+
+        def _on_enriched_for_avatar(payload: dict[str, Any]) -> None:  # type: ignore[name-defined]
+            try:
+                user = payload.get("user") if isinstance(payload, dict) else None
+                avatar_url = (
+                    payload.get("avatar_url")
+                    or payload.get("avatar")
+                    if isinstance(payload, dict)
+                    else None
+                )
+                if isinstance(user, str) and isinstance(avatar_url, str):
+                    social_svc.remember_avatar(user, avatar_url)
+            except Exception:
+                pass
+
+        _bus.subscribe("tiktok:comment-enriched", _on_enriched_for_avatar)
+    except Exception:
+        # No bloquear el bootstrap si el bus no está disponible.
+        pass
     # Exponemos para los schedulers en __main__.py.
     reg.spotify_svc = spotify_svc  # type: ignore[attr-defined]
 

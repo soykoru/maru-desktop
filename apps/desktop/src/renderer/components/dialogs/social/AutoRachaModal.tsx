@@ -13,7 +13,11 @@ export interface AutoRachaModalProps {
   open: boolean;
   user: SocialUser | null;
   onClose: () => void;
-  onActivate: (days: number) => Promise<string | undefined>;
+  /** kind opcional — "manual" (default) o "super_fan". */
+  onActivate: (
+    days: number,
+    kind?: 'manual' | 'super_fan',
+  ) => Promise<string | undefined>;
   onDeactivate: () => Promise<string | undefined>;
   busy?: boolean;
 }
@@ -28,12 +32,14 @@ export function AutoRachaModal({
 }: AutoRachaModalProps) {
   const idPrefix = useId();
   const [days, setDays] = useState(7);
+  const [kind, setKind] = useState<'manual' | 'super_fan'>('manual');
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [working, setWorking] = useState(false);
 
   useEffect(() => {
     if (open) {
       setDays(user?.auto_racha?.total_days ?? 7);
+      setKind(user?.auto_racha?.kind === 'super_fan' ? 'super_fan' : 'manual');
       setMessage(null);
       setWorking(false);
     }
@@ -42,12 +48,13 @@ export function AutoRachaModal({
   if (!open || !user) return null;
 
   const isActive = !!user.auto_racha?.active;
+  const userIsSF = !!user.is_super_fan;
 
   async function handleActivate() {
     setWorking(true);
     setMessage(null);
     try {
-      const msg = await onActivate(days);
+      const msg = await onActivate(days, kind);
       setMessage({ ok: true, text: msg ?? 'Activado.' });
     } catch (ex) {
       setMessage({
@@ -85,31 +92,92 @@ export function AutoRachaModal({
     >
       <div className="space-y-3">
         {isActive && user.auto_racha && (
-          <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
-            ⚡ Activa: {user.auto_racha.remaining_days} de{' '}
-            {user.auto_racha.total_days} días restantes.
+          <div
+            className={
+              user.auto_racha.kind === 'super_fan'
+                ? 'rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs'
+                : 'rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs'
+            }
+          >
+            {user.auto_racha.kind === 'super_fan' ? (
+              <>
+                <span className="maru-super-fan-gold inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] tracking-wider leading-none mr-1">
+                  ⭐ SUPER FAN
+                </span>
+                Activa hasta que finalice la suscripción Super Fan del live.
+              </>
+            ) : (
+              <>
+                ⚡ Activa: {user.auto_racha.remaining_days} de{' '}
+                {user.auto_racha.total_days} días restantes.
+              </>
+            )}
           </div>
         )}
 
         <div>
-          <Label htmlFor={`${idPrefix}-days`} required>
-            Días a activar
-          </Label>
-          <Input
-            id={`${idPrefix}-days`}
-            type="number"
-            min={1}
-            max={365}
-            value={String(days)}
-            onChange={(e) =>
-              setDays(Math.max(1, Math.min(365, parseInt(e.target.value, 10) || 1)))
-            }
-            disabled={busy || working}
-          />
+          <Label>Tipo de racha</Label>
+          <div className="flex gap-2 mt-1">
+            <button
+              type="button"
+              onClick={() => setKind('manual')}
+              disabled={busy || working}
+              className={[
+                'flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors',
+                kind === 'manual'
+                  ? 'border-accent bg-accent/15 text-accent'
+                  : 'border-border bg-bg-base text-fg-muted hover:border-fg-muted',
+              ].join(' ')}
+            >
+              ⚡ Manual (N días)
+            </button>
+            <button
+              type="button"
+              onClick={() => setKind('super_fan')}
+              disabled={busy || working}
+              title={
+                !userIsSF
+                  ? 'El user no es Super Fan ahora — al activarla se mantendrá hasta que lo sea (o se desactiva auto si pierde el rol).'
+                  : 'Activa la racha mientras el user mantenga Super Fan'
+              }
+              className={[
+                'flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors',
+                kind === 'super_fan'
+                  ? 'maru-super-fan-gold !text-warning border-warning/50'
+                  : 'border-border bg-bg-base text-fg-muted hover:border-fg-muted',
+              ].join(' ')}
+            >
+              ⭐ Super Fan
+            </button>
+          </div>
           <p className="mt-1 text-[11px] text-fg-subtle">
-            Rango 1-365. Default 7 (una semana).
+            {kind === 'super_fan'
+              ? 'La racha durará hasta que finalice la suscripción Super Fan del user en el live. Se desactiva sola cuando lo pierda.'
+              : 'Racha activa por una cantidad fija de días que vos definís.'}
           </p>
         </div>
+
+        {kind === 'manual' && (
+          <div>
+            <Label htmlFor={`${idPrefix}-days`} required>
+              Días a activar
+            </Label>
+            <Input
+              id={`${idPrefix}-days`}
+              type="number"
+              min={1}
+              max={365}
+              value={String(days)}
+              onChange={(e) =>
+                setDays(Math.max(1, Math.min(365, parseInt(e.target.value, 10) || 1)))
+              }
+              disabled={busy || working}
+            />
+            <p className="mt-1 text-[11px] text-fg-subtle">
+              Rango 1-365. Default 7 (una semana).
+            </p>
+          </div>
+        )}
 
         {message && (
           <div

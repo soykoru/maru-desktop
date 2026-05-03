@@ -93,6 +93,13 @@ class TikTokService:
         # y consumido al re-emitir gift/follow/like para que las reglas
         # filtren por rol incluso en eventos sin user_identity.
         self._user_ranks_cache: dict[str, dict[str, Any]] = {}
+        # Cache de avatares por user (lower) — solo en memoria, durante
+        # la sesión activa del live. Se vacía en disconnect/reconnect.
+        # Tamaño máximo 500 entries para evitar crecimiento indefinido en
+        # lives con miles de viewers únicos. Cada entry pesa ~150 bytes
+        # (URL string), total max ~75KB de RAM.
+        self._user_avatar_cache: dict[str, str] = {}
+        self._USER_AVATAR_CACHE_MAX = 500
         # Reconnect machinery
         self._auto_reconnect = True
         self._reconnect_attempts = 0
@@ -368,6 +375,10 @@ class TikTokService:
             except Exception:
                 pass
             self._user_ranks_cache.clear()
+            # Avatares por sesión: el user pidió que NO persistan entre
+            # sesiones (privacidad + ahorro de RAM/disco). Se borran
+            # acá al disconnect.
+            self._user_avatar_cache.clear()
             # Limpiar el set de users diagnosticados (DIAG @user) — vuelve
             # a emitir DIAG en el próximo connect si algo cambió.
             try:
@@ -654,6 +665,17 @@ class TikTokService:
                     or "gift"
                 )
                 rank_pref = _rank_prefix(merged)
+                avatar_url = self._user_avatar_cache.get(user.lower(), "")
+                meta_g: dict[str, Any] = {"user": user, "gift": gift_name}
+                if avatar_url:
+                    meta_g["avatar"] = avatar_url
+                for k in (
+                    "is_super_fan", "is_moderator", "is_top_gifter",
+                    "is_follower", "member_level", "gifter_level",
+                    "top_gifter_rank",
+                ):
+                    if merged.get(k):
+                        meta_g[k] = merged[k]
                 try:
                     self._logs.publish(
                         f"🎁 {rank_pref}@{user} envió: {gift_name}",
@@ -661,6 +683,7 @@ class TikTokService:
                         source="tiktok",
                         category="gift",
                         skip_dedupe=True,
+                        meta=meta_g,
                     )
                 except Exception:
                     pass
@@ -691,6 +714,9 @@ class TikTokService:
                         "nickname": nick,
                         "kind": "join",
                     }
+                    avatar_url = self._user_avatar_cache.get(user.lower(), "")
+                    if avatar_url:
+                        meta_payload["avatar"] = avatar_url
                     for k in (
                         "is_super_fan", "is_moderator", "is_top_gifter",
                         "is_follower", "is_member", "is_anchor",
@@ -727,11 +753,15 @@ class TikTokService:
                 except (TypeError, ValueError):
                     count = 1
                 if count > 0:
-                    rank_pref = _rank_prefix(merged)
+                    # Likes son ruido masivo (puede llegar 200+/seg al
+                    # iniciar un live grande). NO ponemos prefijo de rol
+                    # acá — sobrecargaría el log visualmente. Para gift y
+                    # join sí mostramos rol porque son eventos individuales
+                    # y útiles para identificar al usuario.
                     label = "like" if count == 1 else "likes"
                     try:
                         self._logs.publish(
-                            f"❤️ {rank_pref}@{user} dio {count} {label}",
+                            f"❤️ @{user} dio {count} {label}",
                             level="INFO",
                             source="tiktok",
                             category="like",
@@ -894,6 +924,23 @@ class TikTokService:
             real del live."""
             if not user or user == "?":
                 return
+            # Cache de avatar (memoria, sesión actual). Si el cache está
+            # lleno, eviccionamos al primero (FIFO simple — no necesita
+            # LRU porque la sesión es transitoria y se vacía en disconnect).
+            avatar_url = info.get("avatar_url")
+            if isinstance(avatar_url, str) and avatar_url.startswith("http"):
+                key = user.lower()
+                if key not in self._user_avatar_cache:
+                    if len(self._user_avatar_cache) >= self._USER_AVATAR_CACHE_MAX:
+                        try:
+                            first_key = next(iter(self._user_avatar_cache))
+                            self._user_avatar_cache.pop(first_key, None)
+                        except StopIteration:
+                            pass
+                    self._user_avatar_cache[key] = avatar_url
+                else:
+                    # Refrescar URL si cambió (TikTok rota CDNs).
+                    self._user_avatar_cache[key] = avatar_url
             keep = {
                 k: info.get(k)
                 for k in (
@@ -920,6 +967,19 @@ class TikTokService:
                     )
                 except Exception:
                     log.exception("notify_super_fan fallo (user=%s)", user)
+            # Sync racha super_fan en SocialService — dispara la racha
+            # automática "super_fan" o la desactiva si el user perdió
+            # el rol. Idempotente; solo escribe disco al cambiar.
+            if "is_super_fan" in info:
+                try:
+                    from ..rpc import registry as _reg  # type: ignore
+                    social_svc = getattr(_reg, "_GLOBAL_SOCIAL_SVC", None)
+                    if social_svc is not None and hasattr(social_svc, "sync_super_fan_status"):
+                        social_svc.sync_super_fan_status(
+                            user, bool(info.get("is_super_fan")),
+                        )
+                except Exception:
+                    log.exception("sync_super_fan_status fallo (user=%s)", user)
 
         def _on_comment_enriched(user: str, info: dict[str, Any]) -> None:
             """Comment con flags super_fan/moderator/top_gifter/etc.
@@ -976,11 +1036,25 @@ class TikTokService:
                     # comentarios al pill "Comentarios". Antes era hardcoded
                     # "comment" → el pill de Comandos quedaba huérfano para
                     # los `!cmd` que llegaban del live.
+                    # Meta enriquecido para que el frontend pinte
+                    # avatar + badges visuales sin necesidad de RPC extra.
+                    meta_payload: dict[str, Any] = {"user": user}
+                    avatar_url = info.get("avatar_url") or self._user_avatar_cache.get(user.lower(), "")
+                    if avatar_url:
+                        meta_payload["avatar"] = avatar_url
+                    for k in (
+                        "is_super_fan", "is_moderator", "is_top_gifter",
+                        "is_follower", "is_member", "is_anchor",
+                        "member_level", "gifter_level", "top_gifter_rank",
+                    ):
+                        if info.get(k):
+                            meta_payload[k] = info[k]
                     self._logs.publish(
                         line,
                         level="INFO",
                         source="tiktok",
                         category="command" if is_command else "comment",
+                        meta=meta_payload,
                     )
             except Exception:
                 log.exception("comment enriched log fallo")

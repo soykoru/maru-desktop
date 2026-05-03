@@ -410,6 +410,21 @@ class ChatDispatcher:
                 "voice": voice,
                 "user": user,
             })
+            # Log de la suerte que se le leyó al user — sin esto el
+            # streamer no sabe qué se reprodujo en el TTS hasta que
+            # termina el audio. Categoría dedicada `fortune`.
+            if self._logs is not None:
+                try:
+                    self._logs.publish(
+                        f"🔮 Suerte para @{user}: {text}",
+                        level="INFO",
+                        source="fortune",
+                        category="fortune",
+                        skip_dedupe=True,
+                        meta={"user": user, "text": text},
+                    )
+                except Exception:
+                    pass
         except Exception:
             log.exception("fortunes.read fallo")
 

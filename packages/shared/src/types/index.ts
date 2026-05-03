@@ -481,6 +481,13 @@ export interface SocialAutoRacha {
   total_days: number;
   remaining_days: number;
   started_at: string | number | null;
+  /**
+   * Tipo de racha automática:
+   *  - "manual": el streamer la activó por N días.
+   *  - "super_fan": vinculada al rol Super Fan del live (dura mientras
+   *    el user mantenga is_super_fan=true). Renderer la pinta dorada.
+   */
+  kind?: 'manual' | 'super_fan';
 }
 
 export interface SocialUser {
@@ -496,6 +503,10 @@ export interface SocialUser {
   duelos_ganados: number;
   duelos_perdidos: number;
   registered_at: string | number | null;
+  /** URL del avatar (CDN TikTok) — persistente. */
+  avatar?: string | null;
+  /** Si el user está marcado como Super Fan EN ESTE LIVE. */
+  is_super_fan?: boolean;
 }
 
 export interface SocialConfig {
@@ -692,6 +703,8 @@ export const LOG_CATEGORIES = [
   'tts',
   'sound',
   'profile',
+  'fortune',
+  'join',
   'error',
   'warn',
   'debug',
@@ -722,6 +735,8 @@ export type LogGroup =
   | 'social' // sistema social interno (duelos, rachas, ranking)
   | 'music' // spotify (play, skip, cola)
   | 'ia' // respuestas/queries IA
+  | 'fortune' // fortuna leída al user (texto + TTS)
+  | 'joins' // joins al live (entradas)
   | 'audio' // tts + sonidos
   | 'sistema' // system / tiktok-conexión / profile
   | 'errores'; // error + warn

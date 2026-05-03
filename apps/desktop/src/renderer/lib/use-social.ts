@@ -186,10 +186,15 @@ export function useSocial(options?: { autoLoad?: boolean }) {
   );
 
   const activateAutoRacha = useCallback(
-    async (username: string, days: number) => {
+    async (
+      username: string,
+      days: number,
+      kind: 'manual' | 'super_fan' = 'manual',
+    ) => {
       const res = await rpcCall('social.users.activate-auto-racha', {
         username,
         days,
+        kind,
       });
       if (!res.ok) throw new Error(res.message);
       await reloadUserLocal(username);

@@ -1640,6 +1640,20 @@ select:focus-visible {
   background: rgb(var(--maru-fg) / 0.06);
   color: rgb(var(--maru-fg-muted));
 }
+
+/* Avatar de comentarista cacheado por sesión (v1.0.51) — pinta la
+ * foto del user en vez del emoji genérico cuando viene en `meta.avatar`.
+ * loading=lazy + decoding=async + onError-fallback al emoji garantizan
+ * que la lista no se traba aunque el CDN de TikTok rote URLs. */
+.maru-event-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: rgb(var(--maru-fg) / 0.06);
+  border: 1px solid rgb(var(--maru-border) / 0.6);
+}
 .maru-event-body {
   flex: 1;
   min-width: 0;
@@ -2160,6 +2174,38 @@ a:focus-visible {
   background: rgb(var(--maru-warning) / 0.14);
   color: rgb(var(--maru-warning));
   border-color: rgb(var(--maru-warning) / 0.32);
+}
+
+/* Super Fan DORADO premium (v1.0.51) — para users con rol activo en
+ * el SocialDialog. Gradient dorado real + halo sutil + texto inset.
+ * Diferente al ⭐ FAN del log (que es color warning/ámbar). */
+.maru-super-fan-gold {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.28) 0%,
+    rgba(255, 178, 0, 0.18) 50%,
+    rgba(218, 165, 32, 0.22) 100%
+  );
+  color: #f5c542;
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(255, 215, 0, 0.15),
+    0 0 12px -2px rgba(255, 215, 0, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  font-weight: 700;
+}
+.maru-super-fan-row {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 215, 0, 0.05) 0%,
+    transparent 60%
+  );
+  border-left: 3px solid rgba(255, 215, 0, 0.55);
+}
+.maru-super-fan-avatar-ring {
+  box-shadow:
+    0 0 0 2px rgba(255, 215, 0, 0.7),
+    0 0 8px rgba(255, 215, 0, 0.3);
 }
 .maru-role-badge--top {
   background: rgb(var(--maru-accent-purple) / 0.14);

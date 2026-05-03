@@ -29,6 +29,8 @@ const GROUP_TO_CATEGORIES: Record<LogGroup, LogCategory[]> = {
   social: ['social'],
   music: ['music'],
   ia: ['ia'],
+  fortune: ['fortune'],
+  joins: ['join'],
   audio: ['tts', 'sound'],
   sistema: ['system', 'tiktok', 'profile'],
   errores: ['error', 'warn'],

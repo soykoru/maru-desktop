@@ -662,11 +662,21 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
 
     # JoinEvent enriquecido — el handler nativo del core solo emite
     # `{user, nickname}` sin roles. Acá extraemos badges del propio
-    # evento (TikTokLive 6.6.5 expone `JoinEvent.user.badge_list` igual
-    # que CommentEvent), y los re-emitimos por `comment_enriched` para
-    # que se cacheen en `_user_ranks_cache` del sidecar. Con eso, el log
-    # de joins muestra `[mod]@x entró`, `[superfan L3]@y entró`, etc.,
-    # incluso si el viewer entra SIN haber comentado nunca antes.
+    # evento.
+    #
+    # Auditoría TikTokLive 6.6.5 (proto_events.py:728 +
+    # tiktok_proto.py:6761): JoinEvent NO tiene `user_identity` (es
+    # exclusivo de CommentEvent). Sí tiene `user: User` con
+    # `badge_list`, `subscribe_info`, `fans_club_info` — el path que
+    # `_extract_ranks` ya cubre. Además expone flags propios del proto:
+    #   - is_top_user (bool) y top_user_no (int): si es uno de los
+    #     top de la sesión (rank score). Útil como fallback de
+    #     is_top_gifter cuando el badge no se incluye.
+    #   - enter_type (int): 1 = primer join de la sesión.
+    #
+    # Tambien re-emitimos SIEMPRE el avatar — independiente de roles —
+    # para alimentar el cache de avatares por sesión que pinta los
+    # comments en el log con la foto del user.
     if JoinEvent is not None:
         @client.on(JoinEvent)
         async def _on_join_enriched(e: Any) -> None:  # noqa: ANN401
@@ -681,9 +691,20 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
                 if not user or user.startswith("viewer_"):
                     return
                 ranks = _extract_ranks(e, user_obj)
-                # Solo re-emitimos si extraímos AL MENOS un flag útil —
-                # sino estamos polucionando el cache y el bus con noise.
-                useful = any(
+                # Refuerzo desde el propio JoinEvent (TikTokLive 6.6.5).
+                try:
+                    if bool(getattr(e, "is_top_user", False)):
+                        ranks["is_top_gifter"] = True
+                        rn = int(getattr(e, "top_user_no", 0) or 0)
+                        if rn > 0:
+                            ranks.setdefault("top_gifter_rank", rn)
+                except Exception:
+                    pass
+                avatar_url = _extract_user_avatar_url(user_obj)
+                # Emitimos SIEMPRE si tenemos avatar O algún rol — el
+                # avatar alimenta el cache de fotos del log de comments
+                # aunque el viewer no tenga roles especiales.
+                useful_role = any(
                     ranks.get(k)
                     for k in (
                         "is_super_fan", "is_moderator", "is_top_gifter",
@@ -691,12 +712,12 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
                         "member_level", "gifter_level",
                     )
                 )
-                if not useful:
+                if not useful_role and not avatar_url:
                     return
                 payload = {
                     "user": user,
                     "text": "",
-                    "avatar_url": _extract_user_avatar_url(user_obj),
+                    "avatar_url": avatar_url,
                     "emote_ids": [],
                     "kind": "join",
                     **ranks,

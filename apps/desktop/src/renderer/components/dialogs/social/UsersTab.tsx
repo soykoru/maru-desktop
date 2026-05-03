@@ -56,7 +56,11 @@ export interface UsersTabProps {
     username: string,
     relType: 'novios' | 'amigo' | 'rival',
   ) => Promise<void>;
-  onActivateAutoRacha: (username: string, days: number) => Promise<string | undefined>;
+  onActivateAutoRacha: (
+    username: string,
+    days: number,
+    kind?: 'manual' | 'super_fan',
+  ) => Promise<string | undefined>;
   onDeactivateAutoRacha: (username: string) => Promise<string | undefined>;
   busy?: boolean;
 }
@@ -152,9 +156,9 @@ export function UsersTab({
         open={autoRachaOpen}
         user={selectedUser}
         onClose={() => setAutoRachaOpen(false)}
-        onActivate={(d) =>
+        onActivate={(d, kind) =>
           selectedUser
-            ? onActivateAutoRacha(selectedUser.username, d)
+            ? onActivateAutoRacha(selectedUser.username, d, kind)
             : Promise.resolve(undefined)
         }
         onDeactivate={() =>
@@ -239,50 +243,110 @@ export function UsersTab({
             }
           />
         ) : (
-          <div className="overflow-x-auto max-h-[280px]">
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-bg-elev z-10">
-                <tr className="border-b border-border text-left text-fg-subtle">
-                  <th className="px-2 py-2 font-medium">Usuario</th>
-                  <th className="px-2 py-2 font-medium text-center w-10">Reg</th>
-                  <th className="px-2 py-2 font-medium w-20">Racha</th>
-                  <th className="px-2 py-2 font-medium text-center w-14">Récord</th>
-                  <th className="px-2 py-2 font-medium">Casado/a</th>
-                  <th className="px-2 py-2 font-medium">Novio/a</th>
-                  <th className="px-2 py-2 font-medium">Mejor Amigo</th>
-                  <th className="px-2 py-2 font-medium">Rival</th>
-                  <th className="px-2 py-2 font-medium text-center w-14">Victorias</th>
-                  <th className="px-2 py-2 font-medium text-center w-10" title="Eliminar usuario"></th>
+          <div className="overflow-x-auto max-h-[280px] relative">
+            <table className="w-full text-xs border-separate border-spacing-0">
+              {/*
+                Bug raíz F9: el `thead.sticky top-0 bg-bg-elev` se veía
+                transparente al scrollear (los `td` se sobreponían). En
+                tablas con `border-collapse: collapse` (default), el
+                background del THEAD/TR no aplica al sticky en muchos
+                navegadores — solo el de los TH individuales sí. Fix:
+                `border-separate` + bg explícito en cada TH + sticky en
+                cada TH (no en thead).
+              */}
+              <thead>
+                <tr className="text-left text-fg-subtle">
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Usuario</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-center w-10 border-b border-border">Reg</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium w-20 border-b border-border">Racha</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-center w-14 border-b border-border">Récord</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Casado/a</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Novio/a</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Mejor Amigo</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium border-b border-border">Rival</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-center w-14 border-b border-border">Victorias</th>
+                  <th className="sticky top-0 z-20 bg-bg-elev px-2 py-2 font-medium text-center w-10 border-b border-border" title="Eliminar usuario"></th>
                 </tr>
               </thead>
               <tbody>
                 {visibleUsers.map((u) => {
                   const isSelected = u.username === selectedUsername;
                   const rachaCellKey = cellKey(u.username, 'racha');
+                  const isAutoSF = u.auto_racha?.kind === 'super_fan';
                   const rachaText =
                     editingCells[rachaCellKey] ??
                     (u.auto_racha?.active
-                      ? `⚡${u.racha} (${u.auto_racha.remaining_days})`
+                      ? isAutoSF
+                        ? `⭐${u.racha}`
+                        : `⚡${u.racha} (${u.auto_racha.remaining_days})`
                       : String(u.racha));
+                  const isSuperFan = !!u.is_super_fan;
                   return (
                     <tr
                       key={u.username}
                       onClick={() => onSelect(u.username)}
                       className={[
-                        'border-b border-border/50 cursor-pointer transition-colors',
+                        'cursor-pointer transition-colors',
                         isSelected
                           ? 'bg-accent/10'
-                          : 'hover:bg-fg/5',
+                          : isSuperFan
+                            ? 'maru-super-fan-row hover:bg-warning/8'
+                            : 'hover:bg-fg/5',
                       ].join(' ')}
                     >
-                      <td className="px-2 py-1.5 font-medium truncate max-w-[120px]" title={u.username}>
-                        {u.username}
+                      <td
+                        className="px-2 py-1.5 font-medium border-b border-border/50"
+                        title={u.username}
+                      >
+                        <div className="flex items-center gap-2 max-w-[160px]">
+                          {u.avatar ? (
+                            <img
+                              src={u.avatar}
+                              alt=""
+                              loading="lazy"
+                              decoding="async"
+                              referrerPolicy="no-referrer"
+                              className={[
+                                'h-6 w-6 rounded-full object-cover flex-shrink-0',
+                                isSuperFan
+                                  ? 'maru-super-fan-avatar-ring'
+                                  : 'border border-border',
+                              ].join(' ')}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span
+                              className={[
+                                'h-6 w-6 rounded-full grid place-items-center text-[10px] font-bold flex-shrink-0',
+                                isSuperFan
+                                  ? 'maru-super-fan-avatar-ring bg-warning/15 text-warning'
+                                  : 'bg-fg/10 text-fg-muted',
+                              ].join(' ')}
+                              aria-hidden="true"
+                            >
+                              {u.username.slice(0, 1).toUpperCase()}
+                            </span>
+                          )}
+                          <span className="truncate flex items-center gap-1">
+                            {u.username}
+                            {isSuperFan && (
+                              <span
+                                className="maru-super-fan-gold inline-flex items-center gap-0.5 rounded px-1 text-[8.5px] tracking-wider leading-none"
+                                title="Super Fan del live (rol activo)"
+                              >
+                                ⭐ FAN
+                              </span>
+                            )}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-2 py-1.5 text-center">
+                      <td className="px-2 py-1.5 text-center border-b border-border/50">
                         {u.registered ? '✅' : '❌'}
                       </td>
                       <td
-                        className="px-2 py-1.5"
+                        className="px-2 py-1.5 border-b border-border/50"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <input
@@ -309,7 +373,7 @@ export function UsersTab({
                           className="w-full bg-transparent border-b border-transparent hover:border-border focus:border-accent text-xs font-mono outline-none"
                         />
                       </td>
-                      <td className="px-2 py-1.5 text-center text-fg-muted">
+                      <td className="px-2 py-1.5 text-center text-fg-muted border-b border-border/50">
                         {u.record_racha}
                       </td>
                       {(['marriage', 'partner', 'best_friend', 'rival'] as const).map(
@@ -319,7 +383,7 @@ export function UsersTab({
                           return (
                             <td
                               key={field}
-                              className="px-2 py-1.5"
+                              className="px-2 py-1.5 border-b border-border/50"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <input
@@ -353,11 +417,11 @@ export function UsersTab({
                           );
                         },
                       )}
-                      <td className="px-2 py-1.5 text-center text-success font-mono">
+                      <td className="px-2 py-1.5 text-center text-success font-mono border-b border-border/50">
                         {u.duelos_ganados}
                       </td>
                       <td
-                        className="px-2 py-1.5 text-center"
+                        className="px-2 py-1.5 text-center border-b border-border/50"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -397,7 +461,19 @@ export function UsersTab({
             {selectedUser.auto_racha?.active && (
               <>
                 <br />
-                ⚡ Racha Automática activa: {selectedUser.auto_racha.remaining_days}/{selectedUser.auto_racha.total_days} días restantes.
+                {selectedUser.auto_racha.kind === 'super_fan' ? (
+                  <>
+                    <span className="maru-super-fan-gold inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] tracking-wider leading-none mr-1">
+                      ⭐ SUPER FAN
+                    </span>
+                    Racha automática vinculada al rol Super Fan — durará
+                    hasta que termine la suscripción.
+                  </>
+                ) : (
+                  <>
+                    ⚡ Racha Automática activa: {selectedUser.auto_racha.remaining_days}/{selectedUser.auto_racha.total_days} días restantes.
+                  </>
+                )}
               </>
             )}
             {selectedUser.marriage && (

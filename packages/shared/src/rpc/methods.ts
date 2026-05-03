@@ -666,8 +666,13 @@ export interface SocialMethods {
     result: { ok: boolean; error?: string };
   };
   'social.users.activate-auto-racha': {
-    params: { username: string; days: number };
-    result: { ok: boolean; message: string };
+    params: {
+      username: string;
+      days?: number;
+      /** "manual" (default) o "super_fan" — vinculada al rol del live. */
+      kind?: 'manual' | 'super_fan';
+    };
+    result: { ok: boolean; message: string; kind?: 'manual' | 'super_fan' };
   };
   'social.users.deactivate-auto-racha': {
     params: { username: string };

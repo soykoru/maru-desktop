@@ -187,7 +187,14 @@ def _safe_int(v: Any, default: int = 0) -> int:
     return default
 
 
-def _user_to_dto(username: str, raw: Any) -> dict[str, Any]:
+def _user_to_dto(
+    username: str,
+    raw: Any,
+    *,
+    avatar: str = "",
+    super_fan: bool = False,
+    auto_racha_kind: str = "manual",
+) -> dict[str, Any]:
     """Coerce un usuario del SocialSystem al DTO del renderer.
 
     El SocialSystem core tiene DOS formas de devolver un user, según el
@@ -225,6 +232,8 @@ def _user_to_dto(username: str, raw: Any) -> dict[str, Any]:
             "duelos_ganados": 0,
             "duelos_perdidos": 0,
             "registered_at": None,
+            "avatar": avatar or None,
+            "is_super_fan": super_fan,
         }
     # racha: puede venir flat (`racha=int`) o nested
     # (`racha={"dias":N, "record":N}`).
@@ -264,6 +273,8 @@ def _user_to_dto(username: str, raw: Any) -> dict[str, Any]:
             "remaining_days": _safe_int(raw.get("auto_racha_restantes")),
             "started_at": raw.get("auto_racha_inicio"),
         }
+    if auto is not None:
+        auto["kind"] = auto_racha_kind
     # stats puede venir nested en `stats={"duelos_ganados":N, ...}` o flat.
     stats_raw = raw.get("stats") if isinstance(raw.get("stats"), dict) else {}
     return {
@@ -289,6 +300,8 @@ def _user_to_dto(username: str, raw: Any) -> dict[str, Any]:
             raw.get("duelos_perdidos", stats_raw.get("duelos_perdidos"))
         ),
         "registered_at": raw.get("registered_at") or raw.get("fecha_registro"),
+        "avatar": avatar or None,
+        "is_super_fan": super_fan,
     }
 
 
@@ -325,6 +338,20 @@ class SocialService:
         self._tts = tts
         self._spotify_svc: Any = None
         self._logs: Any = None
+        # Avatares persistentes del sistema social — mapean
+        # `username_lower → URL CDN TikTok`. Persisten a disco como
+        # `data/social_avatars.json`. Se actualizan cuando un user
+        # comenta/dona/entra (alimentado por bus tiktok:comment-enriched).
+        # Diferencia con `tiktok._user_avatar_cache` (memoria, sesión):
+        # esto persiste hasta que el user sea borrado por el streamer
+        # o por inactividad. Ahorra requests al CDN — un avatar
+        # cacheado el primer día sigue siendo válido para el log de
+        # social/registrados N días después.
+        self._avatars: dict[str, str] = {}
+        self._avatars_path: Any = None
+        self._avatars_dirty: bool = False
+        self._avatars_save_timer: threading.Timer | None = None
+        self._avatars_lock = threading.Lock()
         # Dedupe del callback de TTS — defensa en profundidad. La causa raíz
         # de los duplicados de `!racha`/`!suerte` se cortó en
         # `ChatDispatcher._is_duplicate_cmd` (el core emite `comment` +
@@ -344,6 +371,111 @@ class SocialService:
         usa internamente para `🎵 !play por @user: ✅ canción`) llegue al
         panel del frontend, no solo al stderr de Python."""
         self._logs = logs
+
+    # ── Avatares persistentes ────────────────────────────────────────────
+    def _avatars_init(self) -> None:
+        """Carga el archivo `social_avatars.json` desde data/. Idempotente.
+        Llamar solo después de tener `_sys` (con `data_dir`)."""
+        if self._avatars_path is not None:
+            return
+        try:
+            from ..runtime import DATA_DIR
+            self._avatars_path = DATA_DIR / "social_avatars.json"
+            if self._avatars_path.is_file():
+                import json as _json
+                with open(self._avatars_path, "r", encoding="utf-8") as fh:
+                    raw = _json.load(fh)
+                if isinstance(raw, dict):
+                    # Sanitizar: solo URLs válidas, claves lower.
+                    for k, v in raw.items():
+                        if (
+                            isinstance(k, str)
+                            and isinstance(v, str)
+                            and v.startswith("http")
+                        ):
+                            self._avatars[k.lower()] = v
+                log.info("social_avatars cargados: %d entries", len(self._avatars))
+        except Exception:
+            log.exception("social_avatars init fallo (continúo con dict vacío)")
+
+    def _avatars_schedule_save(self) -> None:
+        """Persistir con debounce 3s — agrupa muchos updates en 1 escritura."""
+        with self._avatars_lock:
+            self._avatars_dirty = True
+            if self._avatars_save_timer is not None:
+                self._avatars_save_timer.cancel()
+            self._avatars_save_timer = threading.Timer(3.0, self._avatars_flush)
+            self._avatars_save_timer.daemon = True
+            self._avatars_save_timer.start()
+
+    def _avatars_flush(self) -> None:
+        with self._avatars_lock:
+            if not self._avatars_dirty or self._avatars_path is None:
+                return
+            snapshot = dict(self._avatars)
+            self._avatars_dirty = False
+        try:
+            import json as _json
+            tmp = self._avatars_path.with_suffix(".tmp")
+            with open(tmp, "w", encoding="utf-8") as fh:
+                _json.dump(snapshot, fh, ensure_ascii=False)
+            tmp.replace(self._avatars_path)
+        except Exception:
+            log.exception("social_avatars flush fallo")
+
+    def remember_avatar(self, username: str, url: str) -> None:
+        """Llamada externa (bus tiktok:comment-enriched) para persistir
+        el avatar de un user. Idempotente — no escribe si ya existía con
+        la misma URL."""
+        if not username or not url or not url.startswith("http"):
+            return
+        self._avatars_init()
+        key = username.lower()
+        if self._avatars.get(key) == url:
+            return
+        self._avatars[key] = url
+        self._avatars_schedule_save()
+
+    def forget_avatar(self, username: str) -> None:
+        """Borra el avatar (cuando el user se elimina del sistema)."""
+        if not username:
+            return
+        self._avatars_init()
+        if self._avatars.pop(username.lower(), None) is not None:
+            self._avatars_schedule_save()
+
+    def get_avatar(self, username: str) -> str:
+        if not username:
+            return ""
+        self._avatars_init()
+        return self._avatars.get(username.lower(), "")
+
+    def _is_super_fan_now(self, username: str) -> bool:
+        """Lee del cache de rangos del TikTokService si el user está
+        marcado como super_fan EN ESTE LIVE. Esto alimenta:
+          1. La columna "Super Fan" del SocialDialog → se muestra dorado.
+          2. La racha automática "Super Fan" — dura mientras lo sea.
+        Tolerante: si el TikTokService no está cableado, retorna False."""
+        if not username:
+            return False
+        try:
+            from . import tiktok as _tk  # type: ignore
+            # tiktok_svc se cablea en bootstrap; usamos el global del
+            # registry para evitar inyectarlo en SocialService
+            # constructor (que rompería retro-compat).
+            from ..rpc import registry as _reg  # type: ignore
+            tiktok_svc = getattr(_reg, "_GLOBAL_TIKTOK_SVC", None)
+            if tiktok_svc is None:
+                return False
+            cache = getattr(tiktok_svc, "_user_ranks_cache", None)
+            if not isinstance(cache, dict):
+                return False
+            entry = cache.get(username.lower())
+            if not isinstance(entry, dict):
+                return False
+            return bool(entry.get("is_super_fan"))
+        except Exception:
+            return False
 
     def attach_tts(self, tts: Any) -> None:
         """Permite cablear TTS después de construir el servicio."""
@@ -701,7 +833,16 @@ class SocialService:
                 continue
             if query and query not in str(username).lower():
                 continue
-            out.append(_user_to_dto(str(username), payload))
+            avatar = self.get_avatar(str(username))
+            super_fan = self._is_super_fan_now(str(username))
+            kind = "super_fan" if self.is_super_fan_racha(str(username)) else "manual"
+            out.append(
+                _user_to_dto(
+                    str(username), payload,
+                    avatar=avatar, super_fan=super_fan,
+                    auto_racha_kind=kind,
+                )
+            )
         return {"users": out}
 
     def users_get(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -709,8 +850,14 @@ class SocialService:
         username = params.get("username")
         if not isinstance(username, str) or not username.strip():
             raise TypeError("username requerido")
+        kind = "super_fan" if self.is_super_fan_racha(username) else "manual"
         if s is None:
-            return {"user": _user_to_dto(username, None)}
+            return {"user": _user_to_dto(
+                username, None,
+                avatar=self.get_avatar(username),
+                super_fan=self._is_super_fan_now(username),
+                auto_racha_kind=kind,
+            )}
         try:
             data = (
                 s.admin_get_user_data(username)
@@ -719,7 +866,12 @@ class SocialService:
             )
         except Exception:
             data = None
-        return {"user": _user_to_dto(username, data)}
+        return {"user": _user_to_dto(
+            username, data,
+            avatar=self.get_avatar(username),
+            super_fan=self._is_super_fan_now(username),
+            auto_racha_kind=kind,
+        )}
 
     def users_register(self, params: dict[str, Any]) -> dict[str, Any]:
         return self._admin_simple(params, "admin_register_user")
@@ -772,20 +924,115 @@ class SocialService:
             return {"ok": False, "error": str(exc)}
 
     def users_activate_auto_racha(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Activa racha automática.
+
+        Tipos (`kind`):
+          - "manual" (default) — N días que el streamer define.
+          - "super_fan" — vinculado al rol Super Fan del live. Dura
+            mientras el user mantenga is_super_fan=True. Cuando termina
+            el sub, se desactiva automáticamente. Se persiste con un
+            flag marcador en `data/super_fan_rachas.json` para distinguir
+            del manual al desactivar.
+        """
         s = self._ensure()
         username = params.get("username")
         days = params.get("days")
+        kind = (params.get("kind") or "manual")
         if not isinstance(username, str) or not username.strip():
             raise TypeError("username requerido")
-        if not isinstance(days, int) or days < 1 or days > 365:
-            raise ValueError("days ∈ [1, 365]")
+        if kind == "super_fan":
+            # Super Fan: usamos un valor alto (365) para que el contador
+            # no se agote durante el live, y el track real lo lleva el
+            # marcador en super_fan_rachas. Si el user pierde super_fan,
+            # `_sync_super_fan_rachas` lo desactiva.
+            days = 365
+            try:
+                self._mark_super_fan_racha(username, True)
+            except Exception:
+                pass
+        else:
+            if not isinstance(days, int) or days < 1 or days > 365:
+                raise ValueError("days ∈ [1, 365]")
         if s is None:
             return {"ok": False, "message": "core no disponible"}
         try:
             ok, msg = s.admin_activate_auto_racha(username, days)
-            return {"ok": bool(ok), "message": str(msg)}
+            return {"ok": bool(ok), "message": str(msg), "kind": kind}
         except Exception as exc:
             return {"ok": False, "message": str(exc)}
+
+    # ── Super fan rachas (marcadores) ────────────────────────────────────
+    def _super_fan_path(self) -> Any:
+        try:
+            from ..runtime import DATA_DIR
+            return DATA_DIR / "super_fan_rachas.json"
+        except Exception:
+            return None
+
+    def _load_super_fan_rachas(self) -> set[str]:
+        p = self._super_fan_path()
+        if p is None or not p.is_file():
+            return set()
+        try:
+            import json as _json
+            with open(p, "r", encoding="utf-8") as fh:
+                raw = _json.load(fh)
+            if isinstance(raw, list):
+                return {str(x).lower() for x in raw if isinstance(x, str)}
+        except Exception:
+            pass
+        return set()
+
+    def _save_super_fan_rachas(self, marks: set[str]) -> None:
+        p = self._super_fan_path()
+        if p is None:
+            return
+        try:
+            import json as _json
+            tmp = p.with_suffix(".tmp")
+            with open(tmp, "w", encoding="utf-8") as fh:
+                _json.dump(sorted(marks), fh, ensure_ascii=False)
+            tmp.replace(p)
+        except Exception:
+            log.exception("super_fan_rachas save fallo")
+
+    def _mark_super_fan_racha(self, username: str, active: bool) -> None:
+        marks = self._load_super_fan_rachas()
+        key = username.lower()
+        if active:
+            marks.add(key)
+        else:
+            marks.discard(key)
+        self._save_super_fan_rachas(marks)
+
+    def is_super_fan_racha(self, username: str) -> bool:
+        return username.lower() in self._load_super_fan_rachas()
+
+    def sync_super_fan_status(self, username: str, is_super_fan: bool) -> None:
+        """Llamado por TikTokService cuando detecta cambio de
+        is_super_fan en un comment-enriched. Activa/desactiva la
+        racha super fan automáticamente."""
+        if not username:
+            return
+        if is_super_fan:
+            # Activar solo si no estaba ya marcado.
+            if not self.is_super_fan_racha(username):
+                try:
+                    self.users_activate_auto_racha({
+                        "username": username,
+                        "kind": "super_fan",
+                    })
+                except Exception:
+                    pass
+        else:
+            # El user perdió super_fan: si tenía marca super_fan,
+            # desactivamos la racha automática.
+            if self.is_super_fan_racha(username):
+                self._mark_super_fan_racha(username, False)
+                try:
+                    self.users_deactivate_auto_racha({"username": username})
+                except Exception:
+                    pass
 
     def users_deactivate_auto_racha(self, params: dict[str, Any]) -> dict[str, Any]:
         s = self._ensure()
