@@ -3,6 +3,7 @@ import { Download, RefreshCw, Sparkles } from 'lucide-react';
 import { useAppStore } from '../lib/store/index.js';
 import { THEME_LIST, type ThemeId } from '../lib/store/ui-slice.js';
 import { rpcCall } from '../lib/rpc.js';
+import logoSrc from '../assets/logo.png';
 
 /**
  * `HeaderGlobal` — barra superior 56px premium (FASE V1 redesign v1.0.40).
@@ -32,6 +33,8 @@ export function HeaderGlobal(): ReactNode {
   // Status global desde el store — los mismos selectors que ya usa el
   // Sidebar y el SystemHealthWidget, sin nuevas suscripciones.
   const tiktokStatus = useAppStore((s) => s.tiktokStatus);
+  const tiktokAvatarUrl = useAppStore((s) => s.tiktokAvatarUrl);
+  const tiktokUsername = useAppStore((s) => s.tiktokUsername);
   const sidecarStatus = useAppStore((s) => s.sidecarStatus);
   const spotifyConnected = useAppStore((s) => s.spotifyStatus.connected);
   const updater = useAppStore((s) => s.updater);
@@ -84,7 +87,12 @@ export function HeaderGlobal(): ReactNode {
       className="header-v140 relative z-10 flex h-14 shrink-0 items-center justify-between gap-3 px-4"
       aria-label="Barra superior"
     >
-      <BrandBlock version={appVersion} />
+      <BrandBlock
+        version={appVersion}
+        avatarUrl={tiktokAvatarUrl}
+        username={tiktokUsername}
+        connected={tiktokStatus === 'connected'}
+      />
 
       <GlobalStatusPill
         tiktok={tiktokStatus === 'connected'}
@@ -115,20 +123,69 @@ export function HeaderGlobal(): ReactNode {
 // Subcomponentes locales (no exportados — reuso solo dentro del header)
 // ────────────────────────────────────────────────────────────────────
 
-function BrandBlock({ version }: { version: string }) {
+function BrandBlock({
+  version,
+  avatarUrl,
+  username,
+  connected,
+}: {
+  version: string;
+  avatarUrl: string;
+  username: string | null;
+  connected: boolean;
+}) {
   return (
     <div className="flex items-center gap-2.5 select-none">
-      <div className="header-v140-mark" aria-hidden="true">
-        M
+      {/* Logo real (logo.png) en vez del placeholder con la inicial. */}
+      <div
+        className="header-v140-mark overflow-hidden p-0"
+        aria-hidden="true"
+        style={{ background: 'transparent' }}
+      >
+        <img
+          src={logoSrc}
+          alt="MARU"
+          width={32}
+          height={32}
+          className="block h-full w-full object-contain"
+          draggable={false}
+        />
       </div>
-      <div className="leading-tight">
+      <div className="leading-tight min-w-0">
         <div className="header-v140-brand text-[15px] font-extrabold tracking-tight">
           MARU LIVE
         </div>
         <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-subtle font-mono">
-          {version ? `Chaos Engine v${version}` : 'Chaos Engine'}
+          {version ? `v${version}` : '—'}
         </div>
       </div>
+      {/* Avatar + handle del streamer cuando está conectado al live. */}
+      {connected && username && (
+        <div className="ml-3 flex items-center gap-2 rounded-full border border-fg/10 bg-bg-elevated/40 pl-1 pr-3 py-1 animate-fade-in">
+          <div className="h-7 w-7 rounded-full overflow-hidden bg-bg-elev shrink-0 ring-2 ring-success/40">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+                draggable={false}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[12px] font-bold text-fg-muted">
+                {username.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col leading-none">
+            <span className="text-[11px] font-bold">@{username}</span>
+            <span className="text-[9px] text-success font-semibold tracking-wider uppercase">en vivo</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -187,6 +244,8 @@ function ThemeSwatchRow({
     dracula: 'linear-gradient(135deg, #ff79c6, #bd93f9)',
     'tokyo-night': 'linear-gradient(135deg, #7aa2f7, #bb9af7)',
     'catppuccin-mocha': 'linear-gradient(135deg, #cba6f7, #f5c2e7)',
+    'pure-dark': 'linear-gradient(135deg, #000000, #2a2a35)',
+    nord: 'linear-gradient(135deg, #88c0d0, #5e81ac)',
   };
   return (
     <div

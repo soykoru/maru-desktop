@@ -1,5 +1,82 @@
 # Changelog — maru-desktop
 
+## 1.0.41 — 2026-05-03 · 🎨 Pulido del redesign + 2 temas nuevos + foto streamer real
+
+Iteración sobre v1.0.40 con feedback directo del user. 11 fixes
+visuales sin tocar lógica de negocio. Build limpio sin nuevos errores TS.
+
+### Duplicaciones removidas
+- ThemeSwitcher viejo eliminado del Sidebar (queda solo el de arriba
+  con 4 swatches en HeaderGlobal). Sin pérdida de funcionalidad: el
+  switcher del header tiene los 6 temas y persiste igual.
+- SystemHealthWidget removido del LogPanel (los 4 estados ya están
+  arriba en HeaderGlobal).
+
+### Auto-scroll del log mejorado
+- Coalescer con `requestAnimationFrame`: bajo ráfagas (50+ entries/s)
+  hacemos UN solo `scrollTop` por frame.
+- Flag `programmaticScroll` para no desactivar autoscroll cuando el
+  scroll es nuestro (no del user).
+- Threshold "atBottom" 20px → 60px (más tolerante a un toque de rueda).
+- Doble click en cualquier entrada del log la oculta localmente (set
+  `hiddenIds` en LogPanel). Se resetea al limpiar el log.
+
+### StatsCounters re-diseñado
+- Cada contador ahora es tile vertical: emoji + número + label corta.
+  Antes "👤" parecía "Usuarios" — ahora dice "Nuevos" claramente.
+- Likes incluye `like_milestone` (que llegaba como categoría aparte
+  y no se sumaba al contador).
+- Labels: Regalos · Nuevos · Shares · Likes · Chat · Reglas.
+
+### Hero card del logo
+- Padding 22→28px, border-radius xl→2xl, sombra exterior añadida,
+  halo accent superior con radial gradient. Más premium.
+
+### Avatar real del streamer
+- Sidecar emite `avatarUrl` en el `tiktok:status` cuando termina el
+  handshake (ya extraía la URL del room_info, ahora la propaga al
+  renderer).
+- Slice `tiktok-slice` agrega `tiktokAvatarUrl: string` + setter.
+- Card TikTok del Sidebar y el header global muestran `<img>` real
+  con fallback a iniciales si la URL falla. Browser cachea — cero
+  RAM agregada significativa (24px PNG ≈ 3KB).
+
+### Header global pulido
+- Logo placeholder "M" reemplazado por `logo.png` real.
+- Subtitle muestra `vX.Y.Z` real desde `app.getVersion()` (ya estaba,
+  solo más claro).
+- Avatar + handle del streamer aparece a la derecha del brand cuando
+  hay live activo, con ring verde y tag "EN VIVO".
+
+### Layout de Configuración
+- Grid 2-cols con TODOS los botones del mismo tamaño. El último botón
+  (impar — "TikTok API") usa `col-span-2` para no quedar aislado en
+  una fila propia con espacio vacío. Visualmente uniforme.
+
+### Botones globales más profesionales
+- `rounded-md` → `rounded-lg` (10px) en todos los Button.
+- Hover `brightness-110` simultáneo con lift + glow → feedback más
+  rico sin coste.
+- Active `scale-[0.99]` en vez de `[0.98]` (más sutil, peso físico).
+- Ghost variant: `backdrop-blur-sm` + border más fino → glass-like.
+- `will-change-transform` para promotion GPU permanente.
+
+### 2 temas nuevos
+- **Pure Dark** (⚫): negro absoluto premium. Para OLED y minimalismo.
+  Acento blanco-azulado frío.
+- **Nord** (❄️): paleta nordtheme.com famosa en dev community. Frost
+  cyan signature, polar night base.
+
+Total: **6 temas** ahora (Midnight, Dracula, Tokyo Night, Catppuccin
+Mocha, Pure Dark, Nord). Cero RAM extra — son solo tokens CSS.
+
+### Reglas duras cumplidas
+- ✅ Cero handlers/refs/useEffects rotos.
+- ✅ Cero botones eliminados (solo movidos para verse mejor).
+- ✅ Cero RPC nuevos.
+- ✅ Cero RAM extra (avatar es nativo del browser).
+- ✅ Build limpio (vite + tsc sin errores nuevos).
+
 ## 1.0.40 — 2026-05-03 · ⭐ Redesign visual 1→1000 (sin push hasta validación)
 
 Reescritura visual completa **sin remover ni un solo botón existente,

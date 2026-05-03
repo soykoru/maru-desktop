@@ -55,13 +55,14 @@ export function wireSidecarEvents(): () => void {
         username?: string;
         connecting?: boolean;
         reconnecting?: boolean;
+        avatarUrl?: string;
       };
       const next = p.connected
         ? 'connected'
         : p.connecting || p.reconnecting
           ? 'connecting'
           : 'disconnected';
-      useAppStore.getState().setTikTokStatus(next, p.username);
+      useAppStore.getState().setTikTokStatus(next, p.username, p.avatarUrl);
     }),
   );
   offs.push(

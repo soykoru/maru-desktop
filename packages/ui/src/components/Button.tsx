@@ -12,28 +12,30 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  // primary = botón principal MARU (gradient accent)
+  // primary = botón principal MARU (gradient accent + glow al hover)
   primary:
     'bg-gradient-to-b from-accent to-accent-hover text-white font-bold ' +
     'border border-accent/30 shadow-elev-1 shadow-inset-top-strong ' +
-    'hover:shadow-glow hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]',
+    'hover:brightness-110 hover:shadow-glow hover:-translate-y-0.5 ' +
+    'active:translate-y-0 active:scale-[0.99] active:brightness-95',
   // secondary = look "Midnight QSS" (gradient azul mn)
   secondary:
     'bg-gradient-to-b from-mn-button to-mn-button-end text-white font-bold ' +
     'border border-mn-button/30 shadow-elev-1 shadow-inset-top-strong ' +
     'hover:from-mn-button-hover hover:to-mn-button hover:shadow-glow-blue ' +
-    'hover:-translate-y-0.5 active:translate-y-0',
-  // ghost = transparente con borde sutil
+    'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]',
+  // ghost = glass-like con border casi invisible
   ghost:
-    'bg-fg/[0.06] text-fg border border-fg/10 ' +
-    'hover:bg-fg/10 hover:border-fg/20 hover:-translate-y-0.5 hover:shadow-elev-1 ' +
-    'active:translate-y-0',
+    'bg-fg/[0.05] text-fg border border-fg/[0.08] backdrop-blur-sm ' +
+    'hover:bg-fg/[0.10] hover:border-fg/20 hover:-translate-y-0.5 hover:shadow-elev-1 ' +
+    'active:translate-y-0 active:scale-[0.99]',
   // danger = gradient rojo
   danger:
     'bg-gradient-to-b from-accent-red to-accent-red-dark text-white font-bold ' +
     'border border-accent-red/30 shadow-elev-1 shadow-inset-top-strong ' +
+    'hover:brightness-110 ' +
     'hover:shadow-[0_0_0_1px_rgb(231_76_60_/_0.5),_0_8px_24px_rgb(231_76_60_/_0.3)] ' +
-    'hover:-translate-y-0.5 active:translate-y-0',
+    'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]',
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -50,8 +52,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-md',
-        'transition-all duration-fast ease-maru',
+        'inline-flex items-center justify-center gap-2 rounded-lg',
+        'transition-all duration-fast ease-maru will-change-transform',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-elev-1',
         variantClasses[variant],

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Activity,
   ChevronDown,
@@ -16,7 +16,6 @@ import {
   LogBucketRow,
   LogEntryRow,
   StatsCounters,
-  SystemHealthWidget,
 } from './log/index.js';
 
 /**
@@ -42,24 +41,77 @@ export function LogPanel(): ReactNode {
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const lastEntryIdRef = useRef<string | null>(null);
+  // Flag interno: cuando hacemos scroll programático no debe interpretarse
+  // como gesto del user (sino el onScroll desactivaría autoScroll).
+  // Usamos `useRef` para no causar re-renders.
+  const programmaticScrollRef = useRef(false);
+  // rAF coalescer — bajo ráfaga de eventos llegamos hasta 50/s; en vez de
+  // setear `scrollTop` en cada one, lo hacemos UNA vez por frame. Ahorra
+  // jank y mantiene el scroll pegado al fondo.
+  const rafIdRef = useRef<number | null>(null);
+
+  // Set local de IDs ocultos por el user (doble-click en una fila la oculta
+  // hasta que se limpie el log). NO toca el sidecar — solo filtro local.
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
+  const hideEntry = useCallback((id: string) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
 
   // Auto-scroll al fondo cuando llegan nuevas entries y autoScroll=true.
+  // Coalescemos con rAF: si llegan 30 entries en 16ms, hacemos UN solo
+  // scrollTop al final del frame.
   useEffect(() => {
     if (!log.autoScroll) return;
     const last = log.visible[log.visible.length - 1];
     if (!last) return;
     if (last.id === lastEntryIdRef.current) return;
     lastEntryIdRef.current = last.id;
-    const el = scrollRef.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
+
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
     }
+    rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = null;
+      const el = scrollRef.current;
+      if (!el) return;
+      programmaticScrollRef.current = true;
+      el.scrollTop = el.scrollHeight;
+      // Liberamos el flag tras 2 frames — el onScroll del scroll
+      // programático suele dispararse 1 frame después del set.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          programmaticScrollRef.current = false;
+        });
+      });
+    });
   }, [log.visible, log.autoScroll]);
 
+  // Cleanup del rAF si el componente se desmonta.
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, []);
+
+  // Cuando el buffer se limpia (clear log) reseteamos los IDs ocultos —
+  // sino quedan zombies referenciando entries que ya no existen.
+  useEffect(() => {
+    if (log.entries.length === 0 && hiddenIds.size > 0) {
+      setHiddenIds(new Set());
+    }
+  }, [log.entries.length, hiddenIds.size]);
+
   function onScroll(e: React.UIEvent<HTMLDivElement>) {
+    if (programmaticScrollRef.current) return;
     const el = e.currentTarget;
+    // Threshold más generoso (60px en vez de 20) — el user puede mover la
+    // rueda 1 click sin que se le desactive el autoscroll.
     const atBottom =
-      el.scrollHeight - el.scrollTop - el.clientHeight < 20;
+      el.scrollHeight - el.scrollTop - el.clientHeight < 60;
     if (atBottom !== log.autoScroll) {
       log.setAutoScroll(atBottom);
     }
@@ -68,8 +120,14 @@ export function LogPanel(): ReactNode {
   function jumpToBottom() {
     const el = scrollRef.current;
     if (el) {
+      programmaticScrollRef.current = true;
       el.scrollTop = el.scrollHeight;
       log.setAutoScroll(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          programmaticScrollRef.current = false;
+        });
+      });
     }
   }
 
@@ -136,12 +194,6 @@ export function LogPanel(): ReactNode {
       <Card className="shrink-0">
         <CardBody className="py-2 px-3">
           <StatsCounters entries={log.entries} />
-        </CardBody>
-      </Card>
-
-      <Card className="shrink-0">
-        <CardBody className="!py-1 !px-0">
-          <SystemHealthWidget />
         </CardBody>
       </Card>
 
@@ -255,21 +307,41 @@ export function LogPanel(): ReactNode {
               />
             </div>
           ) : (
-            log.visibleItems.map((item) =>
-              isBucket(item) ? (
-                <LogBucketRow
-                  key={item.id}
-                  bucket={item}
-                  showTimestamp={log.showTimestamps}
-                />
-              ) : (
-                <LogEntryRow
-                  key={item.id}
-                  entry={item}
-                  showTimestamp={log.showTimestamps}
-                />
-              ),
-            )
+            log.visibleItems
+              .filter((item) =>
+                isBucket(item) ? !hiddenIds.has(item.id) : !hiddenIds.has(item.id),
+              )
+              .map((item) =>
+                isBucket(item) ? (
+                  <div
+                    key={item.id}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      hideEntry(item.id);
+                    }}
+                    title="Doble click para ocultar esta racha"
+                  >
+                    <LogBucketRow
+                      bucket={item}
+                      showTimestamp={log.showTimestamps}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    key={item.id}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      hideEntry(item.id);
+                    }}
+                    title="Doble click para ocultar esta entrada"
+                  >
+                    <LogEntryRow
+                      entry={item}
+                      showTimestamp={log.showTimestamps}
+                    />
+                  </div>
+                ),
+              )
           )}
         </div>
 

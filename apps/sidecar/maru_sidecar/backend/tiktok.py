@@ -561,18 +561,24 @@ class TikTokService:
             self._username = name
             self._reconnect_attempts = 0
             self._user_initiated_disconnect = False
-            bus.publish("tiktok:status", {"connected": True, "username": name})
-            # Auto-crear carpeta del streamer en emotes + intentar
-            # extraer avatar URL del `_room_info` que TikTokLive 6.6.5
-            # populó en el handshake (gracias al patch que pasa
-            # `fetch_room_info=True` en core_bridge).
+            # Extraer avatar URL del room_info para incluirlo en el
+            # status — el header global y la card TikTok lo usan para
+            # mostrar la foto real del streamer en vez del placeholder.
+            avatar_url = self._extract_avatar_url() or ""
+            bus.publish("tiktok:status", {
+                "connected": True,
+                "username": name,
+                "avatarUrl": avatar_url,
+            })
+            # Auto-crear carpeta del streamer en emotes (paridad MARU
+            # original — sigue cacheando el avatar a disco para galería
+            # de emotes).
             if self._emotes is not None:
-                avatar_url = self._extract_avatar_url()
                 try:
                     self._emotes.set_streamer_avatar({
                         "username": name,
                         "displayName": name,
-                        "avatarUrl": avatar_url or "",
+                        "avatarUrl": avatar_url,
                     })
                 except Exception:
                     log.exception("emote auto-create streamer fallo")

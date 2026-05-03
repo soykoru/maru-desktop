@@ -12,13 +12,17 @@ export type ThemeId =
   | 'midnight'
   | 'dracula'
   | 'tokyo-night'
-  | 'catppuccin-mocha';
+  | 'catppuccin-mocha'
+  | 'pure-dark'
+  | 'nord';
 
 export const THEME_LIST: { id: ThemeId; label: string; emoji: string; description: string }[] = [
   { id: 'midnight',         label: 'Midnight',         emoji: '🌙', description: 'Naranja-mostaza signature MARU' },
   { id: 'dracula',          label: 'Dracula',          emoji: '🦇', description: 'Púrpura/rosa, popular en dev community' },
   { id: 'tokyo-night',      label: 'Tokyo Night',      emoji: '🗼', description: 'Azul-violeta noche, premium VSCode' },
   { id: 'catppuccin-mocha', label: 'Catppuccin Mocha', emoji: '🍮', description: 'Pastel mocha, suave y elegante' },
+  { id: 'pure-dark',        label: 'Pure Dark',        emoji: '⚫', description: 'Negro absoluto premium, máximo contraste' },
+  { id: 'nord',             label: 'Nord',             emoji: '❄️', description: 'Frost ártico, popular dev community' },
 ];
 
 /**

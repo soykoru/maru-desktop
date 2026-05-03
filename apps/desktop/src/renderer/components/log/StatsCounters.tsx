@@ -3,11 +3,20 @@ import { CountUp } from '@maru/ui';
 import type { LogEntry } from '@maru/shared';
 
 /**
- * `StatsCounters` — 6 contadores compactos del MARU original.
+ * `StatsCounters` (v1.0.41) — 6 tiles compactos con emoji + número + label.
  *
- * Cuenta DIRECTO desde las entries del buffer del log. Premium polish
- * v1.0.34: cada número anima con CountUp (ease-out cubic 600ms) cuando
- * cambia. Skipea la primera render para no animar al boot.
+ * Antes mostrábamos solo emoji + número, lo que hacía que "👤" pareciera
+ * "Usuarios" cuando en realidad es Follows. Ahora cada tile lleva una
+ * label corta visible debajo del número.
+ *
+ * Conteo:
+ *   - Sumamos por las categorías declaradas en `cats`. Para "Likes"
+ *     contamos también `like_milestone` si el sidecar lo loguea como
+ *     categoría aparte (paridad MARU original donde llega en batches).
+ *
+ * Se mantiene `CountUp` (ease-out cubic 500ms) para la animación
+ * incremental. memo implícito vía useMemo para evitar recálculo en cada
+ * push.
  */
 export interface StatsCountersProps {
   /** Entries actuales del log buffer (max 500). */
@@ -18,14 +27,15 @@ const COUNTERS: {
   emoji: string;
   color: string;
   cats: string[];
+  label: string;
   title: string;
 }[] = [
-  { emoji: '🎁', color: 'text-warning', cats: ['gift'], title: 'Gifts' },
-  { emoji: '👤', color: 'text-info', cats: ['follow'], title: 'Follows' },
-  { emoji: '📤', color: 'text-success', cats: ['share'], title: 'Shares' },
-  { emoji: '❤️', color: 'text-accent-red', cats: ['like'], title: 'Likes' },
-  { emoji: '💬', color: 'text-info', cats: ['comment', 'command'], title: 'Chat' },
-  { emoji: '🎮', color: 'text-accent', cats: ['rule', 'action'], title: 'Acciones' },
+  { emoji: '🎁', color: 'text-warning',     cats: ['gift'],                           label: 'Regalos',  title: 'Gifts recibidos' },
+  { emoji: '➕', color: 'text-success',     cats: ['follow'],                         label: 'Nuevos',   title: 'Follows nuevos' },
+  { emoji: '📤', color: 'text-cyan-400',    cats: ['share'],                          label: 'Shares',   title: 'Compartidos' },
+  { emoji: '❤️', color: 'text-accent-red',  cats: ['like', 'like_milestone'],         label: 'Likes',    title: 'Likes (incluye milestones)' },
+  { emoji: '💬', color: 'text-info',        cats: ['comment', 'command'],             label: 'Chat',     title: 'Comentarios + comandos' },
+  { emoji: '⚡', color: 'text-accent',      cats: ['rule', 'action'],                 label: 'Reglas',   title: 'Reglas ejecutadas' },
 ];
 
 export function StatsCounters({ entries }: StatsCountersProps) {
@@ -38,12 +48,26 @@ export function StatsCounters({ entries }: StatsCountersProps) {
   }, [entries]);
 
   return (
-    <div className="grid grid-cols-6 gap-1 text-[11px] font-bold text-center">
+    <div className="grid grid-cols-6 gap-1.5">
       {COUNTERS.map((c) => {
         const total = c.cats.reduce((acc, k) => acc + (counts[k] ?? 0), 0);
         return (
-          <div key={c.title} className={c.color} title={c.title}>
-            {c.emoji} <CountUp value={total} durationMs={500} />
+          <div
+            key={c.label}
+            className="maru-stat-tile flex flex-col items-center !py-1.5 !px-1"
+            title={c.title}
+          >
+            <div className={`flex items-baseline gap-1 ${c.color}`}>
+              <span className="text-[12px] leading-none" aria-hidden="true">
+                {c.emoji}
+              </span>
+              <span className="font-mono font-bold text-[13px] leading-none tabular-nums">
+                <CountUp value={total} durationMs={500} />
+              </span>
+            </div>
+            <span className="mt-1 text-[8.5px] uppercase tracking-wider text-fg-subtle font-semibold leading-none">
+              {c.label}
+            </span>
           </div>
         );
       })}

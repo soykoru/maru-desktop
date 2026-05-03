@@ -27,7 +27,6 @@ import { rpcCall } from '../lib/rpc.js';
 import type { FortunesConfig, GameId, TtsVoiceMode } from '@maru/shared';
 import { GiftSelectorDialog } from './dialogs/gifts/GiftSelectorDialog.js';
 import { MaruImage } from '@maru/ui';
-import { ThemeSwitcher } from './ThemeSwitcher.js';
 import { NowPlayingCard } from './NowPlayingCard.js';
 
 /**
@@ -204,6 +203,7 @@ export function Sidebar(): ReactNode {
   // ── G14: TikTok wiring ────────────────────────────────────────────────
   const tiktokStatus = useAppStore((s) => s.tiktokStatus);
   const tiktokUsername = useAppStore((s) => s.tiktokUsername);
+  const tiktokAvatarUrl = useAppStore((s) => s.tiktokAvatarUrl);
   const tiktokStats = useAppStore((s) => s.tiktokStats);
   const tiktokError = useAppStore((s) => s.tiktokError);
   const setTikTokStatus = useAppStore((s) => s.setTikTokStatus);
@@ -358,10 +358,27 @@ export function Sidebar(): ReactNode {
             ].join(' ')}
             aria-hidden="true"
           >
-            {(tiktokUsername || usernameInput || '?')
-              .replace(/^@/, '')
-              .charAt(0)
-              .toUpperCase() || '?'}
+            {tiktokAvatarUrl ? (
+              <img
+                src={tiktokAvatarUrl}
+                alt=""
+                className="h-full w-full rounded-full object-cover"
+                onError={(e) => {
+                  // Si la URL falla (CDN expirado), ocultamos el img y
+                  // queda visible la inicial fallback debajo.
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+                referrerPolicy="no-referrer"
+                draggable={false}
+              />
+            ) : (
+              <span>
+                {(tiktokUsername || usernameInput || '?')
+                  .replace(/^@/, '')
+                  .charAt(0)
+                  .toUpperCase() || '?'}
+              </span>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
@@ -863,6 +880,9 @@ export function Sidebar(): ReactNode {
       </GroupBox>
 
       {/* ── ⚙️ Configuración ──────────────────────────────────────── */}
+      {/* Grid 2 columnas con TODOS los botones del mismo tamaño. El
+          último botón (impar) usa col-span-2 para no quedar aislado en
+          una fila propia con espacio vacío al lado. */}
       <GroupBox title="⚙️ Configuración" density="md">
         <div className="grid grid-cols-2 gap-1.5">
           <Button
@@ -892,81 +912,66 @@ export function Sidebar(): ReactNode {
             <Sparkles className="h-3.5 w-3.5" />
             Emotes
           </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            title="Simular eventos TikTok (Ctrl+Shift+S)"
+            aria-keyshortcuts="Control+Shift+S"
+            onClick={() => openModal('simulator')}
+          >
+            <Theater className="h-3.5 w-3.5" />
+            Simulador
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            title="Guardar / cargar configuraciones"
+            onClick={() => openModal('profiles')}
+          >
+            <Save className="h-3.5 w-3.5" />
+            Perfiles
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            title="Gestionar respaldos automáticos"
+            onClick={() => openModal('backup')}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Respaldos
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            title="Configurar IA (Claude / Groq / Gemini / OpenAI)"
+            onClick={() => openModal('ia-config')}
+          >
+            <Bot className="h-3.5 w-3.5" />
+            IA
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            title="Configurar Spotify (cuentas, queue, comandos)"
+            onClick={() => openModal('spotify-config')}
+          >
+            <Music className="h-3.5 w-3.5" />
+            Spotify
+          </Button>
+          {/* Último botón impar — ocupa las 2 columnas para que no quede
+              un hueco vacío al lado. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="col-span-2"
+            title="Diagnóstico del cliente TikTokLive (estado, versión, errores)"
+            onClick={() => openModal('tiktok-api-info')}
+          >
+            <Wrench className="h-3.5 w-3.5" />
+            TikTok API
+          </Button>
         </div>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          className="mt-1.5 w-full"
-          title="Simular eventos TikTok (Ctrl+Shift+S)"
-          aria-keyshortcuts="Control+Shift+S"
-          onClick={() => openModal('simulator')}
-        >
-          <Theater className="h-3.5 w-3.5" />
-          Simulador
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          className="mt-1.5 w-full"
-          title="Guardar / cargar configuraciones"
-          onClick={() => openModal('profiles')}
-        >
-          <Save className="h-3.5 w-3.5" />
-          Perfiles
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          className="mt-1.5 w-full"
-          title="Gestionar respaldos automáticos"
-          onClick={() => openModal('backup')}
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Respaldos
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          className="mt-1.5 w-full"
-          title="Configurar IA (Claude / Groq / Gemini / OpenAI)"
-          onClick={() => openModal('ia-config')}
-        >
-          <Bot className="h-3.5 w-3.5" />
-          IA
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          className="mt-1.5 w-full"
-          title="Configurar Spotify (cuentas, queue, comandos)"
-          onClick={() => openModal('spotify-config')}
-        >
-          <Music className="h-3.5 w-3.5" />
-          Spotify
-        </Button>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          className="mt-1.5 w-full"
-          title="Diagnóstico del cliente TikTokLive (estado, versión, errores)"
-          onClick={() => openModal('tiktok-api-info')}
-        >
-          <Wrench className="h-3.5 w-3.5" />
-          TikTok API
-        </Button>
-
       </GroupBox>
-
-      {/* ── 🎨 Tema visual ─────────────────────────────────────────── */}
-      <div className="mt-2">
-        <ThemeSwitcher />
-      </div>
 
       {/* Spacer al final */}
       <div className="h-2" />
