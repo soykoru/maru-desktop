@@ -1,5 +1,35 @@
 # Changelog — maru-desktop
 
+## 1.0.47 — 2026-05-03 · 🩹 Comments individuales + Spotify autostart con accounts + format 1.1k
+
+### Comentarios desagrupados
+Quitado `comment` del set GROUPABLE — los comentarios se ven uno por
+uno (cada texto es único, agruparlos perdía información). Likes, gifts,
+shares, follows, commands, sounds siguen agrupándose.
+
+### Spotify auto-start: bug raíz
+**Bug**: el listener de `tiktok:status` exigía credenciales en
+`spotify.json` antes de hacer warm-start. Pero el user puede tener
+cuentas guardadas en `spotify_accounts.json` SIN credenciales activas
+en el config principal (caso común: cerró la app sin reconectar).
+
+**Fix**: si no hay `client_id`/`client_secret` en el config pero SÍ
+hay accounts guardadas, hidratamos la primera al config y disparamos
+`_ensure_client`. Resultado: al iniciar el live, Spotify se prende
+solo aunque no hayas tocado nada.
+
+### Stats counter compact 1.1k
+**Bug**: el tile de Likes es chiquito y `1247` ya quedaba apretado.
+`11000`, `120000` salían cortados.
+
+**Fix**: helper `formatCompact` aplicado al `format` de CountUp.
+- 999 → "999"
+- 1247 → "1.2k"
+- 11000 → "11k"
+- 1100000 → "1.1M"
+
+Tooltip muestra el número completo `1247` para que no pierdas precisión.
+
 ## 1.0.46 — 2026-05-04 · 🔬 Log raíz: agrupación correcta + counter real
 
 Auditoría completa del log. 3 bugs raíz cerrados.

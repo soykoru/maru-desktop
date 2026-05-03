@@ -35,6 +35,18 @@ const COUNTERS: {
   { emoji: '⚡', color: 'text-accent',      cats: ['rule', 'action'],                 label: 'Reglas',   title: 'Reglas ejecutadas' },
 ];
 
+/** Formato compacto: 999 → "999", 1000 → "1.0k", 1247 → "1.2k",
+ *  11000 → "11k", 1100000 → "1.1M". El tile tiene poco espacio y
+ *  números de 5+ dígitos no entran. */
+function formatCompact(n: number): string {
+  const abs = Math.abs(n);
+  if (abs < 1000) return Math.round(n).toString();
+  if (abs < 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  if (abs < 1_000_000) return Math.round(n / 1000) + 'k';
+  if (abs < 10_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  return Math.round(n / 1_000_000) + 'M';
+}
+
 export function StatsCounters({ entries }: StatsCountersProps) {
   const counts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -64,8 +76,11 @@ export function StatsCounters({ entries }: StatsCountersProps) {
               <span className="text-[12px] leading-none" aria-hidden="true">
                 {c.emoji}
               </span>
-              <span className="font-mono font-bold text-[13px] leading-none tabular-nums">
-                <CountUp value={total} durationMs={500} />
+              <span
+                className="font-mono font-bold text-[13px] leading-none tabular-nums"
+                title={total.toLocaleString()}
+              >
+                <CountUp value={total} durationMs={500} format={formatCompact} />
               </span>
             </div>
             <span className="mt-1 text-[8.5px] uppercase tracking-wider text-fg-subtle font-semibold leading-none">

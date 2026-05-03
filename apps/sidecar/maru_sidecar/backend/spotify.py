@@ -209,9 +209,15 @@ class SpotifyService:
 
     def _on_tiktok_status_bus(self, payload: dict[str, Any]) -> None:
         """Cuando TikTok pasa a connected, intenta warm-start de Spotify
-        (no-op si ya está conectado o si no hay credenciales). Se ejecuta
-        en thread del bus → usamos un thread aparte para no bloquear el
-        loop con un posible HTTP del OAuth refresh."""
+        en background.
+
+        v1.0.47 fix raíz: antes el guard exigía `client_id`/`client_secret`
+        en `self._config`. Pero el user puede tener cuentas guardadas en
+        `spotify_accounts.json` SIN haberlas hidratado al config (caso
+        común: cerró la app sin clickear "conectar" tras guardar). Ahora
+        si NO hay credenciales en config pero SÍ hay accounts guardadas,
+        cargamos la primera (preferentemente la que estaba "current").
+        """
         if not isinstance(payload, dict):
             return
         if not payload.get("connected"):
@@ -219,13 +225,31 @@ class SpotifyService:
         # Si ya tenemos cliente conectado, no hay nada que hacer.
         if self._client is not None and getattr(self._client, "is_connected", False):
             return
-        # Solo intentamos si hay credenciales persistidas (sino el
-        # `_ensure_client` no podrá conectar y solo gastará un HTTP en vano).
-        if not self._config.get("client_id") or not self._config.get("client_secret"):
-            return
 
         def _warm() -> None:
             try:
+                # Si el config no tiene credenciales, hidratar desde la
+                # primera cuenta guardada (si existe).
+                cid = str(self._config.get("client_id") or "").strip()
+                csec = str(self._config.get("client_secret") or "").strip()
+                if not cid or not csec:
+                    accounts = _read_accounts()
+                    first = next(
+                        (a for a in accounts if isinstance(a, dict)
+                         and a.get("client_id") and a.get("client_secret")),
+                        None,
+                    )
+                    if first is None:
+                        return  # nada que cargar
+                    cid = str(first.get("client_id") or "")
+                    csec = str(first.get("client_secret") or "")
+                    with self._lock:
+                        self._config["client_id"] = cid
+                        self._config["client_secret"] = csec
+                        self._config["enabled"] = True
+                        self._write_config()
+                # Disparar la inicialización del cliente — ya hace
+                # try_auto_connect internamente.
                 self._ensure_client()
             except Exception:
                 log.exception("spotify warm-start tras tiktok:connected fallo")

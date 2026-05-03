@@ -24,14 +24,16 @@
 import type { LogCategory, LogEntry } from '@maru/shared';
 
 // Categorías agrupables — eventos que típicamente llegan en ráfaga del
-// MISMO usuario. Comments y commands del mismo user en menos de 60s
-// también colapsan (caso real: spam de "hola" o ráfaga de !ia).
+// MISMO usuario y NO son texto único.
+//
+// Excluido v1.0.47: `comment` se ve uno por uno (cada mensaje es texto
+// distinto y agruparlos pierde info — el user quiere leer cada
+// comentario individual aunque sean del mismo viewer).
 const GROUPABLE: ReadonlySet<LogCategory> = new Set<LogCategory>([
   'like',
   'gift',
   'share',
   'follow',
-  'comment',
   'command',
   'sound',
 ]);
