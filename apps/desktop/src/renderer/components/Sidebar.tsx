@@ -154,7 +154,14 @@ export function Sidebar(): ReactNode {
     gift_id: '',
     voice: 'en_female_madam_leota',
     volume_pct: 80,
-    categories: ['good', 'bad', 'neutral'],
+    // Fallback antes de cargar la config real — coincide con el default
+    // del sidecar (incluye 'grosera' y todas las temáticas).
+    categories: [
+      'good', 'bad', 'neutral', 'specific', 'philosophical',
+      'love', 'money', 'health', 'work', 'gaming', 'social',
+      'creative', 'mystery', 'humor', 'stream', 'luck', 'wisdom',
+      'grosera',
+    ],
   });
   const [fortuneTesting, setFortuneTesting] = useState(false);
   const [fortuneFlash, setFortuneFlash] = useState<string | null>(null);
@@ -297,7 +304,10 @@ export function Sidebar(): ReactNode {
   return (
     <div className="flex flex-col gap-2 pr-1">
       {/* ── Logo ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center pt-3 pb-2">
+      {/* `maru-header-shine` aporta un gradiente sutil animado (30s) detrás
+          del logo. Composite-only (background-position) → 0 RAM extra,
+          sin re-render, sin layout. Premium feel sin distraer. */}
+      <div className="flex flex-col items-center pt-3 pb-2 rounded-lg maru-header-shine">
         <img
           src={logoSrc}
           alt="MaruLive"

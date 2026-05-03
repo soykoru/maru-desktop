@@ -10,8 +10,10 @@ import {
 } from 'lucide-react';
 import { Button, Card, CardBody, Empty, Input } from '@maru/ui';
 import { useLog } from '../lib/use-log.js';
+import { isBucket } from '../lib/log-grouping.js';
 import {
   FilterPills,
+  LogBucketRow,
   LogEntryRow,
   StatsCounters,
   SystemHealthWidget,
@@ -253,13 +255,21 @@ export function LogPanel(): ReactNode {
               />
             </div>
           ) : (
-            log.visible.map((e) => (
-              <LogEntryRow
-                key={e.id}
-                entry={e}
-                showTimestamp={log.showTimestamps}
-              />
-            ))
+            log.visibleItems.map((item) =>
+              isBucket(item) ? (
+                <LogBucketRow
+                  key={item.id}
+                  bucket={item}
+                  showTimestamp={log.showTimestamps}
+                />
+              ) : (
+                <LogEntryRow
+                  key={item.id}
+                  entry={item}
+                  showTimestamp={log.showTimestamps}
+                />
+              ),
+            )
           )}
         </div>
 

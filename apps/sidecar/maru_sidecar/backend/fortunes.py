@@ -27,15 +27,27 @@ from ..logger import get_logger
 from ..runtime import DATA_DIR
 from .settings import SettingsService
 from .tts import TtsService
+from .utils.tts_text import clean_user_for_tts
 
 log = get_logger(__name__)
 
 _DEFAULT_CONFIG: dict[str, Any] = {
     "enabled": False,
     "gift_id": "",
-    "voice": "en_female_madam_leota",
+    # Antes era `en_female_madam_leota`. Esa voz es inglesa y la API
+    # TikTok TTS devolvía audio truncado al leer texto en español
+    # (acentos / palabras 100% es). Default nuevo: voz española mexicana.
+    "voice": "es_mx_002",
     "volume_pct": 80,
-    "categories": ["good", "bad", "neutral"],
+    # Default amplio: incluye 'grosera' (sarcástica) para que la nueva
+    # categoría rote desde el primer uso sin que el user la habilite a
+    # mano. Si el user achica el set en SettingsDialog, se respeta.
+    "categories": [
+        "good", "bad", "neutral", "specific", "philosophical",
+        "love", "money", "health", "work", "gaming", "social",
+        "creative", "mystery", "humor", "stream", "luck", "wisdom",
+        "grosera",
+    ],
 }
 
 
@@ -73,10 +85,24 @@ class FortunesService:
                 self._cache = {"intro_templates": [], "good": [], "bad": []}
             return self._cache
 
+    # Set viejo de defaults — si el user tiene exactamente este set,
+    # asumimos que nunca personalizó las categorías y lo migramos al
+    # nuevo default amplio (que ya incluye 'grosera' y las temáticas).
+    _LEGACY_DEFAULT_CATS = {"good", "bad", "neutral"}
+    _LEGACY_FORTUNE_VOICE = "en_female_madam_leota"
+
     def _config(self) -> dict[str, Any]:
         full = self._settings.get({}).get("config", {})
         cfg = full.get("fortunes") or {}
-        return {**_DEFAULT_CONFIG, **cfg}
+        merged = {**_DEFAULT_CONFIG, **cfg}
+        cats = merged.get("categories") or []
+        if isinstance(cats, list) and set(cats) == self._LEGACY_DEFAULT_CATS:
+            merged["categories"] = list(_DEFAULT_CONFIG["categories"])
+        # Migrar voz inglesa default histórica a la nueva española —
+        # ataca el bug raíz de "solo se lee la intro y se corta".
+        if merged.get("voice") == self._LEGACY_FORTUNE_VOICE:
+            merged["voice"] = _DEFAULT_CONFIG["voice"]
+        return merged
 
     # ── RPC handlers ──────────────────────────────────────────────────────
 
@@ -106,7 +132,13 @@ class FortunesService:
         }
 
     def read(self, params: dict[str, Any]) -> dict[str, Any]:
-        name = (params.get("name") or "viewer").strip() or "viewer"
+        # Defensa: el TTS se trunca al toparse con `_` o dígitos en el
+        # username (la API TikTok TTS lo rechaza). Limpiamos a solo
+        # letras para que la fortuna se lea entera. El caller normal
+        # (chat_dispatcher) ya limpia, esto cubre RPC manual / Probar
+        # Fortuna desde la UI.
+        raw_name = (params.get("name") or "viewer").strip() or "viewer"
+        name = clean_user_for_tts(raw_name)
         data = self._load()
         cfg = self._config()
         wanted_cats = [

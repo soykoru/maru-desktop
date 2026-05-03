@@ -252,6 +252,7 @@ export function UsersTab({
                   <th className="px-2 py-2 font-medium">Mejor Amigo</th>
                   <th className="px-2 py-2 font-medium">Rival</th>
                   <th className="px-2 py-2 font-medium text-center w-14">Victorias</th>
+                  <th className="px-2 py-2 font-medium text-center w-10" title="Eliminar usuario"></th>
                 </tr>
               </thead>
               <tbody>
@@ -354,6 +355,21 @@ export function UsersTab({
                       )}
                       <td className="px-2 py-1.5 text-center text-success font-mono">
                         {u.duelos_ganados}
+                      </td>
+                      <td
+                        className="px-2 py-1.5 text-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setPendingDelete(u.username)}
+                          disabled={busy}
+                          title={`Eliminar a ${u.username}`}
+                          aria-label={`Eliminar a ${u.username}`}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-fg-subtle hover:text-danger hover:bg-danger/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </td>
                     </tr>
                   );

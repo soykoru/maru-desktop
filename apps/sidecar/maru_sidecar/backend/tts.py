@@ -49,12 +49,23 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "enabled_fortune": True,
     "default_voice": "es_mx_002",   # canal CHAT
     "social_voice": "es_mx_002",    # canal SOCIAL (paridad MARU `config["social_voice"]`)
-    "fortune_voice": "en_female_madam_leota",  # canal FORTUNA
+    # Antes era `en_female_madam_leota` (voz inglesa). El bug raíz era que
+    # la API TikTok TTS devolvía audio truncado al leer texto en español
+    # con voz inglesa (lee solo el principio, se corta en acentos). El
+    # nuevo default `es_mx_002` lee español completo. La migración soft
+    # de `_coerce_config` actualiza usuarios viejos que aún tengan la
+    # default histórica.
+    "fortune_voice": "es_mx_002",
     "voice_mode": "global",  # 'global' | 'profile'
     "volume_chat": 80,  # 0-100 (UI). Engine usa 0.0-1.0.
     "volume_social": 85,
     "volume_fortune": 85,
 }
+
+# Voz default histórica de fortuna que rompía el TTS español. Si el user
+# todavía la tiene asignada (nunca personalizó), `_coerce_config` la
+# migra al default nuevo `es_mx_002`.
+_LEGACY_FORTUNE_VOICE = "en_female_madam_leota"
 
 # Espejo de `core.tts_engine.TTSEngine.VOICES` (74 voces).
 # Categorización por familia para grouping en la UI.
@@ -225,6 +236,12 @@ def _coerce_config(raw: Any) -> dict[str, Any]:
         v = raw.get(vk)
         if isinstance(v, str) and v.strip():
             out[vk] = v
+    # Migración soft: si el user nunca cambió la voz de fortuna y aún
+    # tiene la default histórica inglesa (Madame Leota), forzamos la
+    # voz nueva española. Sin esto, la API TikTok TTS sigue devolviendo
+    # audio truncado al leer fortunas en español con voz inglesa.
+    if out.get("fortune_voice") == _LEGACY_FORTUNE_VOICE:
+        out["fortune_voice"] = DEFAULT_CONFIG["fortune_voice"]
     if raw.get("voice_mode") in ("global", "profile"):
         out["voice_mode"] = raw["voice_mode"]
     for k in ("volume_chat", "volume_social", "volume_fortune"):
@@ -461,6 +478,17 @@ class TtsService:
         text = str(params.get("text") or "").strip()
         channel = str(params.get("channel") or "chat").lower()
         user = params.get("user")
+        # Defensa final: sanear usernames embebidos en el text SIEMPRE.
+        # `sanitize_text_usernames` solo limpia tokens que contienen
+        # `@`, `_` o dígitos — el resto del comentario del viewer queda
+        # intacto. Antes excluíamos `channel=chat` con `user` set para
+        # no alterar el comentario, pero un viewer puede mencionar a
+        # otro user (`@cristian_rivasxd hola!`) y la API TikTok TTS
+        # truncaría todo el audio al toparse con el `_`. Aplicar siempre
+        # cierra ese gap sin distorsionar palabras normales.
+        if text:
+            from .utils.tts_text import sanitize_text_usernames
+            text = sanitize_text_usernames(text)
         # Dedupe defensiva: si llega `(channel, text[:120])` idéntico
         # en <1.5s, devolvemos OK silencioso. Garantiza que el bot NO
         # hable lo mismo dos veces en esa ventana, sea cual sea el

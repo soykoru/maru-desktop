@@ -1,5 +1,82 @@
 # Changelog — maru-desktop
 
+## 1.0.39 — 2026-05-02 · 🔴 !playfan raíz + TTS plomería + log agrupado + visual polish
+
+Sesión de 4 fases atacando todo desde la raíz, sin parches.
+
+### FASE 1 · Fix `!playfan` raíz (3 bugs en 1)
+
+**Bug A — `playfan_uses` nunca se aplicaba al cliente legacy.**
+`spotify.py:_ensure_client` llamaba `c.configure(priority_users=list(keys))`
+pasando solo nombres. El cliente legacy convertía a `set()` y dejaba
+`playfan_uses = {}`. Resultado: `playfan_request` veía `max_uses=0` y
+devolvía "no tienes usos de playfan configurados" — el TTS lo leía
+truncado/raro y al user le sonaba como "tiene usuarios activos".
+Fix: tras `configure`, llamar `_apply_priority_users_to_client()`
+explícitamente. `_apply_priority_users_to_client` ahora pobla SIEMPRE
+ambas estructuras (`priority_users` set + `playfan_uses` dict), no solo
+en el branch fallback.
+
+**Bug B — `_playfan_used` vivía solo en memoria.**
+Cualquier reinicio de MARU (auto-update incluido) reseteaba el contador
+y el comando se volvía "infinito". Fix: nuevos métodos
+`SpotifyClient.restore_playfan_state(used, date_iso)` y
+`get_playfan_used_today()` + hook `on_playfan_state_changed` que el
+sidecar registra. `spotify.json` ahora persiste `playfan_used` y
+`playfan_used_date`. Reset diario sigue automático (descarta el dict si
+la fecha persistida es de ayer).
+
+**Bug C — UI no mostraba consumo por usuario.**
+`super_fans_list` extendido con `usedToday` + `remaining` por user.
+`SpotifyConfigDialog` agrega badge `X/Y` con color por intensidad
+(verde <50%, amarillo 50-80%, naranja 80-100%, rojo lleno) y tooltip
+con el detalle. Push event `spotify:playfan-state` repinta el badge
+sin esperar al poll de 30s.
+
+### FASE 2 · TTS plomería (3 huecos cerrados)
+
+1. **Sanitización universal de username**. `tts.speak` ahora pasa
+   `sanitize_text_usernames` SIEMPRE (incluido el comentario libre del
+   viewer). La función solo limpia tokens con `@`/`_`/dígitos, así que
+   el comentario natural queda intacto pero `@cristian_rivasxd hola`
+   ya no trunca el audio.
+2. **Overflow visible**. `_queue_chat_audio` antes descartaba en
+   silencio cuando la cola chat alcanzaba 30 items. Ahora loguea una
+   línea WARN throttleada cada 5s (`TTS chat saturada (X/30) —
+   descartando hasta drenar`).
+3. **Retry HTTP 429**. `tts_engine._gen` antes caía al else genérico y
+   descartaba el chunk. Ahora respeta `Retry-After` (clamp 1-10s) o
+   hace backoff exponencial 1s → 2s → 4s, hasta el cap `max_retries=3`.
+
+### FASE 3 · Log overhaul (agrupación expand/collapse)
+
+Nuevo módulo `lib/log-grouping.ts` (puro, memoizable). Eventos
+consecutivos `like`/`gift`/`share` del mismo user dentro de 60s se
+colapsan en un `LogBucket` con badge `@user × N likes` + chevron.
+Click expande las entradas individuales con misma estructura de fila.
+La identidad del bucket es estable (sobrevive a re-renders mientras la
+racha siga viva), así el estado expand/collapse no se resetea.
+Comments y commands NO se agrupan (cada uno tiene contenido único).
+Filtros 1:1 con categorías (ya estaban perfectos).
+
+Bonus: timestamps suben a 90% opacidad por default (eran 70% — había
+que hacer hover para leerlos).
+
+### FASE 4 · Visual 100→1000 (CSS-only, GPU)
+
+Nuevas utilidades en `globals.css` — todas opt-in, composite-only:
+
+- `.maru-live-dot` — punto verde respirando (animación `maru-breath`,
+  solo box-shadow + opacity).
+- `.maru-skeleton` — shimmer placeholder con gradient + transform.
+- `.maru-header-shine` — gradiente animado MUY lento (30s) detrás de
+  headers, solo `background-position`.
+- `.maru-row-lift` — micro-lift `translateY(-1px)` para filas densas.
+- `.maru-icon-pop` — bounce de entrada para badges nuevos.
+
+Aplicado en: header del Sidebar (logo), filas de SuperFans, badge de
+usos. Cero RAM extra, cero JS, respeta `prefers-reduced-motion`.
+
 ## 1.0.35 — 2026-05-01 · 🎚️ FASE 4: VolumeSlider premium + warmup que pobla store
 
 Ataca dos issues reportados por user:

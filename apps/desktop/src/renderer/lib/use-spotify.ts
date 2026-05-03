@@ -253,9 +253,14 @@ export function useSpotify(options?: {
 
   const setSuperFanUses = useCallback(
     async (username: string, uses: number) => {
-      // Optimistic local update.
+      // Optimistic local update — recalculamos `remaining` con el nuevo
+      // tope para que el badge "X/Y" no muestre un máximo desfasado.
       setSuperFansState((prev) =>
-        prev.map((sf) => (sf.username === username ? { ...sf, uses } : sf)),
+        prev.map((sf) =>
+          sf.username === username
+            ? { ...sf, uses, remaining: Math.max(0, uses - sf.usedToday) }
+            : sf,
+        ),
       );
       try {
         const r = await rpcCall('spotify.super-fans.set-uses', {
@@ -265,6 +270,25 @@ export function useSpotify(options?: {
         if (!r.ok) {
           await refreshSuperFans();
           throw new Error(r.message ?? 'no se pudo actualizar');
+        }
+        return r;
+      } catch (e) {
+        await refreshSuperFans();
+        throw e;
+      }
+    },
+    [refreshSuperFans],
+  );
+
+  const removeSuperFan = useCallback(
+    async (username: string) => {
+      // Optimistic local update — quitamos al user de la lista visible.
+      setSuperFansState((prev) => prev.filter((sf) => sf.username !== username));
+      try {
+        const r = await rpcCall('spotify.super-fans.remove', { username });
+        if (!r.ok) {
+          await refreshSuperFans();
+          throw new Error(r.message ?? 'no se pudo borrar');
         }
         return r;
       } catch (e) {
@@ -293,6 +317,37 @@ export function useSpotify(options?: {
     const id = window.setInterval(() => void refreshSuperFans(), 30_000);
     return () => window.clearInterval(id);
   }, [autoLoad, refreshSuperFans]);
+
+  // Push event `spotify:playfan-state` — cuando un user gasta un
+  // !playfan o se dispara el reset diario, el sidecar nos avisa para
+  // repintar el contador sin esperar al próximo poll de 30s.
+  useEffect(() => {
+    if (!autoLoad) return;
+    const off = window.maruApi.on(
+      'spotify:playfan-state' as never,
+      (payload: unknown) => {
+        const p = (payload ?? {}) as { used?: Record<string, number> };
+        const used = p.used ?? {};
+        setSuperFansState((prev) =>
+          prev.map((sf) => {
+            const ut = Math.max(0, Number(used[sf.username] ?? 0));
+            return {
+              ...sf,
+              usedToday: ut,
+              remaining: Math.max(0, sf.uses - ut),
+            };
+          }),
+        );
+      },
+    );
+    return () => {
+      try {
+        off?.();
+      } catch {
+        /* swallow */
+      }
+    };
+  }, [autoLoad]);
 
   return {
     // state
@@ -330,6 +385,7 @@ export function useSpotify(options?: {
     defaultUses,
     refreshSuperFans,
     setSuperFanUses,
+    removeSuperFan,
     setPlayfanDefaultUses,
   };
 }

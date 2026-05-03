@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import type { LogCategory, LogEntry, LogGroup } from '@maru/shared';
 import { rpcCall } from './rpc.js';
 import { useAppStore } from './store/index.js';
+import { groupConsecutive, type LogItem } from './log-grouping.js';
 
 const GROUP_TO_CATEGORIES: Record<LogGroup, LogCategory[]> = {
   // 1:1 granular — el user pidió que cada tipo de evento tenga su propio
@@ -117,9 +118,20 @@ export function useLog(options?: { autoLoad?: boolean }) {
     });
   }, [entries, activeGroups, search]);
 
+  // Agrupado: colapsa rachas consecutivas (likes/gifts/shares del mismo
+  // user dentro de 60s) en buckets expandibles. Mantiene el orden y la
+  // identidad del bucket es estable mientras los entries no cambien,
+  // así el estado de expand/collapse en LogPanel no se resetea con el
+  // próximo render.
+  const visibleItems = useMemo<LogItem[]>(
+    () => groupConsecutive(visible),
+    [visible],
+  );
+
   return {
     entries,
     visible,
+    visibleItems,
     stats,
     statsTotal,
     activeGroups,

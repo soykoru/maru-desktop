@@ -909,6 +909,107 @@ select:focus-visible {
   animation: maru-live-ring 1.8s ease-out infinite;
 }
 
+/* ── FASE 4 visual 100→1000 ────────────────────────────────────────────
+ * Micro-mejoras CSS-only / GPU. Cero JavaScript adicional, cero RAM
+ * extra, cero re-renders. Todas las utilidades son OPT-IN — solo se
+ * aplican donde el componente las pida explícitamente con la clase.
+ * Se respetan `prefers-reduced-motion` por la regla media query global
+ * que ya existe en este archivo (líneas anteriores).
+ * ─────────────────────────────────────────────────────────────────────── */
+
+/* `maru-live-dot` — punto verde "respirando" para el indicador LIVE
+ * cuando hay conexión activa. Reemplaza un texto estático "🔴 LIVE" por
+ * una señal viva sin coste de layout (solo opacity + box-shadow,
+ * compositor-only). */
+@keyframes maru-breath {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgb(var(--maru-accent-green-light) / 0.55),
+      0 0 6px 1px rgb(var(--maru-accent-green-light) / 0.55);
+    opacity: 1;
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgb(var(--maru-accent-green-light) / 0),
+      0 0 6px 1px rgb(var(--maru-accent-green-light) / 0.35);
+    opacity: 0.85;
+  }
+}
+.maru-live-dot {
+  animation: maru-breath 2.4s var(--maru-ease) infinite;
+  will-change: opacity, box-shadow;
+}
+
+/* `maru-skeleton` — shimmer placeholder reutilizable. Reemplaza spinners
+ * en cards/listas mientras llega la primera respuesta del sidecar. La
+ * percepción de velocidad mejora porque el usuario ya ve la geometría
+ * del contenido. Pinta solo con gradient + transform (GPU). */
+.maru-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgb(var(--maru-fg) / 0.06);
+  border-radius: var(--maru-radius-sm);
+}
+.maru-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--maru-fg) / 0.10) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: maru-shimmer 1.6s var(--maru-ease) infinite;
+  will-change: transform;
+}
+
+/* `maru-header-shine` — gradiente animado MUY lento (30s) en headers.
+ * Genera vida sin distraer; periodo largo evita la sensación de loop.
+ * Solo background-position se anima → composite-only. */
+@keyframes maru-shine-pan {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.maru-header-shine {
+  background: linear-gradient(
+    110deg,
+    rgb(var(--maru-accent) / 0.10) 0%,
+    rgb(var(--maru-accent-blue) / 0.06) 35%,
+    rgb(var(--maru-accent) / 0.10) 70%,
+    rgb(var(--maru-accent-blue) / 0.06) 100%
+  );
+  background-size: 200% 200%;
+  animation: maru-shine-pan 30s linear infinite;
+  will-change: background-position;
+}
+
+/* `maru-row-lift` — micro-lift suave para filas de listas al hover.
+ * Cards ya tienen su lift en `.maru-card:hover`. Esta clase es para
+ * filas más densas (log entry hover, super fan row). 1px translate +
+ * fondo tintado más fuerte. Composite-only. */
+.maru-row-lift {
+  transition:
+    transform var(--maru-dur-fast) var(--maru-ease),
+    background-color var(--maru-dur-fast) var(--maru-ease);
+  will-change: transform;
+}
+.maru-row-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* `maru-icon-pop` — microbounce de icono al montarse (badge nuevo,
+ * Crown que aparece, etc.). Solo transform: scale + opacity, GPU. */
+@keyframes maru-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.maru-icon-pop {
+  animation: maru-pop var(--maru-dur-base) var(--maru-ease-spring);
+}
+
 /* ── Connect button states premium ────────────────────────────────────
  * success-flash: anillo verde que se expande+desvanece al conectarse OK.
  * error-shake:   sacudida horizontal sutil al fallo.

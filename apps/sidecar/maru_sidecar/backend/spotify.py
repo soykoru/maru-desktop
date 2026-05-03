@@ -62,6 +62,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
     # Paridad MARU original (`gui.py:9392-9398` que también las guardaba).
     "client_id": "",
     "client_secret": "",
+    # Persistencia del contador de !playfan consumido HOY por usuario.
+    # Antes vivía solo en memoria del SpotifyClient → cualquier reinicio
+    # (auto-update incluido) reseteaba la cuota y `!playfan` se volvía
+    # "infinito" desde la perspectiva del streamer.
+    # Shape: { "username_lower": int }, junto con `playfan_used_date` (YYYY-MM-DD).
+    "playfan_used": {},
+    "playfan_used_date": "",
 }
 
 
@@ -145,6 +152,20 @@ def _coerce_config(raw: Any) -> dict[str, Any]:
         out["super_fans"] = coerced_sf
     out["client_id"] = str(raw.get("client_id") or "").strip()
     out["client_secret"] = str(raw.get("client_secret") or "").strip()
+    pfu = raw.get("playfan_used") or {}
+    if isinstance(pfu, dict):
+        cleaned: dict[str, int] = {}
+        for k, v in pfu.items():
+            if not isinstance(k, str):
+                continue
+            try:
+                n = int(v)
+            except (TypeError, ValueError):
+                continue
+            if n > 0:
+                cleaned[k.strip().lower()] = n
+        out["playfan_used"] = cleaned
+    out["playfan_used_date"] = str(raw.get("playfan_used_date") or "").strip()
     return out
 
 
@@ -248,6 +269,12 @@ class SpotifyService:
             return None
         try:
             self._client = SpotifyClient()
+            # Registrar el callback ANTES de cualquier acción que pueda
+            # tocar `_playfan_used` (el reset diario también lo dispara).
+            try:
+                self._client.on_playfan_state_changed = self._on_playfan_state_changed
+            except Exception:
+                log.exception("spotify: no se pudo registrar callback playfan")
             # Restaurar credenciales guardadas. Sin esto `try_auto_connect`
             # falla silencioso porque `client_id`/`client_secret` están en
             # blanco después de reiniciar la app.
@@ -274,6 +301,27 @@ class SpotifyService:
                         self._client.client_secret = csec
                 except Exception:
                     log.exception("spotify: aplicar credenciales guardadas")
+            # CRÍTICO: `configure` arriba pasa SOLO los nombres de
+            # priority_users. El cuota por usuario (`playfan_uses`) queda
+            # vacía → `playfan_request` ve max_uses=0 y rechaza con "no
+            # tienes usos configurados". Aplicarlo explícitamente acá
+            # cierra ese bug raíz: el cliente ahora arranca con la cuota
+            # real de cada super fan.
+            try:
+                self._apply_priority_users_to_client()
+            except Exception:
+                log.exception("spotify: apply_priority_users_to_client tras configure")
+            # Restaurar el contador de usos consumidos HOY (persistido en
+            # spotify.json). Si la fecha persistida es de ayer o anterior,
+            # el cliente lo descarta automáticamente — equivale al reset
+            # diario.
+            try:
+                self._client.restore_playfan_state(
+                    dict(self._config.get("playfan_used") or {}),
+                    str(self._config.get("playfan_used_date") or "") or None,
+                )
+            except Exception:
+                log.exception("spotify: restore_playfan_state fallo")
             try:
                 self._client.try_auto_connect()
             except Exception:
@@ -800,10 +848,10 @@ class SpotifyService:
     # ── RPC: super fans (sync con TikTok is_super_fan) ──────────────────
 
     def super_fans_list(self, _params: dict[str, Any]) -> dict[str, Any]:
-        """Devuelve los super fans actuales con su `uses/día` configurado.
+        """Devuelve los super fans actuales con su cuota y consumo de hoy.
 
         Shape: `{ items: [{username, displayName, lastSeenMs, firstSeenMs,
-        uses}], defaultUses, total }`.
+        uses, usedToday, remaining}], defaultUses, total, dateIso }`.
         Ordenados por lastSeenMs descendente (los más recientes arriba).
         """
         items: list[dict[str, Any]] = []
@@ -811,20 +859,77 @@ class SpotifyService:
             sf = dict(self._config["super_fans"])
             pu = dict(self._config["priority_users"])
             default_uses = int(self._config.get("playfan_default_uses") or 5)
+            persisted_used = dict(self._config.get("playfan_used") or {})
+            persisted_date = str(self._config.get("playfan_used_date") or "")
+        # Si el cliente está vivo lo consultamos directo (verdad-en-vivo).
+        # Si no, fallback al snapshot persistido en spotify.json.
+        used_today: dict[str, int] = {}
+        date_iso = persisted_date
+        c = self._client
+        if c is not None and hasattr(c, "get_playfan_used_today"):
+            try:
+                used_today = c.get_playfan_used_today()
+                pf_date = getattr(c, "_playfan_date", None)
+                if pf_date is not None:
+                    date_iso = pf_date.isoformat()
+            except Exception:
+                used_today = persisted_used
+        else:
+            used_today = persisted_used
         for uname, meta in sf.items():
+            uses = int(pu.get(uname, default_uses))
+            ut = int(used_today.get(uname, 0))
             items.append({
                 "username": uname,
                 "displayName": meta.get("displayName") or uname,
                 "firstSeenMs": int(meta.get("firstSeenMs") or 0),
                 "lastSeenMs": int(meta.get("lastSeenMs") or 0),
-                "uses": int(pu.get(uname, default_uses)),
+                "uses": uses,
+                "usedToday": ut,
+                "remaining": max(0, uses - ut),
             })
         items.sort(key=lambda i: i["lastSeenMs"], reverse=True)
-        return {"items": items, "defaultUses": default_uses, "total": len(items)}
+        return {
+            "items": items,
+            "defaultUses": default_uses,
+            "total": len(items),
+            "dateIso": date_iso,
+        }
 
     def super_fan_set_uses(self, params: dict[str, Any]) -> dict[str, Any]:
         """Alias semántico de `priority_user_set` con la misma validación."""
         return self.priority_user_set(params)
+
+    def super_fan_remove(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Borra manualmente a un usuario de super_fans + priority_users.
+
+        El auto-add/remove desde TikTok (`notify_super_fan`) sigue activo:
+        si el user vuelve a comentar con `is_super_fan=True`, se vuelve a
+        agregar automáticamente. Sirve para limpiar entradas que quedaron
+        de un default viejo o usuarios fantasma.
+        """
+        username = params.get("username")
+        if not isinstance(username, str) or not username.strip():
+            raise TypeError("username requerido")
+        uname = username.strip().lower()
+        removed_sf = False
+        removed_pu = False
+        with self._lock:
+            if uname in self._config["super_fans"]:
+                self._config["super_fans"].pop(uname, None)
+                removed_sf = True
+            if uname in self._config["priority_users"]:
+                self._config["priority_users"].pop(uname, None)
+                removed_pu = True
+            if removed_sf or removed_pu:
+                self._write_config()
+                self._apply_priority_users_to_client()
+        return {
+            "ok": True,
+            "username": uname,
+            "removedFromSuperFans": removed_sf,
+            "removedFromPriorityUsers": removed_pu,
+        }
 
     def playfan_default_set(self, params: dict[str, Any]) -> dict[str, Any]:
         """Setea el `uses/día` por defecto que se asigna a los super fans
@@ -901,20 +1006,68 @@ class SpotifyService:
                 self._write_config()
                 self._apply_priority_users_to_client()
 
+    def _on_playfan_state_changed(
+        self, used: dict[str, int], date_iso: str | None
+    ) -> None:
+        """Hook que dispara el SpotifyClient legacy tras incrementar
+        `_playfan_used` (o tras reset diario). Persiste en spotify.json y
+        emite `spotify:playfan-state` para que la UI repinte el badge sin
+        esperar al próximo refresh manual.
+
+        Idempotente: solo escribe si el shape cambió. Atómico (`_lock`)
+        para no chocar con `config_set` corriendo en otro thread.
+        """
+        try:
+            cleaned: dict[str, int] = {}
+            if isinstance(used, dict):
+                for k, v in used.items():
+                    if not isinstance(k, str):
+                        continue
+                    try:
+                        n = int(v)
+                    except (TypeError, ValueError):
+                        continue
+                    if n > 0:
+                        cleaned[k.strip().lower()] = n
+            new_date = str(date_iso or "")
+            with self._lock:
+                changed = (
+                    cleaned != (self._config.get("playfan_used") or {})
+                    or new_date != str(self._config.get("playfan_used_date") or "")
+                )
+                if not changed:
+                    return
+                self._config["playfan_used"] = cleaned
+                self._config["playfan_used_date"] = new_date
+                self._write_config()
+            try:
+                bus = get_event_bus()
+                bus.publish("spotify:playfan-state", {
+                    "used": cleaned,
+                    "date": new_date,
+                })
+            except Exception:
+                pass
+        except Exception:
+            log.exception("spotify._on_playfan_state_changed fallo")
+
     def _apply_priority_users_to_client(self) -> None:
-        """Re-aplica la lista de priority_users al SpotifyClient en vivo
-        para que `playfan_request` filtre con el set actualizado sin
-        esperar al próximo `config_set`."""
+        """Re-aplica priority_users + playfan_uses al SpotifyClient en
+        vivo. Antes el branch `set_priority_users` solo actualizaba la
+        membresía y dejaba `playfan_uses` vacío → cuota inválida y
+        `!playfan` rechazado con "no tienes usos configurados". Ahora
+        ambas estructuras se mantienen sincronizadas siempre.
+        """
         c = self._client
         if c is None:
             return
+        pu = dict(self._config["priority_users"])
         try:
             if hasattr(c, "set_priority_users"):
-                c.set_priority_users(dict(self._config["priority_users"]))
-            else:
-                c.priority_users = set(self._config["priority_users"].keys())
-                if hasattr(c, "playfan_uses"):
-                    c.playfan_uses = dict(self._config["priority_users"])
+                c.set_priority_users(pu)
+            c.priority_users = set(pu.keys())
+            if hasattr(c, "playfan_uses"):
+                c.playfan_uses = dict(pu)
         except Exception:
             log.exception("apply_priority_users fallo")
 

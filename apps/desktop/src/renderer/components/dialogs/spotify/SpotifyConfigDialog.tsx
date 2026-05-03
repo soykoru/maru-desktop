@@ -166,6 +166,15 @@ export function SpotifyConfigDialog() {
     }
   }
 
+  async function handleRemoveSuperFan(username: string) {
+    try {
+      await sp.removeSuperFan(username);
+      flash(`✓ @${username} borrado de Super Fans.`);
+    } catch (ex) {
+      flash(ex instanceof Error ? ex.message : String(ex), false);
+    }
+  }
+
   async function handleSetDefaultUses(uses: number) {
     try {
       await sp.setPlayfanDefaultUses(uses);
@@ -863,7 +872,7 @@ export function SpotifyConfigDialog() {
               {sp.superFans.map((sf) => (
                 <li
                   key={sf.username}
-                  className="flex items-center gap-3 px-3 py-2 hover:bg-fg/5"
+                  className="flex items-center gap-3 px-3 py-2 hover:bg-fg/5 maru-row-lift"
                 >
                   <Crown className="h-3.5 w-3.5 shrink-0 text-warning" />
                   <div className="flex-1 min-w-0">
@@ -884,6 +893,36 @@ export function SpotifyConfigDialog() {
                         : ''}
                     </p>
                   </div>
+                  {(() => {
+                    // Badge de consumo: usado/total. Color por intensidad
+                    // — verde <50%, amarillo 50-79%, naranja 80-99%, rojo
+                    // 100%. Tooltip muestra restantes y total.
+                    const used = Math.max(0, sf.usedToday ?? 0);
+                    const total = Math.max(0, sf.uses);
+                    const remaining = Math.max(0, sf.remaining ?? total - used);
+                    const pct = total > 0 ? used / total : 0;
+                    const tone =
+                      pct >= 1
+                        ? 'bg-danger/15 text-danger border-danger/30'
+                        : pct >= 0.8
+                          ? 'bg-warning/20 text-warning border-warning/40'
+                          : pct >= 0.5
+                            ? 'bg-warning/10 text-warning border-warning/25'
+                            : 'bg-success/10 text-success border-success/25';
+                    return (
+                      <span
+                        className={`inline-flex h-7 min-w-[58px] items-center justify-center rounded-md border px-2 text-[11px] font-mono font-medium tabular-nums maru-icon-pop ${tone}`}
+                        title={
+                          total === 0
+                            ? 'Sin cuota asignada — editá el campo de la derecha'
+                            : `${used} usados hoy · ${remaining} restantes de ${total}`
+                        }
+                        aria-label={`${used} usados de ${total} hoy`}
+                      >
+                        {used}/{total}
+                      </span>
+                    );
+                  })()}
                   <Input
                     type="number"
                     min={0}
@@ -901,6 +940,16 @@ export function SpotifyConfigDialog() {
                     className="w-[140px] !h-8 !text-xs"
                     title="Editá cuántos !playfan puede hacer por día"
                   />
+                  <button
+                    type="button"
+                    onClick={() => void handleRemoveSuperFan(sf.username)}
+                    disabled={busy}
+                    title={`Borrar a @${sf.username} de Super Fans (vuelve a aparecer si comenta como Super Fan)`}
+                    aria-label={`Borrar a @${sf.username}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-fg-subtle hover:text-danger hover:bg-danger/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </li>
               ))}
             </ul>

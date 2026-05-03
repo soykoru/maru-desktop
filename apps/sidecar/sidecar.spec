@@ -91,6 +91,8 @@ hidden = [
     "maru_sidecar.backend.backups",
     "maru_sidecar.backend.logs",
     "maru_sidecar.backend.metrics",
+    "maru_sidecar.backend.utils",
+    "maru_sidecar.backend.utils.tts_text",
     # core/ del LiveChaosEngine_Refactored — empaquetado vía datas.
     # Lo declaramos como hidden imports también para que PyInstaller
     # incluya sus deps transitivas (PyQt6, pygame, requests, etc).

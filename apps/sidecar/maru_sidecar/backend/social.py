@@ -433,16 +433,23 @@ class SocialService:
                 return
             if not text:
                 return
+            # Sanear usernames embebidos en el anuncio. El core retorna
+            # `"<canción> en cola, pedido por cristian_rivasxd"` y el `_`
+            # truncaba el TTS. `sanitize_text_usernames` deja palabras
+            # normales como "Despacito"/"Spotify" intactas — solo
+            # interviene en tokens con `@`/`_`/dígito.
+            from .utils.tts_text import sanitize_text_usernames
+            safe_text = sanitize_text_usernames(text)
             voice = getattr(social_self, "voice", None) or None
             try:
                 # Canal chat con `speak_now` → bypass de cola social.
                 # El user dijo "demora muchísimo" → este es el fix.
                 e = tts_svc._ensure() if hasattr(tts_svc, "_ensure") else None
                 if e is not None and hasattr(e, "speak_now"):
-                    e.speak_now(text, voice=voice)
+                    e.speak_now(safe_text, voice=voice)
                 else:
                     # Fallback: speak normal canal social.
-                    tts_svc.speak({"text": text, "channel": "social", **({"voice": voice} if voice else {})})
+                    tts_svc.speak({"text": safe_text, "channel": "social", **({"voice": voice} if voice else {})})
             except Exception:
                 log.exception("fast_music_speak fallo")
 
@@ -509,6 +516,28 @@ class SocialService:
         except Exception:
             log.exception("social tts_callback fallo")
 
+    def _tts_fortune_callback(self, *args: Any, **kwargs: Any) -> None:
+        """Bridge específico para `_cmd_tarot` y demás comandos de fortuna
+        del SocialSystem — manda al canal `fortune` en lugar del social,
+        para que la voz de fortuna y la cola exclusiva se respeten.
+
+        El SocialSystem original llama `self.tts_fortune(text, volume)`.
+        Sin este callback dedicado, el fallback caía en `tts_callback` y
+        el tarot sonaba por el canal social con la voz social.
+        """
+        if self._tts is None:
+            return
+        text = ""
+        if args:
+            text = str(args[0]) if args[0] is not None else ""
+        text = text or str(kwargs.get("text") or "")
+        if not text.strip():
+            return
+        try:
+            self._tts.speak({"text": text, "channel": "fortune"})
+        except Exception:
+            log.exception("social tts_fortune_callback fallo")
+
     def _ensure(self) -> Any:
         if self._sys is not None:
             return self._sys
@@ -526,6 +555,7 @@ class SocialService:
                 data_dir=DATA_DIR,
                 tts_callback=self._tts_callback,
                 log_callback=self._log_callback,
+                tts_fortune_callback=self._tts_fortune_callback,
             )
             # Monkey-patch `_music_speak` para que el TTS de Spotify use
             # `speak_now` (canal chat directo, sin cola social) → se

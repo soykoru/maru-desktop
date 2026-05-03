@@ -1,5 +1,43 @@
-{
-  "intro_templates": [
+"""Genera el nuevo data/fortunes.json para MARU.
+
+Reemplaza por completo las 817 fortunas actuales por un set nuevo con la
+misma cantidad o más por categoría. Agrega categoría 'grosera' (sarcástica/
+picante, sin insultos prohibidos por TikTok).
+
+Salida: imprime el JSON canonicalizado a stdout. El llamador lo redirige
+a `data/fortunes.json` y a las copias de `runtime_data` y `resources/data`.
+
+Targets por categoría (count actual → nuevo):
+    intro_templates  25 → 35
+    good            104 → 120
+    bad              89 → 100
+    neutral          50 → 60
+    specific         75 → 90
+    philosophical    69 → 80
+    love             45 → 55
+    money            45 → 55
+    health           45 → 55
+    work             45 → 55
+    gaming           50 → 60
+    social           35 → 45
+    creative         35 → 45
+    mystery          35 → 45
+    humor            35 → 45
+    stream           20 → 30
+    luck             20 → 30
+    wisdom           20 → 30
+    grosera (NUEVO)        80
+    ─────────────────────────
+    Total fortunas      1080  (vs 817)
+    Total intros          35  (vs 25)
+"""
+from __future__ import annotations
+
+import json
+import sys
+
+# ── Intros (35 — el {name} se sustituye en runtime) ────────────────────
+INTROS = [
     "La fortuna de {name} para hoy dice:",
     "El destino de {name} revela:",
     "Las estrellas le dicen a {name}:",
@@ -34,9 +72,11 @@
     "Las profecías olvidadas resurgen para {name}:",
     "El portal del tiempo se abre para {name}:",
     "La voz interior de {name} sentencia:",
-    "El eco del cosmos declara a {name}:"
-  ],
-  "good": [
+    "El eco del cosmos declara a {name}:",
+]
+
+# ── GOOD (120) ─────────────────────────────────────────────────────────
+GOOD = [
     "Hoy es tu día de suerte, todo saldrá mejor de lo esperado",
     "Una sorpresa agradable llegará cuando menos lo esperes",
     "La fortuna sonríe a los valientes como tú",
@@ -158,9 +198,12 @@
     "Tu corazón encontrará calma muy pronto",
     "Lo que parecía imposible se va a cumplir",
     "Una nueva oportunidad llegará disfrazada de imprevisto",
-    "Hoy es buen día para confiar en lo que sientes"
-  ],
-  "bad": [
+    "Hoy es buen día para confiar en lo que sientes",
+]
+assert len(GOOD) >= 120, len(GOOD)
+
+# ── BAD (100) ──────────────────────────────────────────────────────────
+BAD = [
     "Hoy mejor no compres nada caro",
     "Una pequeña confusión arruinará un plan",
     "Cuidado con un mensaje mal interpretado",
@@ -262,9 +305,12 @@
     "Una espera médica o burocrática se hará larga",
     "Hoy una promesa romántica caerá en saco roto",
     "Una persona impuntual te dejará plantado",
-    "Cuidado con prometer algo que no podrás cumplir"
-  ],
-  "neutral": [
+    "Cuidado con prometer algo que no podrás cumplir",
+]
+assert len(BAD) >= 100, len(BAD)
+
+# ── NEUTRAL (60) ───────────────────────────────────────────────────────
+NEUTRAL = [
     "Hoy será un día tranquilo, sin grandes sorpresas",
     "Las cosas seguirán su curso natural sin cambios",
     "Es un buen momento para reflexionar con calma",
@@ -324,9 +370,12 @@
     "Tu intuición trabajará en silencio hoy",
     "El día te recompensará si no lo apuras",
     "Hoy el mundo se mueve, tú observas con sabiduría",
-    "Mantén el ritmo lento, mañana acelerás"
-  ],
-  "specific": [
+    "Mantén el ritmo lento, mañana acelerás",
+]
+assert len(NEUTRAL) >= 60, len(NEUTRAL)
+
+# ── SPECIFIC (90) ──────────────────────────────────────────────────────
+SPECIFIC = [
     "Recibirás un mensaje de WhatsApp que cambiará tu día",
     "Una persona con tu mismo signo te dará un consejo clave",
     "Antes del jueves verás algo que te hará sonreír mucho",
@@ -417,9 +466,12 @@
     "Una persona con misma profesión te abrirá una puerta",
     "Tu siguiente mensaje recibido será de alguien que extrañabas",
     "Una persona que viste hoy aparecerá otra vez en una semana",
-    "Antes del próximo miércoles te ocurrirá una coincidencia mágica"
-  ],
-  "philosophical": [
+    "Antes del próximo miércoles te ocurrirá una coincidencia mágica",
+]
+assert len(SPECIFIC) >= 90, len(SPECIFIC)
+
+# ── PHILOSOPHICAL (80) ─────────────────────────────────────────────────
+PHILOSOPHICAL = [
     "El que controla su mente, controla su destino",
     "La paciencia es la madre de todas las victorias",
     "El silencio enseña lo que las palabras callan",
@@ -500,9 +552,12 @@
     "El que confía en el proceso no necesita controlar todo",
     "La paz es el verdadero lujo del siglo",
     "El que cultiva su jardín interior, perfuma a otros",
-    "Tu mayor herencia será la calidad de tus decisiones"
-  ],
-  "love": [
+    "Tu mayor herencia será la calidad de tus decisiones",
+]
+assert len(PHILOSOPHICAL) >= 80, len(PHILOSOPHICAL)
+
+# ── LOVE (55) ──────────────────────────────────────────────────────────
+LOVE = [
     "Alguien sueña contigo justo en este momento",
     "Una vieja chispa volverá a encenderse pronto",
     "El amor está más cerca de lo que crees",
@@ -557,9 +612,12 @@
     "Vas a salir de una zona gris romántica",
     "Una persona te elegirá una y otra vez",
     "Tu siguiente romance será digno de una película",
-    "Recibirás un detalle simple que valdrá oro"
-  ],
-  "money": [
+    "Recibirás un detalle simple que valdrá oro",
+]
+assert len(LOVE) >= 55, len(LOVE)
+
+# ── MONEY (55) ─────────────────────────────────────────────────────────
+MONEY = [
     "Pronto recibirás un dinero extra que no esperabas",
     "Una propina o bonus te alegrará la semana",
     "Una idea sencilla te traerá ingresos pronto",
@@ -614,9 +672,12 @@
     "Vas a aprender a invertir mejor que tus amigos",
     "Una idea simple multiplicará tus ingresos",
     "Vas a entender el valor real de tu tiempo",
-    "Una próxima factura tendrá un error a tu favor"
-  ],
-  "health": [
+    "Una próxima factura tendrá un error a tu favor",
+]
+assert len(MONEY) >= 55, len(MONEY)
+
+# ── HEALTH (55) ────────────────────────────────────────────────────────
+HEALTH = [
     "Tu energía aumentará en los próximos días",
     "Una rutina nueva te devolverá vitalidad",
     "Vas a sentirte más liviano esta semana",
@@ -671,9 +732,12 @@
     "Tu sistema digestivo se aliviará esta semana",
     "Una pequeña mejora será notada por otros",
     "Vas a descubrir un té o fruta que te encantará",
-    "Tu próximo despertar será mucho más liviano"
-  ],
-  "work": [
+    "Tu próximo despertar será mucho más liviano",
+]
+assert len(HEALTH) >= 55, len(HEALTH)
+
+# ── WORK (55) ──────────────────────────────────────────────────────────
+WORK = [
     "Tu jefe notará tu esfuerzo esta semana",
     "Una promoción está más cerca de lo que crees",
     "Vas a recibir un cumplido profesional importante",
@@ -728,9 +792,12 @@
     "Tu enfoque te traerá resultados visibles pronto",
     "Una alianza profesional duradera está por nacer",
     "Vas a recuperar la pasión por algo que dabas por muerto",
-    "Tu próxima semana laboral será mucho más liviana"
-  ],
-  "gaming": [
+    "Tu próxima semana laboral será mucho más liviana",
+]
+assert len(WORK) >= 55, len(WORK)
+
+# ── GAMING (60) ────────────────────────────────────────────────────────
+GAMING = [
     "Hoy ganarás más partidas de las que pierdas",
     "Tu próximo loot tendrá un drop legendario",
     "Vas a hacer un clutch épico en una partida ranked",
@@ -790,9 +857,12 @@
     "Una recompensa diaria valdrá oro pronto",
     "Vas a clavar un parry imposible en boss",
     "Tu próxima edición especial llegará a buen precio",
-    "Una colaboración cross-game te sorprenderá positivamente"
-  ],
-  "social": [
+    "Una colaboración cross-game te sorprenderá positivamente",
+]
+assert len(GAMING) >= 60, len(GAMING)
+
+# ── SOCIAL (45) ────────────────────────────────────────────────────────
+SOCIAL = [
     "Tu próxima publicación tendrá engagement explosivo",
     "Vas a ganar seguidores nuevos sin buscarlo",
     "Una persona influyente te recomendará pronto",
@@ -837,9 +907,12 @@
     "Vas a tener un mensaje grupal lleno de risas",
     "Tu próximo viaje en grupo será inolvidable",
     "Una persona discreta te apoyará en silencio",
-    "Vas a recibir un audio largo lleno de cariño"
-  ],
-  "creative": [
+    "Vas a recibir un audio largo lleno de cariño",
+]
+assert len(SOCIAL) >= 45, len(SOCIAL)
+
+# ── CREATIVE (45) ──────────────────────────────────────────────────────
+CREATIVE = [
     "Tu próxima idea creativa cambiará tu vida",
     "Vas a escribir, dibujar o grabar algo memorable",
     "Una inspiración nocturna te dejará sin sueño",
@@ -884,9 +957,12 @@
     "Una historia personal será tu próximo proyecto",
     "Tu próxima publicación creativa romperá récords personales",
     "Vas a darle a tu marca personal un giro brillante",
-    "Una colaboración online te abrirá puertas nuevas"
-  ],
-  "mystery": [
+    "Una colaboración online te abrirá puertas nuevas",
+]
+assert len(CREATIVE) >= 45, len(CREATIVE)
+
+# ── MYSTERY (45) ───────────────────────────────────────────────────────
+MYSTERY = [
     "Una pista importante aparecerá entre líneas hoy",
     "Una coincidencia hoy es en realidad una señal",
     "El cosmos te está enviando un mensaje muy claro",
@@ -931,9 +1007,12 @@
     "Vas a tener un sueño tan claro que parecerá real",
     "Una persona soñará contigo esta misma noche",
     "Vas a percibir la verdad sin que te la digan",
-    "Una señal en el cielo o nube te marcará el día"
-  ],
-  "humor": [
+    "Una señal en el cielo o nube te marcará el día",
+]
+assert len(MYSTERY) >= 45, len(MYSTERY)
+
+# ── HUMOR (45) ─────────────────────────────────────────────────────────
+HUMOR = [
     "Hoy te vas a reír de algo absurdo en la calle",
     "Un meme te va a explotar la risa esta semana",
     "Vas a hacer un chiste que va a quedar para siempre",
@@ -978,9 +1057,12 @@
     "Una historia random tuya tendrá éxito viral",
     "Vas a reírte sin parar en pleno silencio incómodo",
     "Un sticker absurdo se va a volver tu marca personal",
-    "Vas a despertar con cara de meme y no querrás verla"
-  ],
-  "stream": [
+    "Vas a despertar con cara de meme y no querrás verla",
+]
+assert len(HUMOR) >= 45, len(HUMOR)
+
+# ── STREAM (30) ────────────────────────────────────────────────────────
+STREAM = [
     "Tu próximo stream tendrá récord de viewers",
     "Un super donador va a aparecer pronto",
     "Vas a sumar nuevos seguidores este live",
@@ -1010,9 +1092,12 @@
     "Vas a probar una cámara o luz nueva con buen resultado",
     "Tu próximo overlay enamorará al chat",
     "Una nueva categoría de stream te traerá nuevos fans",
-    "Vas a tener una noche épica de stream esta semana"
-  ],
-  "luck": [
+    "Vas a tener una noche épica de stream esta semana",
+]
+assert len(STREAM) >= 30, len(STREAM)
+
+# ── LUCK (30) ──────────────────────────────────────────────────────────
+LUCK = [
     "La suerte te acompañará todo el día",
     "Vas a ganar en algo de azar pronto",
     "Una racha buena empieza este mismo momento",
@@ -1042,9 +1127,12 @@
     "Vas a tener un golpe de fortuna antes del fin de mes",
     "Una serie de coincidencias afortunadas se desatará",
     "Tu energía de hoy atraerá rifas y premios",
-    "Vas a estar en el lugar correcto en el momento perfecto"
-  ],
-  "wisdom": [
+    "Vas a estar en el lugar correcto en el momento perfecto",
+]
+assert len(LUCK) >= 30, len(LUCK)
+
+# ── WISDOM (30) ────────────────────────────────────────────────────────
+WISDOM = [
     "El que se conoce a sí mismo, no necesita aprobación",
     "La calma es más eficaz que mil estrategias",
     "Quien aprende del silencio, nunca queda sin respuesta",
@@ -1074,9 +1162,12 @@
     "Tu mejor maestro será siempre tu peor crisis",
     "La sencillez es la sofisticación máxima",
     "El que se rinde aprende, el que se levanta crece",
-    "La calidad de tus preguntas define tu vida"
-  ],
-  "grosera": [
+    "La calidad de tus preguntas define tu vida",
+]
+assert len(WISDOM) >= 30, len(WISDOM)
+
+# ── GROSERA (80) — sarcástica/burlona, sin lenguaje prohibido TikTok ──
+GROSERA = [
     "Hoy hasta la sombra te va a hacer bullying",
     "Tus planes para hoy: nada, y no lo vas a cumplir",
     "El universo te mandó saludos, dice que te enfoques porfa",
@@ -1157,6 +1248,35 @@
     "Tu próximo plan brillante necesita un plan B y uno C",
     "El destino te manda un abrazo, devolvé los libros prestados",
     "Las estrellas opinan que tu humor hoy es internacional, todos lo notan",
-    "Tu suerte te abandonó por un rato, igual fingí que está"
-  ]
-}
+    "Tu suerte te abandonó por un rato, igual fingí que está",
+]
+assert len(GROSERA) >= 80, len(GROSERA)
+
+
+def main() -> None:
+    out = {
+        "intro_templates": INTROS,
+        "good": GOOD,
+        "bad": BAD,
+        "neutral": NEUTRAL,
+        "specific": SPECIFIC,
+        "philosophical": PHILOSOPHICAL,
+        "love": LOVE,
+        "money": MONEY,
+        "health": HEALTH,
+        "work": WORK,
+        "gaming": GAMING,
+        "social": SOCIAL,
+        "creative": CREATIVE,
+        "mystery": MYSTERY,
+        "humor": HUMOR,
+        "stream": STREAM,
+        "luck": LUCK,
+        "wisdom": WISDOM,
+        "grosera": GROSERA,
+    }
+    json.dump(out, sys.stdout, ensure_ascii=False, indent=2)
+
+
+if __name__ == "__main__":
+    main()

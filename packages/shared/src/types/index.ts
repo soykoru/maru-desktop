@@ -345,6 +345,10 @@ export interface SpotifySuperFan {
   lastSeenMs: number;
   /** `uses/día` configurado para este super fan (editable). */
   uses: number;
+  /** !playfan que ya consumió HOY. Persistido en `spotify.json`. */
+  usedToday: number;
+  /** Atajo: max(0, uses - usedToday). El sidecar lo calcula y devuelve. */
+  remaining: number;
 }
 
 // ── TTS (G9) ────────────────────────────────────────────────────────────

@@ -290,6 +290,7 @@ def build_default_registry() -> MethodRegistry:
     # Super fans (sync auto desde TikTok is_super_fan).
     reg.register("spotify.super-fans.list", spotify_svc.super_fans_list)
     reg.register("spotify.super-fans.set-uses", spotify_svc.super_fan_set_uses)
+    reg.register("spotify.super-fans.remove", spotify_svc.super_fan_remove)
     reg.register("spotify.playfan-default.set", spotify_svc.playfan_default_set)
 
     # ia.*

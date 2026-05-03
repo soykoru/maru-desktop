@@ -38,6 +38,7 @@ from typing import Any
 
 from ..event_bus import get_event_bus
 from ..logger import get_logger
+from .utils.tts_text import clean_user_for_tts
 
 log = get_logger(__name__)
 
@@ -51,7 +52,10 @@ _MUSIC_SKIP = {"skip", "s", "siguiente", "next"}
 _MUSIC_PAUSE = {"pause", "pausar", "stop"}
 _MUSIC_RESUME = {"resume", "reanudar", "continuar"}
 _IA = {"ia", "ai", "pregunta", "ask", "chat", "preguntar", "bot"}
-_FORTUNE = {"suerte", "fortuna", "lectura", "fortune", "tarot"}
+# `tarot` se RUTEA al SocialSystem (`_cmd_tarot`) para que use TAROT_CARDS +
+# TAROT_INTROS (78 cartas con narraciones propias). NO entra acá: si entrara,
+# `fortunes.read` leería una fortuna de suerte en su lugar.
+_FORTUNE = {"suerte", "fortuna", "lectura", "fortune"}
 
 _CMD_RE = re.compile(r"^[!/](\S+)\s*(.*)$")
 
@@ -349,7 +353,9 @@ class ChatDispatcher:
             return
         q = question.strip()
         if not q:
-            q = f"Salúdame, soy {user}."
+            # `user` puede tener `_`/dígitos que truncan el TTS al
+            # responder. Usamos el nombre limpio para el saludo.
+            q = f"Salúdame, soy {clean_user_for_tts(user)}."
         try:
             res = self._ia.ask({"user": user, "question": q})
             if not res.get("ok"):
@@ -385,7 +391,12 @@ class ChatDispatcher:
                     k: v for k, v in self._recent_fortunes.items() if v >= cutoff
                 }
         try:
-            res = self._fortunes.read({"name": user})
+            # Sanear el username ANTES de meterlo en la intro de la fortuna.
+            # `darklight_ofk`/`cristian_rivasxd` truncan el audio TTS al
+            # toparse con `_` o dígitos. Limpiamos a solo letras (igual
+            # que `SocialSystem._display_name` del MARU original).
+            clean_name = clean_user_for_tts(user)
+            res = self._fortunes.read({"name": clean_name})
             text = str(res.get("text") or "").strip()
             if not text:
                 return

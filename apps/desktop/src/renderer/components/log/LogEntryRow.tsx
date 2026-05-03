@@ -147,7 +147,7 @@ export const LogEntryRow = memo(function LogEntryRow({
         aria-hidden="true"
       />
       {showTimestamp && (
-        <span className="text-fg-subtle shrink-0 tabular-nums opacity-70 group-hover:opacity-100">
+        <span className="text-fg-subtle shrink-0 tabular-nums opacity-90 group-hover:opacity-100">
           {fmtTime(entry.ts)}
         </span>
       )}
