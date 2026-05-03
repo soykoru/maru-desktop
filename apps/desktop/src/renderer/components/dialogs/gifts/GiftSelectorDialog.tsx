@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ImageOff, Search } from 'lucide-react';
-import { Button, Dialog, Empty, Input, Spinner } from '@maru/ui';
+import { ArrowDownUp, ImageOff, Search } from 'lucide-react';
+import { Button, Dialog, Empty, Input, Select, Spinner } from '@maru/ui';
 import type { DonationGift } from '@maru/shared';
 import { useGifts } from '../../../lib/use-gifts.js';
 import { useDebouncedValue } from '../../../lib/hooks.js';
@@ -50,6 +50,10 @@ export function GiftSelectorDialog({
   // keystroke recorre + ordena toda la lista. Input sigue typing inmediato.
   const debouncedSearch = useDebouncedValue(search, 200);
   const [picked, setPicked] = useState<string | null>(initialId);
+  // v1.0.49: control explícito de orden. Default coins-desc (más caros
+  // primero) que es lo que el user esperaba.
+  type SortKey = 'coins-desc' | 'coins-asc' | 'name-asc';
+  const [sortBy, setSortBy] = useState<SortKey>('coins-desc');
 
   useEffect(() => {
     if (open) {
@@ -79,10 +83,16 @@ export function GiftSelectorDialog({
         return matchesText || matchesCoins;
       });
     }
-    return out
-      .slice()
-      .sort((a, b) => b.coins - a.coins || a.name.localeCompare(b.name));
-  }, [allGifts, excludeIds, debouncedSearch, showDisabled]);
+    const sorted = out.slice();
+    if (sortBy === 'coins-desc') {
+      sorted.sort((a, b) => b.coins - a.coins || a.name.localeCompare(b.name));
+    } else if (sortBy === 'coins-asc') {
+      sorted.sort((a, b) => a.coins - b.coins || a.name.localeCompare(b.name));
+    } else {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return sorted;
+  }, [allGifts, excludeIds, debouncedSearch, showDisabled, sortBy]);
 
   const selected = visible.find((g) => g.id === picked) ?? null;
 
@@ -103,14 +113,28 @@ export function GiftSelectorDialog({
       title={title}
       description={`${visible.length} regalos disponibles`}
     >
-      <div className="border-b border-border px-5 py-3 bg-bg-elev/30">
+      <div className="border-b border-border px-5 py-3 bg-bg-elev/30 flex items-center gap-2">
         <Input
           prefix={<Search className="h-3.5 w-3.5" />}
           placeholder="Buscar por nombre, id, o costo en diamantes (ej. 100)..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
+          className="flex-1 min-w-0"
         />
+        <div className="flex items-center gap-1.5 shrink-0">
+          <ArrowDownUp className="h-3.5 w-3.5 text-fg-subtle" aria-hidden="true" />
+          <Select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="!h-9 !text-xs w-[160px]"
+            title="Ordenar regalos"
+          >
+            <option value="coins-desc">💎 Mayor a menor</option>
+            <option value="coins-asc">💎 Menor a mayor</option>
+            <option value="name-asc">🔤 Nombre A-Z</option>
+          </Select>
+        </div>
       </div>
 
       <div

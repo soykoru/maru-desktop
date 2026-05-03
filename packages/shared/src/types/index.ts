@@ -121,6 +121,8 @@ export const STANDARD_TRIGGER_TYPES = [
   'subscribe',
   'like',
   'like_milestone',
+  'emote',
+  'join',
 ] as const;
 export type StandardTriggerType = (typeof STANDARD_TRIGGER_TYPES)[number];
 export type RuleTriggerType = StandardTriggerType | string;
@@ -176,6 +178,17 @@ export interface Rule {
   required_ranks?: RankFlag[];
   /** Lista de flags. Si el user tiene ALGUNO, la regla NO dispara. */
   excluded_ranks?: RankFlag[];
+
+  /** v1.0.49: multiplicador opcional de ejecuciones cuando el user del
+   *  evento cumple un rol/nivel. Si no está o `enabled=false`, la regla
+   *  ejecuta normalmente (×1). */
+  repeat_for?: {
+    enabled: boolean;
+    rank: 'mod' | 'superfan' | 'donor' | 'follower' | 'member';
+    level_min?: number;
+    level_max?: number;
+    times: number;
+  };
 
   // Compat — espejo de actions[0]. El sidecar los mantiene actualizados.
   action_type?: string;

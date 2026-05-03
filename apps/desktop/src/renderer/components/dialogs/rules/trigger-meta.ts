@@ -51,6 +51,18 @@ export const TRIGGER_META: Record<
     color: 'text-warning',
     hint: 'Se activa UNA VEZ al alcanzar la meta total.',
   },
+  emote: {
+    label: 'Emote / Sticker',
+    emoji: '🎨',
+    color: 'text-purple-400',
+    hint: 'Se activa cuando un viewer envía el emote seleccionado del streamer.',
+  },
+  join: {
+    label: 'Entrada al live',
+    emoji: '👋',
+    color: 'text-cyan-400',
+    hint: 'Se activa cuando un viewer entra al live. Si dejás el campo vacío, vale para cualquier viewer.',
+  },
 };
 
 export const TRIGGER_KEYS: RuleTriggerType[] = [
@@ -61,6 +73,8 @@ export const TRIGGER_KEYS: RuleTriggerType[] = [
   'subscribe',
   'like',
   'like_milestone',
+  'emote',
+  'join',
 ];
 
 export function triggerMeta(t: string) {

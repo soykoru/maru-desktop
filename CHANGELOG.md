@@ -1,5 +1,37 @@
 # Changelog — maru-desktop
 
+## 1.0.49 — 2026-05-03 · ✨ UI completa: triggers emote/join + repeat_for + sort gifts + sin banner duplicado
+
+### UI de los nuevos triggers (backend ya estaba en v1.0.48)
+- **Trigger `emote`**: nueva opción en el dropdown de RuleDialog. Cuando se
+  selecciona, abre selector visual con grid de emotes del streamer (RPC
+  `emotes.list`). Click en cualquier emote lo asigna como trigger_value.
+  Buscador por id/nombre. Empty state si no hay live conectado.
+- **Trigger `join`**: nueva opción "Entrada al live". Input opcional para
+  username (vacío = cualquier viewer).
+
+### UI repeat_for (multiplicador por rol)
+- Nuevo `RepeatForSection` colapsable al final del RuleDialog.
+- Checkbox "Multiplicar las ejecuciones de esta regla cuando el user
+  cumpla un rol/nivel".
+- Selector rol: Moderador / Super Fan / Donador / Sigue al streamer /
+  Miembro.
+- Si Miembro: 2 inputs level_min / level_max.
+- Input "Veces (×N)" con clamp 2-100.
+- Tipo `Rule.repeat_for` agregado a `@maru/shared/types`.
+
+### Sort dropdown en GiftSelectorDialog
+- Nuevo control "Ordenar regalos" al lado del search:
+  - 💎 Mayor a menor (default)
+  - 💎 Menor a mayor
+  - 🔤 Nombre A-Z
+- Aplica a TODAS las invocaciones del selector (rules, fortuna, sounds).
+
+### UpdateBanner inferior removido
+- Quitado del `App.tsx`. El CTA del HeaderGlobal cubre las 3 fases
+  (available / downloading / ready) con la misma funcionalidad. Sin
+  duplicación visual.
+
 ## 1.0.48 — 2026-05-03 · ✨ Triggers emote/join + repeat por rol + temas distintos + búsqueda por valor
 
 ### Backend / sidecar

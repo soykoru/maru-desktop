@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Toaster } from '@maru/ui';
 import { MainLayout } from './components/MainLayout.js';
 import { ModalRoot } from './components/ModalRoot.js';
-import { UpdateBanner } from './components/UpdateBanner.js';
 import { useGlobalShortcuts } from './lib/use-shortcuts.js';
 import { wireSidecarEvents } from './lib/event-wire.js';
 import { useAppStore } from './lib/store/index.js';
@@ -122,7 +121,8 @@ export function App() {
       <div className="maru-bg-shell" aria-hidden="true" />
       <MainLayout />
       <ModalRoot />
-      <UpdateBanner />
+      {/* UpdateBanner inferior removido v1.0.49 — el CTA en el
+          HeaderGlobal cubre la misma funcionalidad sin duplicarla. */}
       <Toaster />
     </>
   );
