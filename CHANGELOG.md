@@ -1,5 +1,49 @@
 # Changelog — maru-desktop
 
+## 1.0.48 — 2026-05-03 · ✨ Triggers emote/join + repeat por rol + temas distintos + búsqueda por valor
+
+### Backend / sidecar
+
+- **Trigger `emote`**: nueva regla cuyo trigger_value es el `emote_id`
+  del sticker del streamer. Cuando un viewer envía ese emote la regla
+  dispara. Validación en backend `rules.py` + match en `rule_engine`.
+- **Trigger `join`**: cuando un viewer entra al live. Si
+  `trigger_value` está vacío, dispara para cualquier user; si trae un
+  username, dispara solo para ese user específico. Cableado el
+  `JoinEvent` de TikTokLive 6.6.5 que NO estaba conectado antes.
+- **Log entry de joins**: throttled 1.5s (evita inundar al inicio del
+  live cuando llegan decenas/segundo). Categoría `tiktok` para que
+  no rompa filtros existentes.
+- **Multiplicador por rol/nivel** (`repeat_for`): nuevo campo opcional
+  en cada regla. Si está enabled y el user del evento cumple
+  rank/level, las ejecuciones se multiplican × times. Roles soportados:
+  mod, superfan, donor, follower, member (con `level_min`/`level_max`
+  para filtrar por rango de nivel).
+
+### Frontend / UI
+
+- **Búsqueda de gifts por valor en diamantes**: si el query es
+  100% numérico (`100`, `5000`), filtra TAMBIÉN por `coins == query`.
+  Aplica a TODAS las galerías (suerte, reglas, sounds) porque usan el
+  mismo `useGifts.deriveVisible`.
+- **EN VIVO** del header: gap entre `@user` y `EN VIVO` (antes
+  pegados).
+- **Hero card del logo** rediseñado: doble capa con halo accent
+  superior tipo "luz cayendo del logo", inset highlights, viñeta
+  inferior. Más radio (2xl) y padding más generoso.
+
+### Temas: diferenciación radical
+Cada tema (excepto Pure Dark, que no se tocó) ahora tiene su PROPIA
+identidad cromática de fondo y glows, no solo un accent distinto:
+- **Midnight** (default): violeta-índigo profundo signature MARU.
+- **Dracula**: bg ahora violeta-noche real, glows pink/purple muy
+  visibles.
+- **Tokyo Night**: bg azul-marino oceánico con glows azul/cyan.
+- **Catppuccin Mocha**: bg cálido marrón-violeta con glows rosa/peach.
+- **Nord**: bg ártico glacial con glows frost cyan/teal.
+
+Ahora los temas se distinguen al primer vistazo.
+
 ## 1.0.47 — 2026-05-03 · 🩹 Comments individuales + Spotify autostart con accounts + format 1.1k
 
 ### Comentarios desagrupados

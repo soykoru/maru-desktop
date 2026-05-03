@@ -76,6 +76,9 @@ VALID_TRIGGERS: tuple[str, ...] = (
     "subscribe",
     "like",
     "like_milestone",
+    # v1.0.48: nuevos triggers
+    "emote",  # cuando llega un emote/sticker; trigger_value = emote_id
+    "join",   # cuando un user entra al live; trigger_value = "" (cualquiera) o username
 )
 
 # Mapeo cat_id (G4 / MARU) → action_type legacy del RuleEngine.
@@ -596,6 +599,15 @@ class RulesService:
                         _add(name, f"{trigger_type} requiere un número > 0", "error")
                 except ValueError:
                     _add(name, f"trigger_value '{trigger_value}' no es un número válido para {trigger_type}", "error")
+            elif trigger_type == "emote":
+                if not trigger_value:
+                    _add(name, "trigger_value vacío para tipo emote", "error",
+                         "Elegí un emote del streamer en la galería")
+            elif trigger_type == "join":
+                # trigger_value vacío = cualquier user. Si trae username
+                # se matchea exacto (case-insensitive). Sin validación
+                # extra — el username puede tener cualquier formato.
+                pass
             # follow / share / subscribe no necesitan trigger_value.
 
             # 3) Tracking de conflictos por (type, value).

@@ -107,6 +107,10 @@ class TikTokService:
         # "TikTok API" del sidebar). Se refresca con cada error fatal del
         # worker (`_on_error` / `_on_log_message` con SignAPIError).
         self._last_error: str = ""
+        # Throttle del log de joins (v1.0.48) — al iniciar el live llegan
+        # decenas de joins por segundo. Mantenemos el evento (para reglas)
+        # pero solo publicamos UN log entry cada 1.5s.
+        self._last_join_log_ts: float = 0.0
 
     def attach_donations(self, donations: Any) -> None:
         self._donations = donations
@@ -660,6 +664,30 @@ class TikTokService:
                     )
                 except Exception:
                     pass
+
+            # Joins (v1.0.48) — un viewer entra al live. En lives grandes
+            # llegan en avalancha al inicio; emitimos solo si pasaron >2s
+            # desde el último join logueado para no inundar. La regla
+            # `join` igual sigue disparando para todos los joins (eso lo
+            # decide el RuleEngine, no el log).
+            if event_type == "join" and self._logs is not None:
+                import time as _t
+                now = _t.time()
+                if now - self._last_join_log_ts > 1.5:
+                    self._last_join_log_ts = now
+                    nick = str(data.get("nickname") or user)
+                    rank_pref = _rank_prefix(merged) if merged.get("rank") else ""
+                    try:
+                        self._logs.publish(
+                            f"👋 {rank_pref}@{user} entró al live",
+                            level="INFO",
+                            source="tiktok",
+                            category="tiktok",
+                            skip_dedupe=True,
+                            meta={"user": user, "nickname": nick, "kind": "join"},
+                        )
+                    except Exception:
+                        pass
 
             # Likes (v1.0.46) — emitimos UN log:entry POR EVENTO con su
             # count real (el worker ya batchea por TikTok WS, típicamente

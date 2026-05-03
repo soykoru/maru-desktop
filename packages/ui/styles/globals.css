@@ -117,11 +117,14 @@
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 [data-theme='dracula'] {
-  --maru-bg-base: 30 32 44;             /* #1e202c */
-  --maru-bg-base-end: 40 42 54;         /* #282a36 */
-  --maru-bg-surface: 50 52 70;          /* surface */
-  --maru-bg-elevated: 68 71 90;         /* #44475a */
-  --maru-bg-overlay: 22 24 33;
+  /* Dracula v1.0.48: bg base más VIOLETA (no gris) para que el tema
+     se sienta nocturno-púrpura signature dracula. Antes era gris
+     azulado casi indistinguible de Midnight. */
+  --maru-bg-base: 36 28 50;             /* violeta-noche profundo */
+  --maru-bg-base-end: 50 38 70;         /* purple-glow */
+  --maru-bg-surface: 60 48 82;          /* surface tinted purple */
+  --maru-bg-elevated: 78 62 100;        /* surface1 */
+  --maru-bg-overlay: 26 18 38;
 
   --maru-fg: 230 230 222;               /* off-white cálido (no #f8f8f2 puro) */
   --maru-fg-muted: 188 188 200;
@@ -176,12 +179,14 @@
     0 0 0 1px rgb(80 250 123 / 0.4),
     0 8px 32px rgb(80 250 123 / 0.22);
 
+  /* Glows MUCHO más visibles (v1.0.48) — el ambient del shell se nota
+     a primer vistazo: gran mancha rosa + halo púrpura clarísimo. */
   --maru-bg-glow-1: 255 121 198;
-  --maru-bg-glow-1-alpha: 0.07;
+  --maru-bg-glow-1-alpha: 0.18;
   --maru-bg-glow-2: 189 147 249;
-  --maru-bg-glow-2-alpha: 0.08;
+  --maru-bg-glow-2-alpha: 0.20;
 
-  --maru-glass-bg: rgb(22 24 33 / 0.72);
+  --maru-glass-bg: rgb(26 18 38 / 0.72);
   --maru-glass-blur: blur(24px) saturate(170%);
 }
 
@@ -192,11 +197,13 @@
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 [data-theme='tokyo-night'] {
-  --maru-bg-base: 22 23 36;             /* #16172a */
-  --maru-bg-base-end: 26 27 38;         /* #1a1b26 */
-  --maru-bg-surface: 36 40 59;          /* #24283b */
-  --maru-bg-elevated: 41 46 66;         /* #292e42 */
-  --maru-bg-overlay: 13 14 25;
+  /* Tokyo Night v1.0.48: tono más AZUL-MARINO profundo para
+     diferenciarse claramente de Midnight (que es violeta-índigo). */
+  --maru-bg-base: 16 22 40;             /* azul oceánico profundo */
+  --maru-bg-base-end: 22 30 56;         /* navy con un toque cyan */
+  --maru-bg-surface: 30 42 70;
+  --maru-bg-elevated: 38 50 84;
+  --maru-bg-overlay: 10 14 26;
 
   /* Text Tokyo Night — paleta oficial pero con brillo suavizado */
   --maru-fg: 184 196 232;               /* ligeramente menos saturado que c0caf5 */
@@ -251,12 +258,13 @@
     0 0 0 1px rgb(158 206 106 / 0.4),
     0 8px 32px rgb(158 206 106 / 0.22);
 
-  --maru-bg-glow-1: 187 154 247;
-  --maru-bg-glow-1-alpha: 0.08;
-  --maru-bg-glow-2: 122 162 247;
-  --maru-bg-glow-2-alpha: 0.10;
+  /* Glows v1.0.48: ambient azul cyan más fuerte para sentirse "tokyo". */
+  --maru-bg-glow-1: 122 162 247;
+  --maru-bg-glow-1-alpha: 0.20;
+  --maru-bg-glow-2: 125 207 255;
+  --maru-bg-glow-2-alpha: 0.16;
 
-  --maru-glass-bg: rgb(13 14 25 / 0.72);
+  --maru-glass-bg: rgb(10 14 26 / 0.72);
   --maru-glass-blur: blur(24px) saturate(150%);
 }
 
@@ -267,11 +275,13 @@
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 [data-theme='catppuccin-mocha'] {
-  --maru-bg-base: 17 17 27;             /* #11111b crust */
-  --maru-bg-base-end: 30 30 46;         /* #1e1e2e base */
-  --maru-bg-surface: 49 50 68;          /* #313244 surface0 */
-  --maru-bg-elevated: 69 71 90;         /* #45475a surface1 */
-  --maru-bg-overlay: 17 17 27;
+  /* Catppuccin Mocha v1.0.48: tonos más CÁLIDOS (toque marrón-violeta
+     real del mocha) para diferenciarse de los temas azul/violeta fríos. */
+  --maru-bg-base: 24 18 28;
+  --maru-bg-base-end: 38 30 44;
+  --maru-bg-surface: 56 46 64;
+  --maru-bg-elevated: 76 64 86;
+  --maru-bg-overlay: 18 14 22;
 
   /* Text Catppuccin — subtext1 como base (no text puro) suaviza el brillo */
   --maru-fg: 196 204 234;               /* entre text (cdd6f4) y subtext1 (bac2de) */
@@ -326,12 +336,13 @@
     0 0 0 1px rgb(166 227 161 / 0.4),
     0 8px 32px rgb(166 227 161 / 0.22);
 
-  --maru-bg-glow-1: 203 166 247;
-  --maru-bg-glow-1-alpha: 0.07;
-  --maru-bg-glow-2: 245 194 231;
-  --maru-bg-glow-2-alpha: 0.06;
+  /* Glows pastel cálidos visibles (v1.0.48). */
+  --maru-bg-glow-1: 245 194 231;
+  --maru-bg-glow-1-alpha: 0.18;
+  --maru-bg-glow-2: 250 179 135;
+  --maru-bg-glow-2-alpha: 0.14;
 
-  --maru-glass-bg: rgb(17 17 27 / 0.72);
+  --maru-glass-bg: rgb(18 14 22 / 0.72);
   --maru-glass-blur: blur(24px) saturate(150%);
 }
 
@@ -481,10 +492,11 @@
     0 0 0 1px rgb(163 190 140 / 0.4),
     0 8px 32px rgb(163 190 140 / 0.22);
 
-  --maru-bg-glow-1: 136 192 208;
-  --maru-bg-glow-1-alpha: 0.06;
-  --maru-bg-glow-2: 94 129 172;
-  --maru-bg-glow-2-alpha: 0.07;
+  /* Glows ártico-frost MUY visibles (v1.0.48). */
+  --maru-bg-glow-1: 143 188 187;
+  --maru-bg-glow-1-alpha: 0.22;
+  --maru-bg-glow-2: 136 192 208;
+  --maru-bg-glow-2-alpha: 0.18;
 
   --maru-glass-bg: rgb(28 32 42 / 0.75);
   --maru-glass-blur: blur(24px) saturate(140%);
@@ -1251,28 +1263,54 @@ select:focus-visible {
   position: relative;
   overflow: hidden;
   border-radius: var(--maru-radius-2xl);
-  padding: 28px 18px 22px;
+  padding: 32px 20px 24px;
+  /* Doble capa: superficie semitransparente + glass blur sutil. El
+   * border es un degradado conic para que se vea como anillo iluminado
+   * en vez de la línea plana de antes. */
   background:
-    linear-gradient(180deg,
-      rgb(var(--maru-bg-elev) / 0.55),
-      rgb(var(--maru-bg-surface) / 0.45));
-  border: 1px solid rgb(var(--maru-fg) / 0.10);
+    linear-gradient(165deg,
+      rgb(var(--maru-bg-elev) / 0.65),
+      rgb(var(--maru-bg-surface) / 0.35) 60%,
+      rgb(var(--maru-bg-base) / 0.20));
+  border: 1px solid rgb(var(--maru-fg) / 0.08);
   text-align: center;
   isolation: isolate;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.06),
-    0 8px 28px rgb(0 0 0 / 0.35);
+    inset 0 1px 0 rgb(255 255 255 / 0.10),
+    inset 0 -1px 0 rgb(0 0 0 / 0.20),
+    0 14px 40px rgb(0 0 0 / 0.45),
+    0 0 0 1px rgb(var(--maru-accent) / 0.05);
+}
+.maru-hero-card::before {
+  /* Anillo accent sutil arriba — efecto "halo" del logo cayendo. */
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(var(--maru-accent) / 0.18),
+    rgb(var(--maru-accent-purple) / 0.08) 60%,
+    transparent 80%
+  );
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(4px);
 }
 .maru-hero-card::after {
-  /* Inset highlight + halo accent muy sutil */
+  /* Highlight superior + viñeta inferior */
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(80% 60% at 50% 0%, rgb(var(--maru-accent) / 0.10), transparent 60%),
-    linear-gradient(180deg, rgb(255 255 255 / 0.05), transparent 35%);
+    linear-gradient(180deg, rgb(255 255 255 / 0.06), transparent 25%),
+    radial-gradient(120% 60% at 50% 100%, rgb(0 0 0 / 0.18), transparent 60%);
 }
 .maru-hero-mesh {
   position: absolute;

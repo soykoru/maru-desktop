@@ -177,9 +177,9 @@ function BrandBlock({
               </div>
             )}
           </div>
-          <div className="flex flex-col leading-none">
-            <span className="text-[11px] font-bold">@{username}</span>
-            <span className="text-[9px] text-success font-semibold tracking-wider uppercase">en vivo</span>
+          <div className="flex flex-col leading-none gap-1">
+            <span className="text-[11px] font-bold leading-tight">@{username}</span>
+            <span className="text-[9px] text-success font-semibold tracking-wider uppercase leading-none">en vivo</span>
           </div>
         </div>
       )}

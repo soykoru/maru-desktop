@@ -68,12 +68,20 @@ function deriveVisible(
   const q = search.trim().toLowerCase();
   let out = showDisabled ? gifts : gifts.filter((g) => !g.disabled);
   if (q) {
+    // v1.0.48: si el query es 100% numérico, filtrar por costo en
+    // diamantes (g.coins). Buscar "100" muestra TODOS los gifts que
+    // valen exactamente 100. Útil para encontrar regalos por precio.
+    const numericQ = /^\d+$/.test(q) ? Number(q) : null;
     out = out.filter((g) => {
-      return (
+      if (
         g.name.toLowerCase().includes(q) ||
         g.id.toLowerCase().includes(q) ||
         (g.icon ?? '').includes(q)
-      );
+      ) {
+        return true;
+      }
+      if (numericQ !== null && g.coins === numericQ) return true;
+      return false;
     });
   }
   out = out.slice();
