@@ -5,30 +5,19 @@ import { LogEntryRow } from './LogEntryRow.js';
 import { categoryMeta } from './log-meta.js';
 
 /**
- * `LogBucketRow` — fila colapsada de un bucket de eventos consecutivos
- * del mismo user (like/gift/share dentro de 60s).
+ * `LogBucketRow` (FASE V5 v1.0.40) — card colapsada de N eventos
+ * consecutivos del mismo user (like/gift/share dentro de 60s).
  *
- * Estado expand/collapse vive LOCAL al componente para evitar contaminar
- * el store global con un Set que cambia en cada click. La identidad del
- * bucket (`id` estable) preserva el estado entre re-renders mientras la
- * racha siga viva.
+ * Cambios vs versión previa:
+ *   - Card pill (kind-like / kind-gift / kind-share) en vez de fila plana.
+ *   - Badge `×N` grande a la derecha en color de la categoría.
+ *   - Chevron pequeño que rota al expandir.
+ *   - Hijos expandidos heredan el `LogEntryRow` (consistencia visual).
  *
- * Render colapsado: stripe de categoría + emoji + count compacto +
- * `@user × N` + rango temporal hover. Hover → fila completa highlightea.
- * Click cualquier parte de la fila → expande/colapsa.
+ * Estado expand/collapse vive LOCAL al componente — la identidad estable
+ * del bucket (`id` derivado del primer entry) preserva el estado entre
+ * re-renders mientras la racha exista.
  */
-
-const STRIPE: Record<string, string> = {
-  like: 'bg-accent-red',
-  gift: 'bg-warning',
-  share: 'bg-cyan-400',
-};
-
-const TINT: Record<string, string> = {
-  like: 'bg-accent-red/[0.05] hover:bg-accent-red/[0.10]',
-  gift: 'bg-warning/[0.07] hover:bg-warning/[0.12]',
-  share: 'bg-cyan-400/[0.05] hover:bg-cyan-400/[0.10]',
-};
 
 const KIND_LABEL: Record<string, { sing: string; plur: string }> = {
   like: { sing: 'like', plur: 'likes' },
@@ -39,7 +28,6 @@ const KIND_LABEL: Record<string, { sing: string; plur: string }> = {
 function fmtTime(ms: number): string {
   return new Date(ms).toTimeString().slice(0, 8);
 }
-
 function fmtRange(firstMs: number, lastMs: number): string {
   const a = fmtTime(firstMs);
   const b = fmtTime(lastMs);
@@ -57,10 +45,9 @@ export const LogBucketRow = memo(function LogBucketRow({
 }: LogBucketRowProps) {
   const [open, setOpen] = useState(false);
   const meta = categoryMeta(bucket.category);
-  const stripe = STRIPE[bucket.category] ?? 'bg-fg-muted';
-  const tint = TINT[bucket.category] ?? 'hover:bg-fg/5';
   const label = KIND_LABEL[bucket.category] ?? { sing: 'evento', plur: 'eventos' };
   const word = bucket.count === 1 ? label.sing : label.plur;
+  const range = fmtRange(bucket.firstTs, bucket.lastTs);
 
   const toggle = useCallback(() => setOpen((v) => !v), []);
 
@@ -78,37 +65,35 @@ export const LogBucketRow = memo(function LogBucketRow({
         }}
         aria-expanded={open}
         aria-label={`${bucket.count} ${word} de @${bucket.user}, ${open ? 'colapsar' : 'expandir'}`}
-        className={`group flex items-baseline gap-2 px-2 py-[3px] text-[11px] font-mono leading-snug rounded-sm relative pl-3 cursor-pointer select-none ${tint}`}
-        title={`${bucket.count} ${word} de @${bucket.user} · ${fmtRange(bucket.firstTs, bucket.lastTs)}`}
+        className={`maru-bucket-card kind-${bucket.category}`}
+        title={`${bucket.count} ${word} de @${bucket.user} · ${range}`}
+        data-cv-auto-row
       >
-        <span
-          className={`absolute left-0 top-1 bottom-1 w-[2px] rounded-full ${stripe}`}
-          aria-hidden="true"
-        />
-        {showTimestamp && (
-          <span className="text-fg-subtle shrink-0 tabular-nums opacity-90 group-hover:opacity-100">
-            {fmtTime(bucket.lastTs)}
-          </span>
-        )}
         <ChevronRight
-          className={`h-3 w-3 shrink-0 text-fg-subtle group-hover:text-fg transition-transform ${open ? 'rotate-90' : ''}`}
+          className={`h-3 w-3 shrink-0 text-fg-subtle transition-transform ${open ? 'rotate-90' : ''}`}
           aria-hidden="true"
         />
-        <span className={`shrink-0 ${meta.color}`} title={bucket.category}>
+        <span className="maru-bucket-icon" aria-hidden="true">
           {meta.emoji}
         </span>
-        <span className="text-fg break-words flex-1 min-w-0">
-          <span className="text-accent font-semibold">@{bucket.user}</span>{' '}
-          <span className="text-fg-subtle">×</span>{' '}
-          <span className="font-semibold tabular-nums">{bucket.count}</span>{' '}
-          <span className="text-fg-subtle">{word}</span>
-        </span>
-        <span className="hidden group-hover:inline text-[9px] text-fg-subtle tabular-nums shrink-0">
-          {fmtRange(bucket.firstTs, bucket.lastTs)}
-        </span>
+
+        <div className="flex-1 min-w-0">
+          <div className="maru-event-line">
+            <span className="who">@{bucket.user}</span>
+            <span className="what">
+              {bucket.count} {word}
+            </span>
+          </div>
+          {showTimestamp && (
+            <div className="maru-event-meta">{range}</div>
+          )}
+        </div>
+
+        <span className="maru-bucket-count">×{bucket.count}</span>
       </div>
+
       {open && (
-        <div className="ml-3 border-l border-border/40 pl-1">
+        <div className="ml-3 border-l border-border/40 pl-1 flex flex-col gap-1.5 my-1">
           {bucket.entries.map((e) => (
             <LogEntryRow key={e.id} entry={e} showTimestamp={showTimestamp} />
           ))}

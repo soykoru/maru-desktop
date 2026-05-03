@@ -184,13 +184,7 @@ function TabButton({
       aria-selected={active}
       aria-controls={`tabpanel-${id}`}
       onClick={onClick}
-      className={[
-        'px-4 py-2 text-xs font-medium uppercase tracking-wider whitespace-nowrap',
-        'transition-colors border-b-2',
-        active
-          ? 'text-accent border-accent bg-bg-elev/50'
-          : 'text-fg-muted border-transparent hover:text-fg hover:bg-bg-elev/30',
-      ].join(' ')}
+      className={['maru-tab-v140', active ? 'active' : ''].join(' ')}
     >
       {label}
     </button>

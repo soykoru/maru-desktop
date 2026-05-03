@@ -1,5 +1,52 @@
 # Changelog — maru-desktop
 
+## 1.0.40 — 2026-05-03 · ⭐ Redesign visual 1→1000 (sin push hasta validación)
+
+Reescritura visual completa **sin remover ni un solo botón existente,
+sin RAM extra, sin re-renders adicionales**. Todo es CSS + componentes
+nuevos que envuelven (no reemplazan) la lógica existente. Build limpio
+en 6 fases incrementales con smoke build entre cada una.
+
+### FASE V1 · Header Global (56px)
+- Nuevo componente `HeaderGlobal.tsx` con brand mark gradient,
+  status pill (TikTok/Sidecar/Spotify/TTS), 4 swatches del theme
+  switcher y CTA del updater.
+- `MainLayout` ahora es `flex-col`: header arriba + las 3 columnas
+  intactas debajo. Paridad EXACTA con la composición previa.
+
+### FASE V2-V3 · Hero card del logo + TikTok card premium
+- Reemplazo del bloque del logo por `.maru-hero-card` con mesh
+  gradient animado (3 blobs flotando, GPU compositing).
+- TikTok GroupBox conserva título + handlers + input + botón connect,
+  pero ahora muestra avatar circular con iniciales + badge LIVE
+  pulsante cuando conectado + stats en 3 tiles modernos.
+
+### FASE V4 · Now Playing card (Spotify)
+- Nuevo `NowPlayingCard.tsx` que aparece SOLO cuando Spotify está
+  conectado. Background con gradient HSL derivado del nombre del track
+  (cero requests extra), scrim oscuro, controles glass (skip/toggle/skip).
+- El botón "Spotify" del GroupBox de Configuración sigue disponible.
+
+### FASE V5 · LogPanel feed cinemático
+- `LogEntryRow` ahora es card pill con icono coloreado por categoría,
+  body con who+what+meta y ts mono a la derecha.
+- `LogBucketRow` ahora es card kind-{like|gift|share} con badge ×N
+  grande en color de la categoría y chevron rotante al expandir.
+- Mantiene 100% la estructura: dedupe, filtros, virtualización,
+  autoscroll, bucket grouping, content-visibility.
+
+### FASE V6 · Tabs underline animado
+- Tabs del CenterPanel con indicador degradado accent→purple, glow,
+  animación de scale-in al cambiar de tab.
+
+### Reglas duras cumplidas
+- ✅ Cero botones eliminados.
+- ✅ Cero handlers/refs/useEffects modificados.
+- ✅ Cero RPC nuevos.
+- ✅ Cero RAM extra.
+- ✅ `prefers-reduced-motion` respetado por la regla global existente.
+- ✅ Smoke build limpio tras cada fase.
+
 ## 1.0.39 — 2026-05-02 · 🔴 !playfan raíz + TTS plomería + log agrupado + visual polish
 
 Sesión de 4 fases atacando todo desde la raíz, sin parches.

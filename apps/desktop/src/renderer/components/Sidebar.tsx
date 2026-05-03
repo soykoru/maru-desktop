@@ -28,6 +28,7 @@ import type { FortunesConfig, GameId, TtsVoiceMode } from '@maru/shared';
 import { GiftSelectorDialog } from './dialogs/gifts/GiftSelectorDialog.js';
 import { MaruImage } from '@maru/ui';
 import { ThemeSwitcher } from './ThemeSwitcher.js';
+import { NowPlayingCard } from './NowPlayingCard.js';
 
 /**
  * Sidebar — réplica fiel del `_build_left_panel` del MARU original.
@@ -303,58 +304,126 @@ export function Sidebar(): ReactNode {
 
   return (
     <div className="flex flex-col gap-2 pr-1">
-      {/* ── Logo ───────────────────────────────────────────────────── */}
-      {/* `maru-header-shine` aporta un gradiente sutil animado (30s) detrás
-          del logo. Composite-only (background-position) → 0 RAM extra,
-          sin re-render, sin layout. Premium feel sin distraer. */}
-      <div className="flex flex-col items-center pt-3 pb-2 rounded-lg maru-header-shine">
-        <img
-          src={logoSrc}
-          alt="MaruLive"
-          width={100}
-          height={100}
-          className="select-none drop-shadow-lg"
-          draggable={false}
-        />
-        <span className="mt-1 text-[10px] uppercase tracking-widest text-fg-subtle">
-          Chaos Engine v1.0.0
-        </span>
-      </div>
-
-      {/* ── 🎵 TikTok Live ─────────────────────────────────────────── */}
-      <GroupBox title="🎵 TikTok Live" density="md">
-        <div className="flex items-center gap-2 text-sm font-bold">
-          <StatusDot
-            status={
-              tiktokStatus === 'connected'
-                ? 'connected'
-                : tiktokStatus === 'connecting'
-                  ? 'connecting'
-                  : tiktokStatus === 'error'
-                    ? 'error'
-                    : 'disconnected'
-            }
-            label=""
+      {/* ── Hero card del logo (v1.0.40) ──────────────────────────── */}
+      {/* Mesh gradient animado de 3 blobs flotando detrás del logo —
+          composite-only (filter: blur + transform), GPU. Cero RAM
+          extra: solo 3 divs absolutos + 2 keyframes. La animación se
+          neutraliza por la regla global `prefers-reduced-motion` ya
+          presente en globals.css. */}
+      <div className="maru-hero-card">
+        <div className="maru-hero-mesh" aria-hidden="true">
+          <div className="blob b1" />
+          <div className="blob b2" />
+          <div className="blob b3" />
+        </div>
+        <div className="maru-hero-content flex flex-col items-center">
+          <img
+            src={logoSrc}
+            alt="MaruLive"
+            width={88}
+            height={88}
+            className="select-none drop-shadow-[0_8px_24px_rgb(0_0_0/0.4)]"
+            draggable={false}
           />
-          <span>
-            {isConnected
-              ? `@${tiktokUsername ?? ''}`
-              : isConnecting
-                ? 'Conectando…'
-                : 'Desconectado'}
+          <span className="mt-2 text-[14px] font-extrabold tracking-tight"
+                style={{
+                  background: 'linear-gradient(135deg, rgb(var(--maru-fg)), rgb(var(--maru-fg-muted)))',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+          >
+            MARU LIVE
+          </span>
+          <span className="mt-0.5 text-[9px] uppercase tracking-[0.22em] text-fg-subtle font-mono">
+            Chaos Engine
           </span>
         </div>
+      </div>
 
-        <div className="mt-1 grid grid-cols-3 gap-1 text-[11px] font-mono">
-          <div className="text-accent-red flex items-center gap-1">
-            <Heart className="h-3 w-3" />
-            <CountUp value={tiktokStats.likes} durationMs={500} />
+      {/* ── 🎵 TikTok Live (v1.0.40 premium) ──────────────────────── */}
+      {/* Conserva el GroupBox + título cyan + TODA la lógica de
+          conexión/cancel/error. Solo se rediseñan visualmente:
+            (1) header con avatar circular + LIVE badge cuando conectado.
+            (2) stats en 3 tiles modernos en vez de inline mono.
+          handleTikTokToggle / handleCancelConnect / setUsernameInput /
+          tiktokError / successFlashKey / errorShakeKey siguen idénticos. */}
+      <GroupBox title="🎵 TikTok Live" density="md">
+        {/* Header: avatar + nombre + badge LIVE */}
+        <div className="flex items-center gap-2.5">
+          <div
+            className={[
+              'maru-avatar-v140',
+              isConnected ? 'live' : 'disconnected',
+            ].join(' ')}
+            aria-hidden="true"
+          >
+            {(tiktokUsername || usernameInput || '?')
+              .replace(/^@/, '')
+              .charAt(0)
+              .toUpperCase() || '?'}
           </div>
-          <div className="text-info" title="Viewers">
-            👁 <CountUp value={tiktokStats.viewers} durationMs={500} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <StatusDot
+                status={
+                  tiktokStatus === 'connected'
+                    ? 'connected'
+                    : tiktokStatus === 'connecting'
+                      ? 'connecting'
+                      : tiktokStatus === 'error'
+                        ? 'error'
+                        : 'disconnected'
+                }
+                label=""
+              />
+              <span className="text-sm font-bold truncate">
+                {isConnected
+                  ? `@${tiktokUsername ?? ''}`
+                  : isConnecting
+                    ? 'Conectando…'
+                    : 'Desconectado'}
+              </span>
+            </div>
+            {!isConnected && !isConnecting && (
+              <span className="text-[10px] text-fg-subtle">
+                Esperando conexión
+              </span>
+            )}
           </div>
-          <div className="text-warning" title="Diamonds">
-            💎 <CountUp value={tiktokStats.diamonds} durationMs={500} />
+          {isConnected && (
+            <span className="maru-live-pill" aria-label="Live activo">
+              <span className="dot" />
+              LIVE
+            </span>
+          )}
+        </div>
+
+        {/* Stats en 3 tiles modernos (reemplaza el grid inline) */}
+        <div className="mt-3 grid grid-cols-3 gap-1.5">
+          <div className="maru-stat-tile">
+            <div className="maru-stat-tile-label text-accent-red">
+              <Heart className="h-3 w-3" /> Likes
+            </div>
+            <div className="maru-stat-tile-value">
+              <CountUp value={tiktokStats.likes} durationMs={500} />
+            </div>
+          </div>
+          <div className="maru-stat-tile">
+            <div className="maru-stat-tile-label text-info">
+              <span aria-hidden="true">👁</span> Vista
+            </div>
+            <div className="maru-stat-tile-value">
+              <CountUp value={tiktokStats.viewers} durationMs={500} />
+            </div>
+          </div>
+          <div className="maru-stat-tile">
+            <div className="maru-stat-tile-label text-warning">
+              <span aria-hidden="true">💎</span> Coins
+            </div>
+            <div className="maru-stat-tile-value">
+              <CountUp value={tiktokStats.diamonds} durationMs={500} />
+            </div>
           </div>
         </div>
 
@@ -437,6 +506,12 @@ export function Sidebar(): ReactNode {
           🔑 Configurar API key (evita rate limit de eulerstream)
         </button>
       </GroupBox>
+
+      {/* ── 🎶 Now Playing (Spotify) — solo aparece si conectado ─────── */}
+      {/* No reemplaza el botón "Spotify" que sigue en el GroupBox de
+          Configuración. Si Spotify NO está conectado, este componente
+          retorna null y no afecta el layout. */}
+      <NowPlayingCard />
 
       {/* ── 🎮 Perfil de Juego ─────────────────────────────────────── */}
       <GroupBox title="🎮 Perfil de Juego" density="md">

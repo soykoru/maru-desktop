@@ -236,7 +236,7 @@ export function LogPanel(): ReactNode {
           ref={scrollRef}
           onScroll={onScroll}
           data-scroll-area
-          className="flex-1 min-h-0 overflow-y-auto px-2 py-1 bg-bg-base/30"
+          className="flex-1 min-h-0 overflow-y-auto px-2 py-2 bg-bg-base/30 flex flex-col gap-1.5"
         >
           {log.visible.length === 0 ? (
             <div className="flex h-full items-center justify-center">

@@ -3,17 +3,20 @@ import type { LogEntry } from '@maru/shared';
 import { categoryMeta } from './log-meta.js';
 
 /**
- * `LogEntryRow` — fila profesional del log con stripe de categoría +
- * fondo tintado para categorías "fuertes" (gifts/errors) + parsing de
- * username (`@user`) y prefijo de rangos (`[mod]`/`[member L3]`/etc.).
+ * `LogEntryRow` (FASE V5 v1.0.40) — fila tipo card para cada evento.
  *
- * Reemplaza la versión plana monocromática por una de "logs de stream
- * tools" donde cada tipo de evento es identificable de un vistazo:
- *   - barra vertical 2px con color de categoría a la izquierda
- *   - emoji de categoría con su color
- *   - level badge (ERROR / WARN solo cuando aplica)
- *   - timestamp opcional (gris claro, tabular)
- *   - message con @user resaltado y `[rangos]` con chips
+ * Cambia respecto a la versión previa:
+ *   - Card pill con icono coloreado a la izquierda en vez de stripe 2px.
+ *   - Body con dos líneas: principal (who + what) y meta opcional.
+ *   - Timestamp en la derecha, mono tabular, opacidad 85%.
+ *   - Categorías con clase `cat-{id}` para tinte sutil + icon color.
+ *
+ * MANTIENE:
+ *   - `data-cv-auto-row` para content-visibility (perf).
+ *   - `memo` para evitar re-renders en cada push.
+ *   - Resaltado de @mentions y [rangos] en chips.
+ *   - Level badge solo para ERROR/WARN/CRITICAL.
+ *   - Title attribute con source y mensaje completo.
  */
 export interface LogEntryRowProps {
   entry: LogEntry;
@@ -32,78 +35,44 @@ const LEVEL_BADGE: Record<
   DEBUG: { text: 'DBG', cls: 'bg-fg/10 text-fg-subtle' },
 };
 
-const CATEGORY_BG_TINT: Record<string, string> = {
-  gift: 'bg-warning/[0.07] hover:bg-warning/[0.12]',
-  error: 'bg-danger/[0.08] hover:bg-danger/[0.14]',
-  warn: 'bg-warning/[0.05] hover:bg-warning/[0.10]',
-  rule: 'bg-accent/[0.05] hover:bg-accent/[0.10]',
-  action: 'bg-accent/[0.05] hover:bg-accent/[0.10]',
-  subscribe: 'bg-amber-400/[0.07] hover:bg-amber-400/[0.12]',
-  follow: 'bg-success/[0.04] hover:bg-success/[0.10]',
-  social: 'bg-emerald-400/[0.04] hover:bg-emerald-400/[0.10]',
-  music: 'bg-green-400/[0.04] hover:bg-green-400/[0.10]',
-};
-
-// Colores distintivos por categoría — basta un vistazo para identificar
-// gifts (amarillo), likes (rojo), follows (verde), reglas (accent),
-// comments (azul claro), emotes (violeta), música (verde-lima), IA (cian),
-// errores (rojo intenso). Cada categoría con su color propio.
-const CATEGORY_STRIPE: Record<string, string> = {
-  comment: 'bg-sky-400',
-  command: 'bg-accent',
-  emote: 'bg-purple-400',
-  gift: 'bg-warning',
-  follow: 'bg-success',
-  share: 'bg-cyan-400',
-  like: 'bg-accent-red',
-  subscribe: 'bg-amber-400',
-  rule: 'bg-accent',
-  action: 'bg-violet-400',
-  social: 'bg-emerald-400',
-  music: 'bg-green-400',
-  ia: 'bg-sky-500',
-  tts: 'bg-blue-400',
-  sound: 'bg-indigo-400',
-  tiktok: 'bg-pink-400',
-  profile: 'bg-fg-muted',
-  system: 'bg-fg-muted',
-  error: 'bg-danger',
-  warn: 'bg-warning',
-  debug: 'bg-fg-subtle',
-};
-
 function fmtTime(ms: number): string {
-  const d = new Date(ms);
-  return d.toTimeString().slice(0, 8);
+  return new Date(ms).toTimeString().slice(0, 8);
 }
 
-// Resalta `@username` en el texto del mensaje (color accent + bold).
-// También resalta los chips de rangos al inicio: `[mod][member L3]` etc.
-function renderMessage(message: string): React.ReactNode {
-  // Detectar prefijo de rangos: `[mod][member L3][G5]...:` o sin `:`.
-  const rankMatch = /^((?:\[[^\]]+\])+)\s*/.exec(message);
+/**
+ * Tokeniza el mensaje en piezas:
+ *   1. Prefijo de chips `[mod][member L3]` → render como chips.
+ *   2. Primer @mention → tratado como `who`.
+ *   3. Resto → `what` con @mentions internos resaltados.
+ *
+ * Evita parsing pesado: regex únicos, sin loops anidados.
+ */
+function partitionMessage(message: string): {
+  chips: string[];
+  who: string | null;
+  what: React.ReactNode;
+} {
   let rest = message;
-  let chips: React.ReactNode = null;
+  const chips: string[] = [];
+
+  const rankMatch = /^((?:\[[^\]]+\])+)\s*/.exec(rest);
   if (rankMatch && rankMatch[1]) {
     const tags = Array.from(rankMatch[1].matchAll(/\[([^\]]+)\]/g))
       .map((m) => m[1])
       .filter((t): t is string => Boolean(t));
-    chips = (
-      <span className="inline-flex gap-1 mr-1.5 align-middle">
-        {tags.map((t, i) => (
-          <span
-            key={i}
-            className="rounded px-1 py-px text-[9px] font-semibold uppercase tracking-wide bg-accent/15 text-accent leading-none"
-          >
-            {t}
-          </span>
-        ))}
-      </span>
-    );
-    rest = message.slice(rankMatch[0].length);
+    chips.push(...tags);
+    rest = rest.slice(rankMatch[0].length);
   }
 
-  // Resaltar @user mentions.
+  // Primer @user al inicio (post chips) → who.
+  let who: string | null = null;
+  const mentionAtStart = /^@([a-z0-9._]{2,30})/i.exec(rest);
+  if (mentionAtStart && mentionAtStart[1]) {
+    who = '@' + mentionAtStart[1];
+    rest = rest.slice(mentionAtStart[0].length).replace(/^[\s:,-]+/, '');
+  }
+
+  // Resaltar @mentions internos restantes.
   const parts: React.ReactNode[] = [];
   let lastIdx = 0;
   const userRe = /@[a-z0-9._]{2,30}/gi;
@@ -119,12 +88,11 @@ function renderMessage(message: string): React.ReactNode {
   }
   if (lastIdx < rest.length) parts.push(rest.slice(lastIdx));
 
-  return (
-    <>
-      {chips}
-      {parts.length === 0 ? rest : parts}
-    </>
-  );
+  return {
+    chips,
+    who,
+    what: parts.length === 0 ? rest : parts,
+  };
 }
 
 export const LogEntryRow = memo(function LogEntryRow({
@@ -132,38 +100,48 @@ export const LogEntryRow = memo(function LogEntryRow({
   showTimestamp = true,
 }: LogEntryRowProps) {
   const meta = categoryMeta(entry.category);
-  const tint = CATEGORY_BG_TINT[entry.category] ?? 'hover:bg-fg/5';
-  const stripe = CATEGORY_STRIPE[entry.category] ?? 'bg-fg-muted';
   const levelBadge = LEVEL_BADGE[entry.level] ?? null;
+  const { chips, who, what } = partitionMessage(entry.message);
 
   return (
     <div
       data-cv-auto-row
-      className={`group flex items-baseline gap-2 px-2 py-[3px] text-[11px] font-mono leading-snug rounded-sm relative pl-3 ${tint}`}
+      className={`maru-event-card cat-${entry.category}`}
       title={`[${entry.source}] ${entry.message}`}
     >
-      <span
-        className={`absolute left-0 top-1 bottom-1 w-[2px] rounded-full ${stripe}`}
-        aria-hidden="true"
-      />
+      <span className="maru-event-icon" aria-hidden="true">
+        {meta.emoji}
+      </span>
+
+      <div className="maru-event-body">
+        <div className="maru-event-line">
+          {chips.length > 0 && (
+            <span className="inline-flex gap-1 mr-0.5">
+              {chips.map((t, i) => (
+                <span
+                  key={i}
+                  className="rounded px-1 py-px text-[8.5px] font-bold uppercase tracking-wide bg-accent/15 text-accent leading-none"
+                >
+                  {t}
+                </span>
+              ))}
+            </span>
+          )}
+          {levelBadge && (
+            <span className={`maru-event-level ${levelBadge.cls}`}>
+              {levelBadge.text}
+            </span>
+          )}
+          {who && <span className="who">{who}</span>}
+          <span className="what">{what}</span>
+        </div>
+      </div>
+
       {showTimestamp && (
-        <span className="text-fg-subtle shrink-0 tabular-nums opacity-90 group-hover:opacity-100">
+        <span className="maru-event-ts" aria-label={`Hora ${fmtTime(entry.ts)}`}>
           {fmtTime(entry.ts)}
         </span>
       )}
-      <span className={`shrink-0 ${meta.color}`} title={entry.category}>
-        {meta.emoji}
-      </span>
-      {levelBadge && (
-        <span
-          className={`shrink-0 rounded px-1 py-px text-[9px] font-bold tracking-wide leading-none ${levelBadge.cls}`}
-        >
-          {levelBadge.text}
-        </span>
-      )}
-      <span className="text-fg break-words flex-1 min-w-0">
-        {renderMessage(entry.message)}
-      </span>
     </div>
   );
 });

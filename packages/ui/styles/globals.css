@@ -1010,6 +1010,680 @@ select:focus-visible {
   animation: maru-pop var(--maru-dur-base) var(--maru-ease-spring);
 }
 
+/* ════════════════════════════════════════════════════════════════════
+ * REDESIGN v1.0.40 — Header global premium
+ *
+ * Barra superior 56px que sumamos sobre el shell `flex h-screen`. El
+ * resto del layout no cambia (sigue Sidebar+Center+LogPanel debajo).
+ * Composite-only: backdrop-filter (GPU), gradient text, transitions
+ * sobre transform/opacity. Cero re-renders extra de React.
+ * ─────────────────────────────────────────────────────────────────── */
+
+.header-v140 {
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.1));
+  border-bottom: 1px solid rgb(var(--maru-fg) / 0.06);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+.header-v140::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--maru-accent) / 0.5),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Brand mark — cuadrado redondeado con gradient signature del tema */
+.header-v140-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--maru-accent)),
+    rgb(var(--maru-accent-purple))
+  );
+  box-shadow:
+    0 4px 12px rgb(var(--maru-accent) / 0.4),
+    inset 0 1px 0 rgb(255 255 255 / 0.3);
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
+/* Brand text con gradient text effect (off-white → muted) */
+.header-v140-brand {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--maru-fg)),
+    rgb(var(--maru-fg-muted))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+}
+
+/* Theme swatch — círculo de 18px con gradient firma del tema */
+.theme-swatch-v140 {
+  cursor: pointer;
+  will-change: transform;
+}
+
+/* CTA del updater — acento sutil con hover scale */
+.header-v140-cta {
+  will-change: transform, background-color;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * REDESIGN v1.0.40 — Hero card del logo (sidebar)
+ *
+ * Sustituye el contenedor `maru-header-shine` con un card más premium
+ * que tiene mesh gradient animado de 3 blobs flotando detrás del logo.
+ * Coste: 3 divs absolutos con `filter: blur(40px)` + 1 keyframe lento
+ * de 30s. GPU compositing, no layout. Si `prefers-reduced-motion`,
+ * la animación se neutraliza.
+ * ─────────────────────────────────────────────────────────────────── */
+
+.maru-hero-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--maru-radius-xl);
+  padding: 22px 16px 18px;
+  background: rgb(var(--maru-bg-surface) / 0.5);
+  border: 1px solid rgb(var(--maru-fg) / 0.10);
+  text-align: center;
+  isolation: isolate;
+}
+.maru-hero-card::after {
+  /* Inset highlight sutil arriba (premium feel) */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.04), transparent 40%);
+}
+.maru-hero-mesh {
+  position: absolute;
+  inset: -40%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(38px);
+  opacity: 0.55;
+  animation: maru-mesh-rotate 30s linear infinite;
+  will-change: transform;
+}
+.maru-hero-mesh > .blob {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+}
+.maru-hero-mesh > .b1 {
+  top: 8%;
+  left: 4%;
+  background: rgb(var(--maru-accent) / 0.55);
+}
+.maru-hero-mesh > .b2 {
+  top: 38%;
+  right: 4%;
+  background: rgb(var(--maru-accent-blue) / 0.5);
+  animation: maru-blob-float 18s ease-in-out infinite;
+}
+.maru-hero-mesh > .b3 {
+  bottom: 0%;
+  left: 28%;
+  background: rgb(var(--maru-accent-purple) / 0.45);
+  animation: maru-blob-float 24s ease-in-out infinite reverse;
+}
+@keyframes maru-mesh-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes maru-blob-float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(28px, -22px); }
+}
+.maru-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * REDESIGN v1.0.40 — Tile compacto premium para stats inline
+ *
+ * Reemplaza el grid `grid-cols-3 text-[11px] font-mono` plano por tiles
+ * con su propia caja, label uppercase mini, número grande tabular y
+ * sparkline opcional al fondo. Cero RAM extra (CSS-only).
+ * ─────────────────────────────────────────────────────────────────── */
+
+.maru-stat-tile {
+  position: relative;
+  background: rgb(var(--maru-fg) / 0.04);
+  border: 1px solid rgb(var(--maru-fg) / 0.06);
+  border-radius: 12px;
+  padding: 9px 10px;
+  overflow: hidden;
+  transition: background var(--maru-dur-fast) var(--maru-ease);
+}
+.maru-stat-tile:hover {
+  background: rgb(var(--maru-fg) / 0.07);
+}
+.maru-stat-tile-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgb(var(--maru-fg-subtle));
+}
+.maru-stat-tile-value {
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Avatar con ring por estado de conexión TikTok */
+.maru-avatar-v140 {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff0050, #00f2ea);
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+  border: 2px solid rgb(var(--maru-bg-surface));
+  flex-shrink: 0;
+}
+.maru-avatar-v140.live {
+  box-shadow: 0 0 0 2px rgb(var(--maru-success) / 0.6);
+}
+.maru-avatar-v140.disconnected {
+  filter: grayscale(0.7);
+  opacity: 0.7;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * REDESIGN v1.0.40 — Now Playing card (Spotify)
+ *
+ * Card de 130px alto con fondo derivado del track, scrim oscuro y
+ * controles glass. Composite-only: blur + transform en hover. Cero RAM
+ * extra (no se cargan covers reales — solo gradient HSL derivado).
+ * ─────────────────────────────────────────────────────────────────── */
+
+.maru-np-card {
+  position: relative;
+  border-radius: var(--maru-radius-xl);
+  overflow: hidden;
+  height: 130px;
+  border: 1px solid rgb(var(--maru-fg) / 0.08);
+  isolation: isolate;
+}
+.maru-np-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  filter: blur(22px) saturate(150%);
+  transform: scale(1.25);
+  /* background es inline (gradient derivado del track) */
+}
+.maru-np-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, transparent 25%, rgb(0 0 0 / 0.85));
+  pointer-events: none;
+}
+.maru-np-source {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1DB954;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.7);
+}
+.maru-np-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: flex;
+  gap: 5px;
+}
+.maru-np-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  color: white;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform var(--maru-dur-fast) var(--maru-ease),
+              background var(--maru-dur-fast) var(--maru-ease);
+}
+.maru-np-btn:hover {
+  background: rgb(255 255 255 / 0.22);
+  transform: scale(1.08);
+}
+.maru-np-btn.primary {
+  background: white;
+  color: black;
+}
+.maru-np-btn.primary:hover {
+  background: white;
+  transform: scale(1.12);
+}
+.maru-np-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 14px;
+  color: white;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.5);
+}
+.maru-np-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.maru-np-artist {
+  font-size: 11px;
+  color: rgb(255 255 255 / 0.75);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.maru-np-progress {
+  margin-top: 8px;
+  height: 3px;
+  background: rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.maru-np-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1DB954, white);
+  border-radius: 999px;
+  transition: width 800ms linear;
+}
+
+/* Badge LIVE pulsante */
+.maru-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: rgb(var(--maru-danger) / 0.15);
+  border: 1px solid rgb(var(--maru-danger) / 0.4);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: rgb(var(--maru-danger));
+}
+.maru-live-pill > .dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--maru-danger));
+}
+.maru-live-pill > .dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: rgb(var(--maru-danger) / 0.4);
+  animation: maru-live-ring 1.4s ease-out infinite;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * REDESIGN v1.0.40 — LogPanel feed cinemático
+ *
+ * Cards individuales para cada evento del log (FASE V5). Reemplaza la
+ * fila densa monoespaciada por una mini-card con icono coloreado a la
+ * izquierda + body con who/what/meta + ts a la derecha. Premium feel
+ * sin coste extra: solo border-radius + padding + hover transition.
+ *
+ * Categorías destacadas:
+ *   - gifts → background con gradient warning + amount badge.
+ *   - errors → border danger + level badge.
+ *   - buckets → contador `×N` grande en el lado derecho.
+ *
+ * Performance:
+ *   - Cada `.maru-event-card` tiene `contain: layout paint` para aislar
+ *     repaints (cuando llega un nuevo evento, no se repinta toda la lista).
+ *   - `content-visibility: auto` sigue activo via [data-cv-auto-row].
+ *   - Sin `box-shadow` por card → solo aparece en hover (compositor-only).
+ * ─────────────────────────────────────────────────────────────────── */
+
+.maru-event-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--maru-fg) / 0.05);
+  background: rgb(var(--maru-bg-surface) / 0.35);
+  transition:
+    background var(--maru-dur-fast) var(--maru-ease),
+    border-color var(--maru-dur-fast) var(--maru-ease),
+    transform var(--maru-dur-fast) var(--maru-ease);
+  contain: layout paint;
+}
+.maru-event-card:hover {
+  background: rgb(var(--maru-bg-surface) / 0.6);
+  border-color: rgb(var(--maru-fg) / 0.10);
+  transform: translateX(2px);
+}
+
+.maru-event-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  background: rgb(var(--maru-fg) / 0.06);
+  color: rgb(var(--maru-fg-muted));
+}
+.maru-event-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.maru-event-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: rgb(var(--maru-fg));
+  font-family: 'Geist', sans-serif;
+}
+.maru-event-line .who {
+  font-weight: 700;
+  color: rgb(var(--maru-accent));
+}
+.maru-event-line .what {
+  color: rgb(var(--maru-fg-muted));
+  word-break: break-word;
+  min-width: 0;
+}
+.maru-event-meta {
+  font-size: 9.5px;
+  color: rgb(var(--maru-fg-subtle));
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+.maru-event-ts {
+  font-size: 9.5px;
+  color: rgb(var(--maru-fg-subtle));
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* Variantes coloreadas por categoría — solo cambia color del icono y un
+ * tinte muy sutil al fondo (composite-only). */
+.maru-event-card.cat-gift {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--maru-warning) / 0.10),
+    rgb(var(--maru-bg-surface) / 0.35)
+  );
+  border-color: rgb(var(--maru-warning) / 0.25);
+}
+.maru-event-card.cat-gift .maru-event-icon {
+  background: linear-gradient(135deg, rgb(var(--maru-warning)), #ff9800);
+  color: white;
+  box-shadow: 0 4px 12px rgb(var(--maru-warning) / 0.30);
+}
+.maru-event-card.cat-like .maru-event-icon {
+  background: rgb(var(--maru-accent-red) / 0.15);
+  color: rgb(var(--maru-accent-red));
+}
+.maru-event-card.cat-follow .maru-event-icon {
+  background: rgb(var(--maru-success) / 0.15);
+  color: rgb(var(--maru-success));
+}
+.maru-event-card.cat-comment .maru-event-icon {
+  background: rgb(var(--maru-info) / 0.15);
+  color: rgb(var(--maru-info));
+}
+.maru-event-card.cat-command .maru-event-icon {
+  background: rgb(var(--maru-accent) / 0.15);
+  color: rgb(var(--maru-accent));
+}
+.maru-event-card.cat-share .maru-event-icon {
+  background: rgb(126 214 223 / 0.15);
+  color: rgb(126, 214, 223);
+}
+.maru-event-card.cat-music .maru-event-icon {
+  background: rgb(46 204 113 / 0.18);
+  color: rgb(46, 204, 113);
+}
+.maru-event-card.cat-tts .maru-event-icon,
+.maru-event-card.cat-sound .maru-event-icon {
+  background: rgb(116 185 255 / 0.15);
+  color: rgb(116, 185, 255);
+}
+.maru-event-card.cat-rule .maru-event-icon,
+.maru-event-card.cat-action .maru-event-icon {
+  background: rgb(var(--maru-accent) / 0.12);
+  color: rgb(var(--maru-accent));
+}
+.maru-event-card.cat-error {
+  border-color: rgb(var(--maru-danger) / 0.35);
+  background: rgb(var(--maru-danger) / 0.07);
+}
+.maru-event-card.cat-error .maru-event-icon {
+  background: rgb(var(--maru-danger) / 0.18);
+  color: rgb(var(--maru-danger));
+}
+.maru-event-card.cat-warn .maru-event-icon {
+  background: rgb(var(--maru-warning) / 0.15);
+  color: rgb(var(--maru-warning));
+}
+
+/* Level badge inline (ERR / WRN / DBG) */
+.maru-event-level {
+  flex-shrink: 0;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Bucket card (likes/gifts/shares agrupados consecutivos) */
+.maru-bucket-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: rgb(var(--maru-accent-red) / 0.06);
+  border: 1px solid rgb(var(--maru-accent-red) / 0.20);
+  cursor: pointer;
+  transition: all var(--maru-dur-fast) var(--maru-ease);
+  contain: layout paint;
+}
+.maru-bucket-card:hover {
+  background: rgb(var(--maru-accent-red) / 0.10);
+  transform: translateX(2px);
+}
+.maru-bucket-card.kind-gift {
+  background: rgb(var(--maru-warning) / 0.07);
+  border-color: rgb(var(--maru-warning) / 0.22);
+}
+.maru-bucket-card.kind-gift:hover {
+  background: rgb(var(--maru-warning) / 0.12);
+}
+.maru-bucket-card.kind-share {
+  background: rgb(126 214 223 / 0.07);
+  border-color: rgb(126 214 223 / 0.22);
+}
+.maru-bucket-card.kind-share:hover {
+  background: rgb(126 214 223 / 0.12);
+}
+.maru-bucket-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.maru-bucket-card.kind-like .maru-bucket-icon {
+  background: rgb(var(--maru-accent-red) / 0.20);
+  color: rgb(var(--maru-accent-red));
+}
+.maru-bucket-card.kind-gift .maru-bucket-icon {
+  background: rgb(var(--maru-warning) / 0.20);
+  color: rgb(var(--maru-warning));
+}
+.maru-bucket-card.kind-share .maru-bucket-icon {
+  background: rgb(126 214 223 / 0.20);
+  color: rgb(126, 214, 223);
+}
+.maru-bucket-count {
+  font-size: 11px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: white;
+  flex-shrink: 0;
+}
+.maru-bucket-card.kind-like .maru-bucket-count {
+  background: rgb(var(--maru-accent-red));
+}
+.maru-bucket-card.kind-gift .maru-bucket-count {
+  background: rgb(var(--maru-warning));
+}
+.maru-bucket-card.kind-share .maru-bucket-count {
+  background: rgb(126, 214, 223);
+  color: rgb(13, 13, 24);
+}
+
+/* Stats pill compacta del log (eventos / por minuto / pico) */
+.maru-log-stats-pill {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgb(var(--maru-bg-surface) / 0.5);
+  border: 1px solid rgb(var(--maru-fg) / 0.06);
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+.maru-log-stats-pill .num {
+  color: rgb(var(--maru-fg));
+  font-weight: 700;
+}
+.maru-log-stats-pill .lbl {
+  color: rgb(var(--maru-fg-subtle));
+  margin-left: 4px;
+  font-size: 10px;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * REDESIGN v1.0.40 — Tab underline animado (CenterPanel)
+ *
+ * Sustituye el border-bottom estático por un underline con gradient
+ * accent → accent-purple, sombra de glow, y transition animada cuando
+ * cambia de tab. Composite-only.
+ * ─────────────────────────────────────────────────────────────────── */
+
+.maru-tab-v140 {
+  position: relative;
+  padding: 10px 16px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: rgb(var(--maru-fg-subtle));
+  transition: color var(--maru-dur-fast) var(--maru-ease);
+}
+.maru-tab-v140:hover {
+  color: rgb(var(--maru-fg-muted));
+}
+.maru-tab-v140.active {
+  color: rgb(var(--maru-fg));
+}
+.maru-tab-v140.active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--maru-accent)),
+    rgb(var(--maru-accent-purple))
+  );
+  border-radius: 999px;
+  box-shadow: 0 0 8px rgb(var(--maru-accent) / 0.6);
+  animation: maru-tab-grow var(--maru-dur-base) var(--maru-ease);
+}
+@keyframes maru-tab-grow {
+  from { transform: scaleX(0.3); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
 /* ── Connect button states premium ────────────────────────────────────
  * success-flash: anillo verde que se expande+desvanece al conectarse OK.
  * error-shake:   sacudida horizontal sutil al fallo.
