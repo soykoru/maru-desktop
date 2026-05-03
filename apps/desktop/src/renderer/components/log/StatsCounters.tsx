@@ -3,20 +3,17 @@ import { CountUp } from '@maru/ui';
 import type { LogEntry } from '@maru/shared';
 
 /**
- * `StatsCounters` (v1.0.41) — 6 tiles compactos con emoji + número + label.
+ * `StatsCounters` (v1.0.46) — 6 tiles compactos con emoji + número + label.
  *
- * Antes mostrábamos solo emoji + número, lo que hacía que "👤" pareciera
- * "Usuarios" cuando en realidad es Follows. Ahora cada tile lleva una
- * label corta visible debajo del número.
+ * Conteo (CRÍTICO v1.0.46):
+ *   Suma `meta.count` de cada entry cuando existe, sino cuenta 1. Esto
+ *   refleja el VOLUMEN REAL: un entry "❤️ @user dio 47 likes" cuenta
+ *   como 47 (no como 1). Sin esto el contador "Likes" mostraba el N°
+ *   de entries en el log, no la cantidad real de likes recibidos.
  *
- * Conteo:
- *   - Sumamos por las categorías declaradas en `cats`. Para "Likes"
- *     contamos también `like_milestone` si el sidecar lo loguea como
- *     categoría aparte (paridad MARU original donde llega en batches).
- *
- * Se mantiene `CountUp` (ease-out cubic 500ms) para la animación
- * incremental. memo implícito vía useMemo para evitar recálculo en cada
- * push.
+ *   Aplica al campo Likes (donde el sidecar mete count del worker).
+ *   Para gifts/follows/etc. la mayoría de entries no tienen meta.count
+ *   y caen al default 1.
  */
 export interface StatsCountersProps {
   /** Entries actuales del log buffer (max 500). */
@@ -42,7 +39,13 @@ export function StatsCounters({ entries }: StatsCountersProps) {
   const counts = useMemo(() => {
     const out: Record<string, number> = {};
     for (const e of entries) {
-      out[e.category] = (out[e.category] ?? 0) + 1;
+      // Sumamos meta.count si está, sino 1. Para likes el sidecar mete
+      // el count real del batch (e.g. 47), entonces el contador refleja
+      // los 47 likes — no las N entries del log.
+      const meta = (e.meta ?? {}) as Record<string, unknown>;
+      const raw = typeof meta.count === 'number' ? meta.count : Number(meta.count);
+      const inc = Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 1;
+      out[e.category] = (out[e.category] ?? 0) + inc;
     }
     return out;
   }, [entries]);

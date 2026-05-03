@@ -1,5 +1,46 @@
 # Changelog — maru-desktop
 
+## 1.0.46 — 2026-05-04 · 🔬 Log raíz: agrupación correcta + counter real
+
+Auditoría completa del log. 3 bugs raíz cerrados.
+
+### Likes en log: agrupación rota
+**Síntoma**: a veces aparecía "@gottina dio 2 likes" + "@gottina dio
+15 likes" como entries separados en vez de un solo bucket.
+
+**Bug raíz #1 — batcher 1.5s del sidecar fragmentaba**: el
+`_batch_like_for_log` acumulaba 1.5s sin nuevos likes y emitía. Si
+el viewer pausaba 2s entre ráfagas, se generaban 2 entries — y el
+front ya no podía re-agruparlos.
+
+**Bug raíz #2 — grouping front exigía consecutivos estrictos**: si en
+medio de la racha de likes de @gottina llegaba 1 comment de @otro,
+el bucket se rompía y los siguientes likes de @gottina aparecían
+individuales.
+
+**Fix integral**:
+- Sidecar emite UN log:entry POR EVENTO del worker (cada batch real
+  de TikTok WS = 1 entry con `meta.count` correcto). Sin batcher local.
+- Frontend `groupConsecutive` reescrito con anchor por (categoría,
+  user). Agrupa todos los entries del mismo (cat, user) dentro de la
+  ventana 60s — INCLUSO si hay entries intercalados de otros users.
+  El bucket se renderiza en la posición del primer entry; los
+  siguientes "desaparecen" del flujo y aparecen al expandir el chevron.
+- `count` del bucket = Σ meta.count (no N° de entries). "@gottina × 47
+  likes" muestra likes reales.
+
+### Stats counter "Likes" arriba: contaba entries, no volumen
+**Bug raíz #3**: `StatsCounters` hacía `out[cat] += 1` por entry. Cada
+entry "dio 50 likes" sumaba 1 al counter "Likes" (debía sumar 50).
+
+**Fix**: `out[cat] += meta.count ?? 1`. Ahora el contador refleja
+likes REALES recibidos, no entries del log.
+
+### Categorías agrupables ampliadas
+- like, gift, share, follow, comment, command, sound, **rule** (NUEVO).
+  Si una regla ejecuta 50 veces por un batch de likes, las 50
+  ejecuciones se agrupan en un bucket "✅ regla → acción × 50".
+
 ## 1.0.45 — 2026-05-04 · 🧹 Log limpio: likes batched + ruido suprimido
 
 ### Likes en log: batched + agrupado

@@ -107,14 +107,6 @@ class TikTokService:
         # "TikTok API" del sidebar). Se refresca con cada error fatal del
         # worker (`_on_error` / `_on_log_message` con SignAPIError).
         self._last_error: str = ""
-        # Batcher de likes para el log (v1.0.45) — los likes vienen en
-        # ráfaga (un viewer da 50 likes en 3s). Antes el legacy emitía
-        # un log_message crudo por cada uno → log inundado. Ahora
-        # acumulamos por user y emitimos UN solo `log:entry` cuando
-        # se cumple el cooldown (1.5s sin nuevos likes del mismo user).
-        # Stats y record_tap siguen siendo en tiempo real (no afectados).
-        self._like_batch: dict[str, dict[str, Any]] = {}
-        self._like_batch_lock = threading.Lock()
 
     def attach_donations(self, donations: Any) -> None:
         self._donations = donations
@@ -130,66 +122,6 @@ class TikTokService:
         con `is_super_fan=True/False` para sincronizar la lista de
         usuarios prioritarios !playfan."""
         self._spotify = spotify
-
-    # ── Like log batcher (v1.0.45) ────────────────────────────────────
-    def _batch_like_for_log(self, user: str, count: int, merged: dict[str, Any]) -> None:
-        """Acumula likes por usuario y emite UN solo log:entry tras 1.5s
-        sin nuevos likes del mismo user. Evita inundar el LogPanel y
-        permite al log-grouping del front colapsarlos visualmente cuando
-        haya varios usuarios en simultáneo.
-
-        Stats y record_tap NO pasan por acá — siguen siendo en tiempo
-        real (el chat_dispatcher los procesa al llegar el evento).
-        """
-        if self._logs is None or count <= 0:
-            return
-        key = (user or "?").strip().lower() or "?"
-        with self._like_batch_lock:
-            entry = self._like_batch.get(key)
-            if entry is None:
-                entry = {
-                    "user": user,
-                    "count": 0,
-                    "rank_pref": _rank_prefix(merged) if merged.get("rank") else "",
-                    "timer": None,
-                }
-                self._like_batch[key] = entry
-            entry["count"] += count
-            # Cancelar timer pendiente (extender la ventana mientras
-            # siga llegando ráfaga).
-            if entry["timer"] is not None:
-                try:
-                    entry["timer"].cancel()
-                except Exception:
-                    pass
-            t = threading.Timer(1.5, self._flush_like_batch, args=(key,))
-            t.daemon = True
-            entry["timer"] = t
-            t.start()
-
-    def _flush_like_batch(self, key: str) -> None:
-        """Disparado por el Timer 1.5s después del último like del user.
-        Emite UN log:entry con el count acumulado y limpia el slot."""
-        with self._like_batch_lock:
-            entry = self._like_batch.pop(key, None)
-        if entry is None or entry["count"] <= 0:
-            return
-        try:
-            count = int(entry["count"])
-            user = str(entry["user"])
-            rank_pref = str(entry["rank_pref"])
-            label = "like" if count == 1 else "likes"
-            msg = f"❤️ {rank_pref}@{user} dio {count} {label}"
-            self._logs.publish(
-                msg,
-                level="INFO",
-                source="tiktok",
-                category="like",
-                skip_dedupe=True,
-                meta={"user": user, "count": count},
-            )
-        except Exception:
-            log.exception("flush like batch fallo (key=%s)", key)
 
     def _extract_avatar_url(self) -> str:
         """Lee la URL del avatar del streamer desde `client._room_info`.
@@ -729,17 +661,34 @@ class TikTokService:
                 except Exception:
                     pass
 
-            # Likes coalesced (v1.0.45) — acumulamos por user y emitimos
-            # UN log:entry cuando termina la ráfaga (1.5s sin nuevos
-            # likes). El front-end los AGRUPA visualmente vía
-            # log-grouping si llegaran varios buckets seguidos del mismo
-            # user en distintas ventanas.
+            # Likes (v1.0.46) — emitimos UN log:entry POR EVENTO con su
+            # count real (el worker ya batchea por TikTok WS, típicamente
+            # 50-200 likes por evento). NO usamos batcher local — eso
+            # fragmentaba un stream natural en N entries pequeños y el
+            # front-end no podía re-agrupar si había otros usuarios en
+            # medio. Ahora cada evento → 1 entry con meta.count = N. El
+            # front-end agrupa todos los entries del mismo user que
+            # estén dentro de la ventana de cohesión (60s) — INCLUSO si
+            # hay entries intercalados de otros users.
             if event_type == "like" and self._logs is not None:
                 try:
                     count = int(data.get("count") or 1)
                 except (TypeError, ValueError):
                     count = 1
-                self._batch_like_for_log(user, count, merged)
+                if count > 0:
+                    rank_pref = _rank_prefix(merged) if merged.get("rank") else ""
+                    label = "like" if count == 1 else "likes"
+                    try:
+                        self._logs.publish(
+                            f"❤️ {rank_pref}@{user} dio {count} {label}",
+                            level="INFO",
+                            source="tiktok",
+                            category="like",
+                            skip_dedupe=True,
+                            meta={"user": user, "count": count},
+                        )
+                    except Exception:
+                        pass
 
         def _on_stats(stats: dict[str, Any]) -> None:
             self._stats.update({k: int(v) for k, v in stats.items() if isinstance(v, (int, float))})

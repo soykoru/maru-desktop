@@ -88,66 +88,102 @@ function entryUser(e: LogEntry): string {
 }
 
 /**
- * Agrupa eventos consecutivos `like|gift|share` del mismo user que estén
- * dentro de la ventana de cohesión. Devuelve la lista mezclada de
- * `LogEntry` (eventos sueltos o categorías no agrupables) + `LogBucket`.
+ * Suma de `count` (likes / gifts) — para likes el sidecar mete el count
+ * real del batch del worker en `meta.count`. Para entries sin meta,
+ * cada entry vale 1.
+ */
+export function entryCount(e: LogEntry): number {
+  const meta = (e.meta ?? {}) as Record<string, unknown>;
+  const c = typeof meta.count === 'number' ? meta.count : Number(meta.count);
+  return Number.isFinite(c) && c > 0 ? Math.floor(c) : 1;
+}
+
+/**
+ * Agrupa eventos `like|gift|share|...` del mismo (categoría, user) que
+ * caigan dentro de una ventana sliding de 60s.
+ *
+ * Cambio v1.0.46 (bug raíz): la versión previa exigía CONSECUTIVOS
+ * estrictos. Si en medio de una racha de 50 likes de @gottina llegaba
+ * un comment de @otro, el bucket de gottina se rompía y los siguientes
+ * likes de gottina aparecían como entries individuales — la app
+ * mostraba "@gottina dio 2 likes" + "@gottina dio 15 likes" sin
+ * agrupar. Ahora cada (categoría, user) tiene UN bucket activo dentro
+ * de la ventana 60s; entries del mismo (cat, user) se SUMAN al bucket
+ * existente aunque haya entries intercalados de otros users.
+ *
+ * El bucket se renderiza en la posición del PRIMER entry — los
+ * siguientes "desaparecen" del flujo individual y solo aparecen
+ * expandidos al click del chevron.
+ *
+ * `count` del bucket = Σ entryCount(e) — para likes con meta.count=N
+ * agregamos N, no 1. Visualmente: "@gottina × 47 likes".
  *
  * Estable: dos llamadas con la misma `entries` producen IDs idénticos.
- * Memoizable a nivel React via `useMemo([entries])`.
  */
 export function groupConsecutive(entries: readonly LogEntry[]): LogItem[] {
   if (entries.length === 0) return [];
-  const out: LogItem[] = [];
-  let bucket: LogEntry[] | null = null;
 
-  const flushBucket = () => {
-    if (!bucket || bucket.length === 0) return;
-    if (bucket.length < MIN_BUCKET_SIZE) {
-      // No vale la pena colapsar — push individual.
-      for (const e of bucket) out.push(e);
-    } else {
-      const first = bucket[0]!;
-      const last = bucket[bucket.length - 1]!;
-      out.push({
-        id: `bucket::${first.category}::${entryUser(first)}::${first.id}`,
-        type: 'bucket',
-        category: first.category,
-        user: entryUser(first),
-        entries: bucket.slice(),
-        count: bucket.length,
-        firstTs: first.ts,
-        lastTs: last.ts,
-      });
-    }
-    bucket = null;
-  };
+  // Pase 1: identificar buckets candidatos (multi-entry del mismo
+  // (cat, user) dentro de la ventana). Anchor = índice del PRIMER
+  // entry del bucket.
+  const bucketByKey = new Map<string, number>(); // key → anchorIdx
+  const memberToAnchor = new Map<number, number>(); // entryIdx → anchorIdx
+  const anchorMembers = new Map<number, number[]>(); // anchorIdx → [entryIdx]
 
-  for (const e of entries) {
-    const cat = e.category;
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i]!;
+    if (!GROUPABLE.has(e.category)) continue;
     const user = entryUser(e);
-    const groupable = GROUPABLE.has(cat) && Boolean(user);
+    if (!user) continue;
+    const key = `${e.category}::${user}`;
+    const anchorIdx = bucketByKey.get(key);
+    if (anchorIdx !== undefined) {
+      const anchor = entries[anchorIdx]!;
+      // Ventana sliding desde el anchor (no desde el último para que la
+      // racha no se "extienda" indefinidamente con goteo).
+      if (e.ts - anchor.ts <= COHESION_WINDOW_MS) {
+        memberToAnchor.set(i, anchorIdx);
+        const list = anchorMembers.get(anchorIdx) ?? [anchorIdx];
+        list.push(i);
+        anchorMembers.set(anchorIdx, list);
+        continue;
+      }
+      // Pasó la ventana — empieza nuevo bucket con este como anchor.
+    }
+    bucketByKey.set(key, i);
+    anchorMembers.set(i, [i]);
+  }
 
-    if (!groupable) {
-      flushBucket();
+  // Pase 2: emitir output. Cada anchor con ≥ MIN_BUCKET_SIZE → bucket;
+  // sino → entries individuales.
+  const out: LogItem[] = [];
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i]!;
+    const anchorIdx = memberToAnchor.get(i);
+    if (anchorIdx !== undefined && anchorIdx !== i) {
+      // Este entry pertenece a un bucket cuyo anchor ya fue procesado
+      // antes — lo absorbemos, no lo emitimos.
+      continue;
+    }
+    const members = anchorMembers.get(i);
+    if (!members || members.length < MIN_BUCKET_SIZE) {
       out.push(e);
       continue;
     }
-
-    if (bucket) {
-      const head = bucket[0]!;
-      const prev = bucket[bucket.length - 1]!;
-      const sameStream =
-        head.category === cat &&
-        entryUser(head) === user &&
-        e.ts - prev.ts <= COHESION_WINDOW_MS;
-      if (sameStream) {
-        bucket.push(e);
-        continue;
-      }
-      flushBucket();
-    }
-    bucket = [e];
+    const bucketEntries = members.map((idx) => entries[idx]!);
+    const last = bucketEntries[bucketEntries.length - 1]!;
+    let total = 0;
+    for (const be of bucketEntries) total += entryCount(be);
+    out.push({
+      id: `bucket::${e.category}::${entryUser(e)}::${e.id}`,
+      type: 'bucket',
+      category: e.category,
+      user: entryUser(e),
+      entries: bucketEntries,
+      count: total,
+      firstTs: e.ts,
+      lastTs: last.ts,
+    });
   }
-  flushBucket();
   return out;
 }
