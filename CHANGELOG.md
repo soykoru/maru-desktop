@@ -1,5 +1,36 @@
 # Changelog — maru-desktop
 
+## 1.0.45 — 2026-05-04 · 🧹 Log limpio: likes batched + ruido suprimido
+
+### Likes en log: batched + agrupado
+**Bug raíz**: el legacy `tiktok_client` emitía un `log_message` crudo
+por CADA like ("❤️ @user +N likes (Total: X)") sin `category=like` →
+no se agrupaba, inundaba el panel y duplicaba info que ya está en los
+stats counters arriba.
+
+**Fix dos capas**:
+1. Removido el `log_message.emit` legacy para likes (estaba en
+   `tiktok_client.on_like`).
+2. Nuevo `_batch_like_for_log` en `tiktok.py` que acumula likes por
+   user y emite UN solo `log:entry` con count agregado tras 1.5s sin
+   nuevos likes del mismo user. Categoría `like` real → el
+   log-grouping del frontend lo agrupa visualmente con otros usuarios.
+
+Resultado: en vez de 50 entries "+1 likes (Total: 1234)", "+1 likes
+(Total: 1235)"… ahora UN entry "❤️ @user dio 50 likes" que se
+agrupa con otros usuarios si vienen en simultáneo.
+
+### Ruido del log suprimido
+Filtros nuevos en `_on_log_message`:
+- `❤️ @...` (likes individuales del worker — superseded por el batcher).
+- `❤️ Likes iniciales` (mensaje de calibración al boot).
+- Mensajes de reintento de conexión (`intento N`, `reintentando en`,
+  `backoff`, `retrying in`) — quedan en stderr para diagnóstico, no
+  inundan el panel del streamer.
+
+Stats counters arriba (LogPanel) y record_tap del SocialSystem siguen
+en TIEMPO REAL — la limpieza solo afecta el panel visual de eventos.
+
 ## 1.0.44 — 2026-05-04 · 🔧 7 bugs raíz: versión 0.0.0 + Spotify auto + sounds scope + taps 500 + NowPlaying clicks + log groupings
 
 ### Versión "0.0.0" en header
