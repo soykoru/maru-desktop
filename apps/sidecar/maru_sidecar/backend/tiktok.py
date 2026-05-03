@@ -653,7 +653,7 @@ class TikTokService:
                     or data.get("gift_id")
                     or "gift"
                 )
-                rank_pref = _rank_prefix(merged) if ranks else ""
+                rank_pref = _rank_prefix(merged)
                 try:
                     self._logs.publish(
                         f"🎁 {rank_pref}@{user} envió: {gift_name}",
@@ -676,15 +676,38 @@ class TikTokService:
                 if now - self._last_join_log_ts > 1.5:
                     self._last_join_log_ts = now
                     nick = str(data.get("nickname") or user)
-                    rank_pref = _rank_prefix(merged) if merged.get("rank") else ""
+                    # `merged` ya incluye los rangos cacheados desde
+                    # comment-enriched. _rank_prefix maneja "" si no hay
+                    # ningún flag activo. ANTES filtrábamos por
+                    # `merged.get("rank")` — esa key NO existe nunca, por
+                    # lo que el prefijo SIEMPRE salía vacío y las badges
+                    # de mod/superfan/member nunca se mostraban en el log
+                    # de joins/likes/gifts.
+                    rank_pref = _rank_prefix(merged)
+                    # Meta enriquecida para que el LogPanel pueda pintar
+                    # el badge de rol con el mismo formato que comments.
+                    meta_payload: dict[str, Any] = {
+                        "user": user,
+                        "nickname": nick,
+                        "kind": "join",
+                    }
+                    for k in (
+                        "is_super_fan", "is_moderator", "is_top_gifter",
+                        "is_follower", "is_member", "is_anchor",
+                        "is_verified", "is_new_subscriber",
+                        "is_friends_badge", "member_level", "gifter_level",
+                        "top_gifter_rank",
+                    ):
+                        if merged.get(k):
+                            meta_payload[k] = merged[k]
                     try:
                         self._logs.publish(
                             f"👋 {rank_pref}@{user} entró al live",
                             level="INFO",
                             source="tiktok",
-                            category="tiktok",
+                            category="join",
                             skip_dedupe=True,
-                            meta={"user": user, "nickname": nick, "kind": "join"},
+                            meta=meta_payload,
                         )
                     except Exception:
                         pass
@@ -704,7 +727,7 @@ class TikTokService:
                 except (TypeError, ValueError):
                     count = 1
                 if count > 0:
-                    rank_pref = _rank_prefix(merged) if merged.get("rank") else ""
+                    rank_pref = _rank_prefix(merged)
                     label = "like" if count == 1 else "likes"
                     try:
                         self._logs.publish(
@@ -911,6 +934,12 @@ class TikTokService:
             """
             info = info or {}
             _cache_ranks(user, info)
+            # `kind=="join"` viene del handler enriquecido de JoinEvent en
+            # core_bridge: solo nos interesa CACHEAR los ranks (para que
+            # el log de join inmediato siguiente los pinte) — NO debemos
+            # emitir un comment-enriched ni un log "💬 @user:" porque el
+            # user no comentó.
+            is_join_only = info.get("kind") == "join"
             try:
                 bus.publish(
                     "tiktok:comment-enriched",
@@ -918,6 +947,8 @@ class TikTokService:
                 )
             except Exception:
                 pass
+            if is_join_only:
+                return
             # Log enriquecido al panel.
             try:
                 if self._logs is not None:

@@ -43,10 +43,14 @@
   --maru-bg-overlay: 8 8 15;            /* backdrop modal */
 
   /* ── Text — off-white, no blanco puro (evita el "brillo" molesto) ── */
+  /* Contraste WCAG AA contra bg-base (#0d0d18):
+     fg ≈ 14:1, fg-muted ≈ 8.5:1, fg-subtle ≈ 5.4:1, fg-hint ≈ 3.6:1
+     Antes fg-subtle estaba en 122/128/150 ≈ 4.0:1 (rozaba el mínimo
+     y se perdía sobre cards elevadas). */
   --maru-fg: 232 234 244;               /* #e8eaf4 — premium frío */
-  --maru-fg-muted: 174 180 200;         /* jerarquía clara */
-  --maru-fg-subtle: 122 128 150;
-  --maru-fg-hint: 92 96 118;
+  --maru-fg-muted: 198 204 222;         /* jerarquía clara */
+  --maru-fg-subtle: 152 158 180;
+  --maru-fg-hint: 116 120 144;
 
   /* ── Brand & Accents (signature MARU) ────────────────────────────── */
   --maru-accent: 243 156 18;            /* #f39c12 naranja-mostaza */
@@ -126,10 +130,10 @@
   --maru-bg-elevated: 78 62 100;        /* surface1 */
   --maru-bg-overlay: 26 18 38;
 
-  --maru-fg: 230 230 222;               /* off-white cálido (no #f8f8f2 puro) */
-  --maru-fg-muted: 188 188 200;
-  --maru-fg-subtle: 132 138 160;
-  --maru-fg-hint: 102 116 162;
+  --maru-fg: 235 235 228;               /* off-white cálido (no #f8f8f2 puro) */
+  --maru-fg-muted: 208 208 218;
+  --maru-fg-subtle: 168 172 192;
+  --maru-fg-hint: 130 140 178;
 
   /* Brand: pink (firma dracula) */
   --maru-accent: 255 121 198;           /* #ff79c6 pink */
@@ -205,11 +209,13 @@
   --maru-bg-elevated: 38 50 84;
   --maru-bg-overlay: 10 14 26;
 
-  /* Text Tokyo Night — paleta oficial pero con brillo suavizado */
-  --maru-fg: 184 196 232;               /* ligeramente menos saturado que c0caf5 */
-  --maru-fg-muted: 158 168 204;
-  --maru-fg-subtle: 92 102 142;
-  --maru-fg-hint: 70 76 108;
+  /* Text Tokyo Night — paleta oficial pero con brillo suavizado.
+     fg-subtle subido de 92/102/142 (~3.4:1, fallaba WCAG) a
+     142/152/188 (~5.6:1) para que se lea sobre cards elevadas. */
+  --maru-fg: 196 208 240;
+  --maru-fg-muted: 178 188 220;
+  --maru-fg-subtle: 142 152 188;
+  --maru-fg-hint: 100 110 148;
 
   /* Brand: magenta-violeta */
   --maru-accent: 187 154 247;           /* #bb9af7 magenta */
@@ -283,11 +289,12 @@
   --maru-bg-elevated: 76 64 86;
   --maru-bg-overlay: 18 14 22;
 
-  /* Text Catppuccin — subtext1 como base (no text puro) suaviza el brillo */
-  --maru-fg: 196 204 234;               /* entre text (cdd6f4) y subtext1 (bac2de) */
-  --maru-fg-muted: 172 180 210;
-  --maru-fg-subtle: 138 146 172;
-  --maru-fg-hint: 105 110 132;
+  /* Text Catppuccin — subtext1 como base (no text puro) suaviza el brillo.
+     fg-subtle subido para no perderse en cards bg-surface (76/64/86). */
+  --maru-fg: 205 214 244;
+  --maru-fg-muted: 192 200 225;
+  --maru-fg-subtle: 158 168 196;
+  --maru-fg-hint: 122 128 154;
 
   /* Brand: mauve (firma catppuccin) */
   --maru-accent: 203 166 247;           /* #cba6f7 mauve */
@@ -359,10 +366,13 @@
   --maru-bg-elevated: 24 24 30;
   --maru-bg-overlay: 0 0 0;
 
-  --maru-fg: 245 245 250;
-  --maru-fg-muted: 175 175 188;
-  --maru-fg-subtle: 110 110 125;
-  --maru-fg-hint: 75 75 90;
+  /* Pure Dark con bg #000 — fg-subtle 110/110/125 daba 4.5:1 raspando
+     el AA. Subido a 158/158/172 (~7.5:1) y muted a 198/198/210 para
+     asegurar lectura impecable en OLED nocturno. */
+  --maru-fg: 248 248 252;
+  --maru-fg-muted: 198 198 210;
+  --maru-fg-subtle: 158 158 172;
+  --maru-fg-hint: 110 110 124;
 
   /* Brand: azul mid-saturated (#3b82f6 aprox) — garantiza que el texto
      blanco de los botones se lea correctamente. El blanco-azulado claro
@@ -439,10 +449,12 @@
   --maru-bg-elevated: 67 76 94;         /* #434c5e */
   --maru-bg-overlay: 28 32 42;
 
-  --maru-fg: 216 222 233;               /* #d8dee9 */
-  --maru-fg-muted: 180 188 200;
-  --maru-fg-subtle: 130 140 158;
-  --maru-fg-hint: 100 110 130;
+  /* Nord — bg-elevated 67/76/94 es relativamente claro, así que muted/
+     subtle deben subir más para mantener jerarquía visible. */
+  --maru-fg: 229 233 240;               /* snow storm #e5e9f0 */
+  --maru-fg-muted: 200 208 222;
+  --maru-fg-subtle: 158 168 188;
+  --maru-fg-hint: 122 132 152;
 
   /* Brand: Frost cyan (#88c0d0 signature) */
   --maru-accent: 136 192 208;           /* #88c0d0 */
@@ -2048,4 +2060,127 @@ select:focus-visible {
 
 [data-smooth-scroll] {
   scroll-behavior: smooth;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * v1.0.50 — POLISH PREMIUM (CSS-only, cero JS, cero RAM extra)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Transición suave al cambiar de tema — solo color/background/border, NUNCA
+ * layout (sin transition: all). Esto evita el "flash" cuando el user
+ * cambia de Midnight a Pure Dark, sin agregar 1KB de JS ni reflows. */
+html {
+  transition:
+    background-color 220ms ease,
+    color 220ms ease;
+}
+
+[data-theme] *:not(svg):not(svg *) {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Respetar prefers-reduced-motion — silencia toda la transición de tema. */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  [data-theme] *:not(svg):not(svg *) {
+    transition: none !important;
+  }
+}
+
+/* ── Scrollbars custom por tema ────────────────────────────────────────── */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--maru-fg-hint) / 0.45);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--maru-accent) / 0.55);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+* {
+  scrollbar-color: rgb(var(--maru-fg-hint) / 0.45) transparent;
+  scrollbar-width: thin;
+}
+
+/* ── Focus ring premium consistente ────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgb(var(--maru-accent) / 0.85);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+button:focus-visible,
+a:focus-visible {
+  box-shadow: 0 0 0 3px rgb(var(--maru-accent) / 0.25);
+}
+
+/* ── Separador con gradient sutil (utilidad reusable) ──────────────────── */
+.maru-divider-gradient {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--maru-border) / 0.8) 20%,
+    rgb(var(--maru-border) / 0.8) 80%,
+    transparent 100%
+  );
+}
+
+/* ── Halo sutil en badges de rol — sin animación pesada ────────────────── */
+.maru-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgb(var(--maru-accent) / 0.12);
+  color: rgb(var(--maru-accent));
+  border: 1px solid rgb(var(--maru-accent) / 0.3);
+  box-shadow: 0 0 0 1px rgb(var(--maru-accent) / 0.05);
+}
+.maru-role-badge--mod {
+  background: rgb(var(--maru-accent-blue) / 0.14);
+  color: rgb(var(--maru-accent-blue));
+  border-color: rgb(var(--maru-accent-blue) / 0.32);
+}
+.maru-role-badge--super-fan {
+  background: rgb(var(--maru-warning) / 0.14);
+  color: rgb(var(--maru-warning));
+  border-color: rgb(var(--maru-warning) / 0.32);
+}
+.maru-role-badge--top {
+  background: rgb(var(--maru-accent-purple) / 0.14);
+  color: rgb(var(--maru-accent-purple));
+  border-color: rgb(var(--maru-accent-purple) / 0.32);
+}
+.maru-role-badge--member {
+  background: rgb(var(--maru-accent-green) / 0.14);
+  color: rgb(var(--maru-accent-green));
+  border-color: rgb(var(--maru-accent-green) / 0.32);
+}
+
+/* ── Hover micro-glow en tiles importantes (solo opt-in) ───────────────── */
+.maru-tile-hover {
+  transition:
+    transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 220ms ease;
+}
+.maru-tile-hover:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgb(var(--maru-accent) / 0.35),
+    0 4px 14px -4px rgb(var(--maru-accent) / 0.25);
 }

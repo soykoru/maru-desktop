@@ -92,6 +92,7 @@ _LOG_CAT_BY_TYPE = {
     "command": "command",
     "subscribe": "subscribe",
     "emote": "emote",
+    "join": "join",
 }
 
 
@@ -195,6 +196,49 @@ class SimulatorService:
         )
         rank_label = self._rank_label(ranks)
         self._log_event(f"📤 {rank_label}@{user} compartió el live", "share")
+        return {"ok": True}
+
+    def join(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Simula un viewer entrando al live (JoinEvent).
+
+        Mismo formato de log que un join real con todos los rangos
+        soportados (super fan, mod, top gifter, follower, member L#,
+        gifter G#). El payload `tiktok:event` también lleva los flags
+        para que las reglas con `trigger=join` y filtros por rol
+        funcionen igual que en el live real.
+
+        Params (todos opcionales salvo user):
+          - user, nickname
+          - isSuperFan, isModerator, isTopGifter, isFollower
+          - memberLevel (int), gifterLevel (int)
+          - gameId / targetGameId
+        """
+        user = str(params.get("user") or "tester")
+        nick = str(params.get("nickname") or user)
+        ranks = _ranks(params)
+        _emit(
+            "join",
+            user,
+            {"nickname": nick, **ranks},
+            target_game=_target(params),
+            user_ranks=ranks if ranks else None,
+        )
+        rank_label = self._rank_label(ranks)
+        # Meta enriquecida — paridad con el path real para que el
+        # frontend pueda renderizar badges idénticos en simulación y vivo.
+        meta_payload: dict[str, Any] = {
+            "user": user,
+            "nickname": nick,
+            "kind": "join",
+        }
+        for k, v in ranks.items():
+            if v:
+                meta_payload[k] = v
+        self._log_event(
+            f"👋 {rank_label}@{user} entró al live",
+            "join",
+            meta_payload,
+        )
         return {"ok": True}
 
     def emote(self, params: dict[str, Any]) -> dict[str, Any]:

@@ -530,6 +530,10 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
             from TikTokLive.events import BizStickerEvent  # type: ignore
         except ImportError:
             BizStickerEvent = None  # type: ignore
+        try:
+            from TikTokLive.events import JoinEvent  # type: ignore
+        except ImportError:
+            JoinEvent = None  # type: ignore
     except ImportError:
         return
 
@@ -655,6 +659,53 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
                     log_sig.emit(f"🎨 {rank_prefix}@{user}: {emote_id}")
         except Exception:
             log.exception("emote handler fallo")
+
+    # JoinEvent enriquecido — el handler nativo del core solo emite
+    # `{user, nickname}` sin roles. Acá extraemos badges del propio
+    # evento (TikTokLive 6.6.5 expone `JoinEvent.user.badge_list` igual
+    # que CommentEvent), y los re-emitimos por `comment_enriched` para
+    # que se cacheen en `_user_ranks_cache` del sidecar. Con eso, el log
+    # de joins muestra `[mod]@x entró`, `[superfan L3]@y entró`, etc.,
+    # incluso si el viewer entra SIN haber comentado nunca antes.
+    if JoinEvent is not None:
+        @client.on(JoinEvent)
+        async def _on_join_enriched(e: Any) -> None:  # noqa: ANN401
+            if not getattr(worker_self, "_running", True):
+                return
+            try:
+                user_obj = (
+                    getattr(e, "user_info", None)
+                    or getattr(e, "user", None)
+                )
+                user = _resolve_username(user_obj)
+                if not user or user.startswith("viewer_"):
+                    return
+                ranks = _extract_ranks(e, user_obj)
+                # Solo re-emitimos si extraímos AL MENOS un flag útil —
+                # sino estamos polucionando el cache y el bus con noise.
+                useful = any(
+                    ranks.get(k)
+                    for k in (
+                        "is_super_fan", "is_moderator", "is_top_gifter",
+                        "is_follower", "is_member", "is_anchor",
+                        "member_level", "gifter_level",
+                    )
+                )
+                if not useful:
+                    return
+                payload = {
+                    "user": user,
+                    "text": "",
+                    "avatar_url": _extract_user_avatar_url(user_obj),
+                    "emote_ids": [],
+                    "kind": "join",
+                    **ranks,
+                }
+                sig = getattr(worker_self, "comment_enriched", None)
+                if sig is not None:
+                    sig.emit(user, payload)
+            except Exception:
+                log.exception("join enriched handler fallo")
 
     # Re-suscribir CommentEvent para enriquecer con flags Y emitir el
     # log con prefijo de rango. Antes este handler solo publicaba un push

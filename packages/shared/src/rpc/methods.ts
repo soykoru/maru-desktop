@@ -114,6 +114,33 @@ export interface TikTokMethods {
     params: { user: string };
     result: { ok: true };
   };
+  /** Simula JoinEvent (viewer entra al live). Acepta los mismos flags
+   * de rango que los demás eventos para testear reglas con required_ranks. */
+  'simulator.join': {
+    params: {
+      user: string;
+      nickname?: string;
+      isSuperFan?: boolean;
+      isModerator?: boolean;
+      isTopGifter?: boolean;
+      isFollower?: boolean;
+      memberLevel?: number;
+      gifterLevel?: number;
+      gameId?: string;
+    };
+    result: { ok: true };
+  };
+  /** Simula EmoteChatEvent (sticker/emote). */
+  'simulator.emote': {
+    params: {
+      user: string;
+      streamer?: string;
+      emoteId?: string;
+      imagePath?: string;
+      gameId?: string;
+    };
+    result: { ok: true };
+  };
 }
 
 export interface EmoteInfo {

@@ -1,5 +1,97 @@
 # Changelog — maru-desktop
 
+## 1.0.50 — 2026-05-03 · 🎨 EmoteTrigger sin live + roles en join (raíz) + simulador join + temas legibles + polish premium
+
+### EmoteTriggerPanel desacoplado del live (F1)
+- El selector de emote en `RuleDialog` ya **no** depende de tener el live
+  conectado. Antes mostraba "Conectate al live primero" si no había
+  `tiktokUsername`. Ahora lee la galería cacheada en disco vía
+  `emotes.list-streamers` (RPC ya existente).
+- Nuevo `<Select>` arriba del grid con todos los streamers que tienen
+  galería cacheada (con `🔴` prefix si es el live activo).
+- Default sensato: live actual → última selección guardada en
+  `localStorage` → primer streamer alfabético.
+- Si no hay galería todavía, CTA grande "Abrir galería de emotes" que
+  abre el modal correspondiente.
+- Permite crear reglas para cualquier streamer con galería cacheada
+  cuando el live está apagado.
+
+### Bug raíz: roles NO se mostraban en log de joins/likes/gifts (F2)
+- `tiktok.py:_on_event` para gift/like/join filtraba el prefijo de rol
+  con `merged.get("rank")` — esa key NO existe en el cache (las keys
+  reales son `is_super_fan`, `is_moderator`, `member_level`, etc.). El
+  prefijo `[mod]@user`, `[superfan L3]@user` SIEMPRE salía vacío.
+- Fix: `_rank_prefix(merged)` directo. La función ya retorna "" si no
+  hay flags, así que filtrar antes era inútil y rompía el feature.
+- Categoría del log de join cambiada de `tiktok` a `join` (categoría
+  dedicada — habilita filtros y stats counters específicos para joins).
+- Meta del log:entry de join ahora incluye TODOS los flags de rango
+  detectados (`is_super_fan/moderator/top_gifter/follower/member_level/
+  gifter_level/...`) para que el frontend pueda renderizar badges
+  visuales con paridad a comments.
+
+### Bug raíz: JoinEvent no extraía roles del propio evento (F2)
+- `core/tiktok_client.py` solo emitía `{user, nickname}` para JoinEvent
+  — sin badges. El cache de ranks solo se populaba si el viewer ya
+  había comentado antes en este live.
+- Fix en `core_bridge.py`: nuevo handler enriquecido `_on_join_enriched`
+  que se registra ANTES del nativo (durante `__init__` patchado del
+  `TikTokLiveClient`) y extrae roles del propio JoinEvent vía
+  `_extract_ranks` (mismo path que CommentEvent enriquecido). Re-emite
+  vía signal `comment_enriched` con `kind="join"` para que el sidecar
+  los cachee.
+- En el sidecar: `_on_comment_enriched` detecta `kind=="join"` y solo
+  cachea (sin emitir log "💬 @user:" vacío ni publicar comment-enriched
+  como si fuera un comentario real).
+- Resultado: cuando un viewer entra al live, el log muestra
+  `👋 [mod]@user entró al live`, `👋 [superfan L3]@otro entró al live`,
+  igual que comentarios.
+
+### Simulador: agregado evento `join` con roles completos (F3)
+- Nuevo `SimulatorService.join(params)` con paridad total al path real:
+  emite `tiktok:event` + `log:entry` con badges, soporta todos los
+  flags de rango, target gameId, etc.
+- Registrado como RPC `simulator.join`.
+- UI `SimulatorDialog`: nueva opción "👋 Join (entrar al live)" en el
+  dropdown de eventos. Reusa el mismo formulario de Rangos (super fan,
+  mod, top gifter, follower, member_level, gifter_level) que ya estaba
+  para los otros eventos.
+- Nuevo preset rápido "👋 Join" en los Atajos rápidos.
+- El simulador genera EXACTAMENTE el mismo formato de log/badges que
+  un join real — testeás reglas con `trigger=join` y filtros por rol
+  sin necesidad de live.
+
+### Texto sort gifts más corto (F4)
+- "💎 Mayor a menor" → "💎 Más caros".
+- "💎 Menor a mayor" → "💎 Más baratos".
+- Antes el texto se cortaba en el dropdown de ancho 160px.
+
+### Contraste de texto WCAG AA en TODOS los temas (F5)
+- Tokens `--maru-fg-muted` y `--maru-fg-subtle` subidos en los 6 temas
+  (Midnight, Dracula, Tokyo Night, Catppuccin Mocha, Pure Dark, Nord)
+  para garantizar legibilidad sobre `bg-elevated` y `bg-surface`.
+- Antes Tokyo Night tenía fg-subtle 92/102/142 (ratio ~3.4:1 sobre
+  base, fallaba AA). Ahora 142/152/188 (~5.6:1).
+- Pure Dark fg-subtle 110/110/125 → 158/158/172 sobre #000 (~7.5:1).
+- Mismo tratamiento en Midnight, Dracula, Catppuccin Mocha y Nord.
+- El usuario reportó "letras de gris tenue que se pueden perder" — esta
+  fase lo cierra desde la raíz.
+
+### Polish premium CSS-only — cero JS, cero RAM extra (F6)
+- **Transición suave entre temas**: `transition: bg-color/border/color/
+  shadow 180ms` en todos los elementos. Sin `transition: all` (no toca
+  layout). Respeta `prefers-reduced-motion`.
+- **Scrollbars custom por tema**: usa `--maru-fg-hint` y
+  `--maru-accent` con alpha. Webkit + Firefox.
+- **Focus ring premium consistente**: outline accent 2px + halo soft
+  3px en buttons/links. Mejor accesibilidad teclado.
+- **Utility `.maru-divider-gradient`**: separador con fade en los
+  bordes — más sofisticado que un border sólido.
+- **Utility `.maru-role-badge`** con variantes mod/super-fan/top/
+  member: badges visuales reusables alineados al sistema de roles.
+- **Utility `.maru-tile-hover`**: micro-glow + lift sutil en cards
+  importantes — opt-in vía className, no afecta a quien no lo use.
+
 ## 1.0.49 — 2026-05-03 · ✨ UI completa: triggers emote/join + repeat_for + sort gifts + sin banner duplicado
 
 ### UI de los nuevos triggers (backend ya estaba en v1.0.48)

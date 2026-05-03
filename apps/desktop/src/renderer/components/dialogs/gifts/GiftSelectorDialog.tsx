@@ -130,8 +130,8 @@ export function GiftSelectorDialog({
             className="!h-9 !text-xs w-[160px]"
             title="Ordenar regalos"
           >
-            <option value="coins-desc">💎 Mayor a menor</option>
-            <option value="coins-asc">💎 Menor a mayor</option>
+            <option value="coins-desc">💎 Más caros</option>
+            <option value="coins-asc">💎 Más baratos</option>
             <option value="name-asc">🔤 Nombre A-Z</option>
           </Select>
         </div>

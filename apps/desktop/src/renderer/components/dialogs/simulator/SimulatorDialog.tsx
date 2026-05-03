@@ -27,7 +27,15 @@ import { rpcCall } from '../../../lib/rpc.js';
  *   - Single-source events vía sidecar EventBus → llegan al log y
  *     a las reglas como si fueran reales.
  */
-type EventType = 'gift' | 'comment' | 'follow' | 'share' | 'subscribe' | 'like' | 'emote';
+type EventType =
+  | 'gift'
+  | 'comment'
+  | 'follow'
+  | 'share'
+  | 'subscribe'
+  | 'like'
+  | 'emote'
+  | 'join';
 
 const EVENT_TYPES: { id: EventType; label: string; emoji: string }[] = [
   { id: 'gift', label: 'Regalo', emoji: '🎁' },
@@ -37,6 +45,7 @@ const EVENT_TYPES: { id: EventType; label: string; emoji: string }[] = [
   { id: 'share', label: 'Compartir', emoji: '📤' },
   { id: 'subscribe', label: 'Super Fan', emoji: '⭐' },
   { id: 'like', label: 'Like', emoji: '❤️' },
+  { id: 'join', label: 'Join (entrar al live)', emoji: '👋' },
 ];
 
 interface EmoteStreamer {
@@ -70,6 +79,7 @@ const PRESETS: Preset[] = [
   { emoji: '❤️', label: '10 Likes', type: 'like', value: '10' },
   { emoji: '💬', label: '!spawn', type: 'comment', value: '!spawn' },
   { emoji: '💬', label: '!ia hola', type: 'comment', value: '!ia hola' },
+  { emoji: '👋', label: 'Join', type: 'join', value: '' },
 ];
 
 interface UserRanks {
@@ -164,6 +174,14 @@ async function dispatchEvent(
         ...ranks,
         user: u,
         count: parseInt(value || '1', 10) || 1,
+      });
+      break;
+    case 'join':
+      await rpcCall('simulator.join', {
+        ...target,
+        ...ranks,
+        user: u,
+        nickname: u,
       });
       break;
     case 'emote': {

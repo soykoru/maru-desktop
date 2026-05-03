@@ -225,12 +225,21 @@ interface EmoteItem {
   name?: string;
 }
 
+interface StreamerOption {
+  username: string;
+  displayName: string;
+  avatar?: string | null;
+  emoteCount: number;
+}
+
 interface EmoteTriggerPanelProps {
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
   idPrefix: string;
 }
+
+const EMOTE_LAST_STREAMER_KEY = 'maru:emoteTrigger:lastStreamer';
 
 function EmoteTriggerPanel({
   value,
@@ -239,24 +248,88 @@ function EmoteTriggerPanel({
   idPrefix,
 }: EmoteTriggerPanelProps) {
   const tiktokUsername = useAppStore((s) => s.tiktokUsername);
+  const openModal = useAppStore((s) => s.openModal);
+  const [streamers, setStreamers] = useState<StreamerOption[]>([]);
+  const [loadingStreamers, setLoadingStreamers] = useState(true);
+  const [selectedStreamer, setSelectedStreamer] = useState<string>('');
   const [emotes, setEmotes] = useState<EmoteItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
 
+  // 1) Cargar lista de streamers cacheados (independiente del live).
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    // El RPC `emotes.list` requiere `streamer` (username TikTok activo).
-    // Si todavía no hay username conectado, mostramos hint en vez de error.
-    const streamer = (tiktokUsername || '').trim();
-    if (!streamer) {
-      setLoading(false);
+    setLoadingStreamers(true);
+    void rpcCall('emotes.list-streamers', {})
+      .then((r) => {
+        if (cancelled) return;
+        const raw = (r as { streamers?: unknown }).streamers;
+        const items: StreamerOption[] = Array.isArray(raw)
+          ? (raw as Array<Record<string, unknown>>).map((it) => ({
+              username: String(it.username ?? ''),
+              displayName: String(it.displayName ?? it.username ?? ''),
+              avatar:
+                typeof it.avatar === 'string' && it.avatar
+                  ? (it.avatar as string)
+                  : null,
+              emoteCount:
+                typeof it.emoteCount === 'number' ? (it.emoteCount as number) : 0,
+            }))
+          : [];
+        const filtered = items.filter((it) => it.username);
+        setStreamers(filtered);
+        // Default sensato: live activo > último seleccionado > primero.
+        const live = (tiktokUsername || '').trim().toLowerCase();
+        const liveMatch = filtered.find(
+          (s) => s.username.toLowerCase() === live,
+        );
+        const lastSaved = (() => {
+          try {
+            return localStorage.getItem(EMOTE_LAST_STREAMER_KEY) || '';
+          } catch {
+            return '';
+          }
+        })();
+        const lastMatch = filtered.find((s) => s.username === lastSaved);
+        const def = liveMatch || lastMatch || filtered[0];
+        if (def) setSelectedStreamer(def.username);
+      })
+      .catch(() => {
+        if (!cancelled) setStreamers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingStreamers(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // tiktokUsername solo se usa para elegir default — no recargamos
+    // streamers cuando cambia el live (ya están cacheados en disco).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persistir última selección.
+  useEffect(() => {
+    if (!selectedStreamer) return;
+    try {
+      localStorage.setItem(EMOTE_LAST_STREAMER_KEY, selectedStreamer);
+    } catch {
+      /* no-op */
+    }
+  }, [selectedStreamer]);
+
+  // 2) Cargar emotes del streamer seleccionado.
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedStreamer) {
       setEmotes([]);
+      setLoading(false);
       return;
     }
-    void rpcCall('emotes.list', { streamer })
+    setLoading(true);
+    setError(null);
+    void rpcCall('emotes.list', { streamer: selectedStreamer })
       .then((r) => {
         if (cancelled) return;
         const raw = (r as { emotes?: unknown }).emotes;
@@ -283,7 +356,7 @@ function EmoteTriggerPanel({
     return () => {
       cancelled = true;
     };
-  }, [tiktokUsername]);
+  }, [selectedStreamer]);
 
   const q = filter.trim().toLowerCase();
   const visible = q
@@ -294,18 +367,51 @@ function EmoteTriggerPanel({
       )
     : emotes;
 
+  const liveLower = (tiktokUsername || '').trim().toLowerCase();
+
   return (
     <div className="rounded-lg border border-border bg-bg-elev p-3 space-y-2">
       <Label htmlFor={`${idPrefix}-emote`} required>
         🎨 Emote del streamer
       </Label>
 
+      {/* Selector de streamer — independiente del live conectado. */}
+      <div>
+        <Label htmlFor={`${idPrefix}-emote-streamer`}>
+          Galería de emotes
+        </Label>
+        <Select
+          id={`${idPrefix}-emote-streamer`}
+          value={selectedStreamer}
+          onChange={(e) => {
+            setSelectedStreamer(e.target.value);
+            onChange('');
+          }}
+          disabled={disabled || loadingStreamers || streamers.length === 0}
+        >
+          {streamers.length === 0 && (
+            <option value="">
+              {loadingStreamers ? 'Cargando…' : 'Sin emotes cacheados'}
+            </option>
+          )}
+          {streamers.map((s) => {
+            const isLive = s.username.toLowerCase() === liveLower;
+            return (
+              <option key={s.username} value={s.username}>
+                {isLive ? '🔴 ' : ''}@{s.displayName} · {s.emoteCount} emote
+                {s.emoteCount === 1 ? '' : 's'}
+              </option>
+            );
+          })}
+        </Select>
+      </div>
+
       <Input
         id={`${idPrefix}-emote-search`}
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         placeholder="Buscar por id o nombre..."
-        disabled={disabled || loading}
+        disabled={disabled || loading || emotes.length === 0}
         className="text-xs"
       />
 
@@ -319,18 +425,30 @@ function EmoteTriggerPanel({
       />
 
       {loading && (
-        <p className="text-[11px] text-fg-subtle">Cargando emotes…</p>
+        <p className="text-[11px] text-fg-muted">Cargando emotes…</p>
       )}
       {error && (
         <p className="text-[11px] text-danger">⚠ {error}</p>
       )}
-      {!loading && !error && emotes.length === 0 && (
-        <p className="text-[11px] text-fg-subtle">
-          {tiktokUsername
-            ? 'Aún no se cachearon emotes de @' +
-              tiktokUsername +
-              '. Conectá el live y esperá a que envíen stickers — aparecerán acá.'
-            : 'Conectate al live primero para ver los emotes del streamer.'}
+      {!loadingStreamers && streamers.length === 0 && (
+        <div className="rounded border border-warning/40 bg-warning/10 p-2 space-y-1.5">
+          <p className="text-[11px] text-fg-default">
+            No tenés ninguna galería de emotes cacheada todavía.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => openModal('emotes')}
+            disabled={disabled}
+          >
+            Abrir galería de emotes
+          </Button>
+        </div>
+      )}
+      {!loading && !error && selectedStreamer && emotes.length === 0 && (
+        <p className="text-[11px] text-fg-muted">
+          @{selectedStreamer} no tiene PNGs cacheados todavía.
         </p>
       )}
       {!loading && visible.length > 0 && (
@@ -356,12 +474,19 @@ function EmoteTriggerPanel({
               >
                 {e.path ? (
                   <MaruImage
-                    src={e.path}
+                    scope="emotes"
+                    path={
+                      e.path.startsWith('emotes/')
+                        ? e.path.slice('emotes/'.length)
+                        : e.path
+                    }
                     alt={e.name ?? e.id}
+                    size={48}
+                    fallback="🎨"
                     className="max-h-full max-w-full object-contain"
                   />
                 ) : (
-                  <span className="text-[10px] text-fg-subtle font-mono truncate px-1">
+                  <span className="text-[10px] text-fg-muted font-mono truncate px-1">
                     {e.id.slice(0, 6)}
                   </span>
                 )}
@@ -376,9 +501,10 @@ function EmoteTriggerPanel({
         </div>
       )}
 
-      <p className="text-[11px] text-fg-subtle">
-        Click en cualquier emote para usarlo como trigger. La regla dispara
-        cuando un viewer envíe ese emote exacto del streamer.
+      <p className="text-[11px] text-fg-muted">
+        Click en cualquier emote para usarlo como trigger. Podés crear
+        reglas para cualquier streamer cuya galería ya hayas cacheado, sin
+        necesidad de tener el live conectado ahora.
       </p>
     </div>
   );
