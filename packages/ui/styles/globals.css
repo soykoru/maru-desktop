@@ -349,16 +349,18 @@
   --maru-fg-subtle: 110 110 125;
   --maru-fg-hint: 75 75 90;
 
-  /* Brand: blanco-azulado frío (no naranja — Pure Dark va con monocromo) */
-  --maru-accent: 220 230 255;
-  --maru-accent-hover: 235 240 255;
-  --maru-accent-soft: 200 215 245;
-  --maru-accent-blue: 130 195 255;
-  --maru-accent-green: 60 215 130;
-  --maru-accent-green-light: 90 230 150;
-  --maru-accent-red: 245 100 100;
-  --maru-accent-red-dark: 215 80 80;
-  --maru-accent-purple: 175 145 245;
+  /* Brand: azul mid-saturated (#3b82f6 aprox) — garantiza que el texto
+     blanco de los botones se lea correctamente. El blanco-azulado claro
+     anterior era ilegible con text-white encima en variant primary. */
+  --maru-accent: 59 130 246;
+  --maru-accent-hover: 96 165 250;
+  --maru-accent-soft: 59 130 246;
+  --maru-accent-blue: 96 165 250;
+  --maru-accent-green: 34 197 94;
+  --maru-accent-green-light: 74 222 128;
+  --maru-accent-red: 239 68 68;
+  --maru-accent-red-dark: 215 60 60;
+  --maru-accent-purple: 168 85 247;
 
   --maru-mn-button: 60 60 80;
   --maru-mn-button-end: 40 40 55;
@@ -368,10 +370,13 @@
   --maru-mn-input: 8 8 12;
   --maru-mn-input-border: 38 38 50;
 
-  --maru-success: 60 215 130;
-  --maru-warning: 250 200 80;
-  --maru-danger: 245 100 100;
-  --maru-info: 130 195 255;
+  --maru-success: 34 197 94;
+  /* Warning: ámbar más oscuro (#d97706) en Pure Dark para que el texto
+     blanco/claro se lea cuando se usa como background de un botón o badge.
+     El amarillo claro anterior dejaba ilegible cualquier label encima. */
+  --maru-warning: 217 119 6;
+  --maru-danger: 239 68 68;
+  --maru-info: 96 165 250;
 
   --maru-border: 38 38 50;
   --maru-border-strong: 70 70 90;
@@ -381,23 +386,23 @@
   --maru-card-bg-alpha: 0.04;
   --maru-card-bg-hover-alpha: 0.08;
   --maru-card-border-alpha: 0.10;
-  --maru-card-selected-bg: 130 195 255;
+  --maru-card-selected-bg: 96 165 250;
   --maru-card-selected-bg-alpha: 0.18;
   --maru-card-selected-border-alpha: 0.5;
 
   --maru-glow-accent:
-    0 0 0 1px rgb(220 230 255 / 0.4),
-    0 8px 32px rgb(220 230 255 / 0.18);
+    0 0 0 1px rgb(59 130 246 / 0.4),
+    0 8px 32px rgb(59 130 246 / 0.22);
   --maru-glow-blue:
-    0 0 0 1px rgb(130 195 255 / 0.4),
-    0 8px 32px rgb(130 195 255 / 0.22);
+    0 0 0 1px rgb(96 165 250 / 0.4),
+    0 8px 32px rgb(96 165 250 / 0.22);
   --maru-glow-green:
-    0 0 0 1px rgb(60 215 130 / 0.4),
-    0 8px 32px rgb(60 215 130 / 0.22);
+    0 0 0 1px rgb(34 197 94 / 0.4),
+    0 8px 32px rgb(34 197 94 / 0.22);
 
-  --maru-bg-glow-1: 130 195 255;
-  --maru-bg-glow-1-alpha: 0.04;
-  --maru-bg-glow-2: 175 145 245;
+  --maru-bg-glow-1: 59 130 246;
+  --maru-bg-glow-1-alpha: 0.05;
+  --maru-bg-glow-2: 168 85 247;
   --maru-bg-glow-2-alpha: 0.05;
 
   --maru-glass-bg: rgb(0 0 0 / 0.78);
@@ -1789,6 +1794,17 @@ select:focus-visible {
   color: rgb(var(--maru-fg-subtle));
   margin-left: 4px;
   font-size: 10px;
+}
+
+/* Flash visual cuando se copia una entrada del log al portapapeles
+ * (doble click). 700ms de tinte accent + sin afectar layout. */
+@keyframes maru-log-copied {
+  0%   { background-color: rgb(var(--maru-success) / 0.30); }
+  100% { background-color: transparent; }
+}
+.maru-log-copied-flash {
+  animation: maru-log-copied 700ms ease-out;
+  border-radius: 12px;
 }
 
 /* ════════════════════════════════════════════════════════════════════

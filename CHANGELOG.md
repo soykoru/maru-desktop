@@ -1,5 +1,30 @@
 # Changelog — maru-desktop
 
+## 1.0.42 — 2026-05-03 · 🩹 Doble click = copiar (no borrar) + Pure Dark legible
+
+Fix de regresión sobre v1.0.41 según feedback del user.
+
+### Doble click en log → copiar al portapapeles
+- Se removió la lógica de "ocultar entrada" introducida en v1.0.41
+  (`hiddenIds` set local). Ahora doble click COPIA el texto de la
+  entrada al clipboard:
+  - Entrada normal: `[HH:MM:SS] mensaje`
+  - Bucket (racha): cada entry con su timestamp, una por línea.
+- Flash visual verde 700ms sobre la fila copiada (animation
+  `maru-log-copied`, composite-only).
+- Tooltip actualizado: "Doble click para copiar esta entrada".
+
+### Pure Dark — texto legible en botones de color
+- El accent blanco-azulado claro (`#dce6ff`) era ilegible con
+  `text-white` encima de los botones primary. Cambio a azul medio
+  saturado (`#3b82f6`) que mantiene el look monocromo frío del tema
+  pero garantiza contraste WCAG AA.
+- El warning amarillo claro (`#fac850`) también dejaba ilegible el
+  texto blanco/claro encima — pasa a ámbar oscuro (`#d97706`).
+- Glows y bg-glow del tema actualizados al nuevo accent.
+
+Reglas duras cumplidas: cero handlers tocados, cero RAM extra.
+
 ## 1.0.41 — 2026-05-03 · 🎨 Pulido del redesign + 2 temas nuevos + foto streamer real
 
 Iteración sobre v1.0.40 con feedback directo del user. 11 fixes

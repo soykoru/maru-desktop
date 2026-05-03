@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+// `useState` aquí lo usamos sólo para el flash visual del copy. La
+// lista del log NO mantiene state local — sigue saliendo del slice.
 import {
   Activity,
   ChevronDown,
@@ -50,15 +52,23 @@ export function LogPanel(): ReactNode {
   // jank y mantiene el scroll pegado al fondo.
   const rafIdRef = useRef<number | null>(null);
 
-  // Set local de IDs ocultos por el user (doble-click en una fila la oculta
-  // hasta que se limpie el log). NO toca el sidecar — solo filtro local.
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
-  const hideEntry = useCallback((id: string) => {
-    setHiddenIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
+  // Doble click en una fila → COPIA su texto al portapapeles. Marcamos
+  // el id como "flashed" durante 600ms para dar feedback visual sin
+  // alterar el contenido. Estado local — no toca sidecar.
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyTimerRef = useRef<number | null>(null);
+  const copyEntry = useCallback((id: string, text: string) => {
+    try {
+      void navigator.clipboard.writeText(text).catch(() => undefined);
+    } catch {
+      /* swallow — clipboard puede fallar si la ventana no tiene foco */
+    }
+    setCopiedId(id);
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = window.setTimeout(() => {
+      setCopiedId(null);
+      copyTimerRef.current = null;
+    }, 700);
   }, []);
 
   // Auto-scroll al fondo cuando llegan nuevas entries y autoScroll=true.
@@ -97,13 +107,12 @@ export function LogPanel(): ReactNode {
     };
   }, []);
 
-  // Cuando el buffer se limpia (clear log) reseteamos los IDs ocultos —
-  // sino quedan zombies referenciando entries que ya no existen.
+  // Cleanup del timer del copy flash al desmontar.
   useEffect(() => {
-    if (log.entries.length === 0 && hiddenIds.size > 0) {
-      setHiddenIds(new Set());
-    }
-  }, [log.entries.length, hiddenIds.size]);
+    return () => {
+      if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   function onScroll(e: React.UIEvent<HTMLDivElement>) {
     if (programmaticScrollRef.current) return;
@@ -307,41 +316,53 @@ export function LogPanel(): ReactNode {
               />
             </div>
           ) : (
-            log.visibleItems
-              .filter((item) =>
-                isBucket(item) ? !hiddenIds.has(item.id) : !hiddenIds.has(item.id),
-              )
-              .map((item) =>
-                isBucket(item) ? (
+            log.visibleItems.map((item) => {
+              const isCopied = copiedId === item.id;
+              if (isBucket(item)) {
+                // Para un bucket copiamos un resumen multilinea con las
+                // entradas internas (timestamp + mensaje) — útil para
+                // pegar en un reporte o investigar una racha.
+                const text = item.entries
+                  .map(
+                    (e) =>
+                      `[${new Date(e.ts).toTimeString().slice(0, 8)}] ${e.message}`,
+                  )
+                  .join('\n');
+                return (
                   <div
                     key={item.id}
                     onDoubleClick={(e) => {
                       e.stopPropagation();
-                      hideEntry(item.id);
+                      copyEntry(item.id, text);
                     }}
-                    title="Doble click para ocultar esta racha"
+                    title="Doble click para copiar las entradas de esta racha"
+                    className={isCopied ? 'maru-log-copied-flash' : undefined}
                   >
                     <LogBucketRow
                       bucket={item}
                       showTimestamp={log.showTimestamps}
                     />
                   </div>
-                ) : (
-                  <div
-                    key={item.id}
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      hideEntry(item.id);
-                    }}
-                    title="Doble click para ocultar esta entrada"
-                  >
-                    <LogEntryRow
-                      entry={item}
-                      showTimestamp={log.showTimestamps}
-                    />
-                  </div>
-                ),
-              )
+                );
+              }
+              const text = `[${new Date(item.ts).toTimeString().slice(0, 8)}] ${item.message}`;
+              return (
+                <div
+                  key={item.id}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    copyEntry(item.id, text);
+                  }}
+                  title="Doble click para copiar esta entrada"
+                  className={isCopied ? 'maru-log-copied-flash' : undefined}
+                >
+                  <LogEntryRow
+                    entry={item}
+                    showTimestamp={log.showTimestamps}
+                  />
+                </div>
+              );
+            })
           )}
         </div>
 
