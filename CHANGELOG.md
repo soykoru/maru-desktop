@@ -1,5 +1,66 @@
 # Changelog — maru-desktop
 
+## 1.0.43 — 2026-05-03 · 🔴 Bugs raíz: TTS dice "usuario" en vez de números + autoscroll + audios encimados
+
+Sesión de fix raíz a 6 bugs reportados por user. Cero parches.
+
+### TTS leía "usuario" en vez de números
+**Bug raíz**: `sanitize_text_usernames` en `backend/utils/tts_text.py`
+saneaba CUALQUIER token con dígitos como si fuera un username sucio.
+Convertía "12" en "usuario" porque el filter `_NON_LETTER_RE` removía
+los dígitos, dejando string vacío → caía en el fallback "usuario".
+
+Resultado: TTS leía "Te quedan **usuario** usos hoy" en vez de
+"Te quedan **3** usos hoy" (!playfan), y "Llevas **usuario** días"
+en vez de "Llevas **12** días" (auto-racha).
+
+**Fix**: ahora solo se sanea cuando el token combina LETRAS + caracteres
+problemáticos (`@`/`_`/dígito). Tokens que son SOLO números pasan
+intactos — el TTS los pronuncia como "doce", "tres", etc.
+
+### Auto-scroll del log dejaba 1-2 filas atrás
+**Bug raíz**: el efecto setea `scrollTop = scrollHeight`, pero el
+contenedor usa `content-visibility: auto` por fila (`data-cv-auto-row`),
+que SUBESTIMA `scrollHeight` mientras los hijos no están materializados.
+Cada nueva entry quedaba visible "casi" pero 1-2 filas debajo del fondo.
+
+**Fix**: usar `lastElementChild.scrollIntoView({block: 'end'})`. Fuerza
+al browser a hacer layout del nodo y scrollearlo a la vista. Cero
+dependencia del scrollHeight calculado.
+
+### Audios TTS encimados de canales distintos
+**Bug raíz**: los 3 canales pygame (chat/social/fortune) son
+verdaderamente independientes — cuando hay items en cola simultánea,
+los workers llaman `channel.play()` al mismo tiempo y los audios suenan
+encimados.
+
+**Fix**: nuevo `_global_play_lock` en `tts_engine.py`. Cada
+`_play_on_*_channel` envuelve `channel.play() + while busy` con
+`with self._global_play_lock:`. Las colas siguen independientes,
+pero la reproducción se serializa: cada audio espera turno.
+
+### Logo del header con marco feo
+**Bug raíz**: `.header-v140-mark` tenía `background: linear-gradient`
++ `box-shadow: 0 4px 12px rgb(accent/0.4)`. Con el logo PNG real
+encima, el cuadrado de fondo competía visualmente y se veía como un
+"marco" cuadrado feo alrededor del logo.
+
+**Fix**: el container ahora es 100% transparente. El logo respira solo
+con un `drop-shadow` sutil. Tamaño 32→36px para mejor presencia.
+
+### Hero card del logo más grande/respira
+- Logo 88→108px, drop-shadow doble (negro + accent tinted), tracking
+  más pronunciado en subtitle.
+
+### Temas: contraste de texto en botones claros
+Warnings amarillos/peach en Dracula, Tokyo Night, Catppuccin Mocha y
+Nord eran demasiado claros para texto blanco encima. Bajados a tonos
+ámbar saturados que respetan WCAG AA con `text-white`.
+- Dracula warning: #ffb86c → #e68246
+- Tokyo Night warning: #ff9e64 → #dc824b
+- Catppuccin warning: #fab387 → #dc824b
+- Nord warning: #ebcb8b → #c8913c
+
 ## 1.0.42 — 2026-05-03 · 🩹 Doble click = copiar (no borrar) + Pure Dark legible
 
 Fix de regresión sobre v1.0.41 según feedback del user.

@@ -136,17 +136,14 @@ function BrandBlock({
 }) {
   return (
     <div className="flex items-center gap-2.5 select-none">
-      {/* Logo real (logo.png) en vez del placeholder con la inicial. */}
-      <div
-        className="header-v140-mark overflow-hidden p-0"
-        aria-hidden="true"
-        style={{ background: 'transparent' }}
-      >
+      {/* Logo real (logo.png) sin marco — el container es transparente
+          para que el logo respire sin un cuadrado de fondo encima. */}
+      <div className="header-v140-mark" aria-hidden="true">
         <img
           src={logoSrc}
           alt="MARU"
-          width={32}
-          height={32}
+          width={36}
+          height={36}
           className="block h-full w-full object-contain"
           draggable={false}
         />

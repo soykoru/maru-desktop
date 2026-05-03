@@ -148,7 +148,9 @@
   --maru-mn-input-border: 68 71 90;
 
   --maru-success: 80 250 123;
-  --maru-warning: 255 184 108;
+  /* Warning bajado de #ffb86c a un ámbar más oscuro para contraste con
+     text-white en botones/badges. */
+  --maru-warning: 230 130 70;
   --maru-danger: 255 85 85;
   --maru-info: 139 233 253;
 
@@ -222,7 +224,8 @@
   --maru-mn-input-border: 65 72 104;
 
   --maru-success: 158 206 106;
-  --maru-warning: 255 158 100;          /* #ff9e64 */
+  /* Warning Tokyo Night bajado para asegurar contraste con texto blanco. */
+  --maru-warning: 220 130 75;
   --maru-danger: 247 118 142;
   --maru-info: 125 207 255;
 
@@ -296,7 +299,8 @@
   --maru-mn-input-border: 69 71 90;
 
   --maru-success: 166 227 161;
-  --maru-warning: 250 179 135;          /* #fab387 peach */
+  /* Warning peach bajado de #fab387 a tono más oscuro para contraste. */
+  --maru-warning: 220 130 75;
   --maru-danger: 243 139 168;
   --maru-info: 116 199 236;
 
@@ -449,7 +453,9 @@
   --maru-mn-input-border: 76 86 106;    /* #4c566a */
 
   --maru-success: 163 190 140;
-  --maru-warning: 235 203 139;          /* #ebcb8b */
+  /* Warning Nord bajado de #ebcb8b a tono ámbar para contraste con
+     texto blanco en botones/badges. */
+  --maru-warning: 200 145 60;
   --maru-danger: 191 97 106;
   --maru-info: 136 192 208;
 
@@ -1192,26 +1198,19 @@ select:focus-visible {
   pointer-events: none;
 }
 
-/* Brand mark — cuadrado redondeado con gradient signature del tema */
+/* Brand mark — sin gradient/sombra para que el logo real respire.
+ * Antes el logo iba dentro de un cuadrado con gradient + box-shadow
+ * que hacía un "marco" visible alrededor de la imagen → se veía feo
+ * porque competía con el propio logo. Ahora es solo un container
+ * transparente para mantener el tamaño 32×32. */
 .header-v140-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--maru-accent)),
-    rgb(var(--maru-accent-purple))
-  );
-  box-shadow:
-    0 4px 12px rgb(var(--maru-accent) / 0.4),
-    inset 0 1px 0 rgb(255 255 255 / 0.3);
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  color: white;
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: -0.02em;
   user-select: none;
+  background: transparent;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45));
 }
 
 /* Brand text con gradient text effect (off-white → muted) */

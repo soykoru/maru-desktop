@@ -320,12 +320,13 @@ export function Sidebar(): ReactNode {
           <img
             src={logoSrc}
             alt="MaruLive"
-            width={88}
-            height={88}
-            className="select-none drop-shadow-[0_8px_24px_rgb(0_0_0/0.4)]"
+            width={108}
+            height={108}
+            className="select-none drop-shadow-[0_10px_28px_rgb(0_0_0/0.5)]"
+            style={{ filter: 'drop-shadow(0 6px 18px rgb(var(--maru-accent) / 0.20))' }}
             draggable={false}
           />
-          <span className="mt-2 text-[14px] font-extrabold tracking-tight"
+          <span className="mt-3 text-[15px] font-extrabold tracking-tight"
                 style={{
                   background: 'linear-gradient(135deg, rgb(var(--maru-fg)), rgb(var(--maru-fg-muted)))',
                   WebkitBackgroundClip: 'text',
@@ -335,7 +336,7 @@ export function Sidebar(): ReactNode {
           >
             MARU LIVE
           </span>
-          <span className="mt-0.5 text-[9px] uppercase tracking-[0.22em] text-fg-subtle font-mono">
+          <span className="mt-1 text-[9px] uppercase tracking-[0.25em] text-fg-subtle font-mono">
             Chaos Engine
           </span>
         </div>

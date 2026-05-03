@@ -72,8 +72,15 @@ export function LogPanel(): ReactNode {
   }, []);
 
   // Auto-scroll al fondo cuando llegan nuevas entries y autoScroll=true.
-  // Coalescemos con rAF: si llegan 30 entries en 16ms, hacemos UN solo
-  // scrollTop al final del frame.
+  // Bug raíz v1.0.42: usábamos `scrollTop = scrollHeight` PERO el
+  // contenedor del log usa `content-visibility: auto` por fila
+  // (`data-cv-auto-row` en globals.css). Esto hace que `scrollHeight`
+  // dé un valor SUBESTIMADO mientras los hijos fuera del viewport no
+  // están "materializados". Resultado: el scroll quedaba 1-2 filas
+  // por debajo del fondo real cada vez que llegaba un evento.
+  // Fix: scrollIntoView en el último hijo del contenedor → fuerza al
+  // browser a hacer layout del nodo y scrollearlo a la vista. Cero
+  // dependencia del scrollHeight calculado.
   useEffect(() => {
     if (!log.autoScroll) return;
     const last = log.visible[log.visible.length - 1];
@@ -89,7 +96,12 @@ export function LogPanel(): ReactNode {
       const el = scrollRef.current;
       if (!el) return;
       programmaticScrollRef.current = true;
-      el.scrollTop = el.scrollHeight;
+      const lastChild = el.lastElementChild;
+      if (lastChild) {
+        lastChild.scrollIntoView({ block: 'end', inline: 'nearest' });
+      } else {
+        el.scrollTop = el.scrollHeight;
+      }
       // Liberamos el flag tras 2 frames — el onScroll del scroll
       // programático suele dispararse 1 frame después del set.
       requestAnimationFrame(() => {
