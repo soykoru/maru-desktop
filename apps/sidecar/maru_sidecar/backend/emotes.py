@@ -546,6 +546,11 @@ class EmotesService:
 
     # ── Helpers ──────────────────────────────────────────────────────────
 
+    # v1.0.69: cap defensivo de tamaño máximo de imagen (10MB). Los
+    # emotes/stickers de TikTok son típicamente 50-200KB; cualquier
+    # cosa >10MB es un asset roto o un atacante intentando agotar RAM.
+    _MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
     @staticmethod
     def _download_image(url: str, dst: Path) -> bool:
         try:
@@ -553,19 +558,43 @@ class EmotesService:
         except ImportError:
             return False
         try:
-            r = requests.get(url, timeout=10)
-            if r.status_code != 200 or not r.content:
-                return False
+            # v1.0.69: stream=True para no cargar el response completo en
+            # RAM antes de procesarlo. Anterior cargaba `r.content` (peak
+            # 2× el tamaño del archivo). Ahora descarga chunk a chunk.
+            with requests.get(url, timeout=10, stream=True) as r:
+                if r.status_code != 200:
+                    return False
+                # Cap por Content-Length si está presente.
+                try:
+                    content_length = int(r.headers.get("Content-Length") or 0)
+                except (TypeError, ValueError):
+                    content_length = 0
+                if content_length and content_length > EmotesService._MAX_IMAGE_BYTES:
+                    log.warning("emote download saltado (%s): %d bytes > cap", url, content_length)
+                    return False
+                buf = io.BytesIO()
+                total = 0
+                for chunk in r.iter_content(chunk_size=8192):
+                    if not chunk:
+                        continue
+                    total += len(chunk)
+                    if total > EmotesService._MAX_IMAGE_BYTES:
+                        log.warning("emote download abortado (%s): supera cap", url)
+                        return False
+                    buf.write(chunk)
+                if total == 0:
+                    return False
+                raw = buf.getvalue()
             try:
                 from PIL import Image  # type: ignore[import-not-found]
-                img = Image.open(io.BytesIO(r.content)).convert("RGBA")
-                buf = io.BytesIO()
-                img.save(buf, format="PNG")
-                data = buf.getvalue()
+                img = Image.open(io.BytesIO(raw)).convert("RGBA")
+                out_buf = io.BytesIO()
+                img.save(out_buf, format="PNG")
+                data = out_buf.getvalue()
             except Exception:
                 # Si PIL falla, guardar raw — la mayoría de los assets
                 # ya son PNG/WebP utilizables tal cual.
-                data = r.content
+                data = raw
             dst.parent.mkdir(parents=True, exist_ok=True)
             with open(dst, "wb") as f:
                 f.write(data)

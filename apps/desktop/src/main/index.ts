@@ -84,6 +84,19 @@ function killOrphanSidecars(): void {
 }
 killOrphanSidecars();
 
+// v1.0.69 — Limitar el heap V8 a 512 MB. Sin esto, el default de
+// Electron en x64 es ~1.4 GB, lo que permite que un bug acumulando
+// objetos en el renderer crezca silenciosamente hasta 1+ GB sin
+// detectar. 512 MB es 3× el uso normal del renderer (~150-180 MB) →
+// margen amplio sin desperdiciar reservas. Si alguna vez se supera,
+// V8 lanza "JavaScript heap out of memory" en lugar de crecer infinito
+// → mejor diagnóstico que ocultar el bug consumiendo más RAM.
+//
+// Aplica vía `--js-flags` que pasa al motor V8 de TODOS los procesos
+// (main + renderer + preload). El main process es liviano (<80 MB),
+// no se ve afectado. Debe llamarse ANTES de `app.whenReady()`.
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
+
 // CRÍTICO: registrar privilegios del scheme `maru://` ANTES de app.ready.
 // Si esto se llama después, Electron lanza error y el protocolo no funciona.
 registerImageProtocolPrivileges();

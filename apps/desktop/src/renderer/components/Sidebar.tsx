@@ -16,6 +16,7 @@ import {
   Heart,
   Bot,
   Music,
+  Tv,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import logoSrc from '../assets/logo.png';
@@ -28,6 +29,7 @@ import type { FortunesConfig, GameId, TtsVoiceMode } from '@maru/shared';
 import { GiftSelectorDialog } from './dialogs/gifts/GiftSelectorDialog.js';
 import { MaruImage } from '@maru/ui';
 import { NowPlayingCard } from './NowPlayingCard.js';
+import { GamePicker } from './GamePicker.js';
 
 /**
  * Sidebar — réplica fiel del `_build_left_panel` del MARU original.
@@ -152,7 +154,7 @@ export function Sidebar(): ReactNode {
   const [fortunesConfig, setFortunesConfig] = useState<FortunesConfig>({
     enabled: false,
     gift_id: '',
-    voice: 'en_female_madam_leota',
+    voice: 'es_mx_002',
     volume_pct: 80,
     // Fallback antes de cargar la config real — coincide con el default
     // del sidecar (incluye 'grosera' y todas las temáticas).
@@ -555,20 +557,13 @@ export function Sidebar(): ReactNode {
           {gamesEnabled ? '🟢 Juegos ACTIVOS' : '🔴 Juegos DESACTIVADOS'}
         </button>
 
-        <select
-          className="maru-input w-full text-sm"
-          value={selectedGameId ?? ''}
-          onChange={(e) =>
-            setSelectedGameId(((e.target.value as GameId) || null))
-          }
-        >
-          {games.length === 0 && <option value="">Sin juegos</option>}
-          {games.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.icon} {g.name}
-            </option>
-          ))}
-        </select>
+        {/* v1.0.72: GamePicker visual reemplaza el <select> nativo.
+            Card con cover del juego activo + popover con grid de portadas. */}
+        <GamePicker
+          games={games}
+          selectedId={selectedGameId}
+          onSelect={setSelectedGameId}
+        />
 
         <div className="mt-2 flex items-center gap-2 text-xs">
           <StatusDot
@@ -959,17 +954,26 @@ export function Sidebar(): ReactNode {
             <Music className="h-3.5 w-3.5" />
             Spotify
           </Button>
-          {/* Último botón impar — ocupa las 2 columnas para que no quede
-              un hueco vacío al lado. */}
           <Button
             variant="secondary"
             size="sm"
-            className="col-span-2"
             title="Diagnóstico del cliente TikTokLive (estado, versión, errores)"
             onClick={() => openModal('tiktok-api-info')}
           >
             <Wrench className="h-3.5 w-3.5" />
             TikTok API
+          </Button>
+          {/* MARU-OVERLAYS-INTEGRATION (1/1 en Sidebar): botón overlays.
+              Reversibilidad: borrando este Button + el import de `Tv`
+              arriba, el sidebar vuelve al layout actual. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            title="Crear/editar overlays para TikTok Live Studio"
+            onClick={() => openModal('overlays')}
+          >
+            <Tv className="h-3.5 w-3.5" />
+            Overlays
           </Button>
         </div>
       </GroupBox>

@@ -93,6 +93,22 @@ hidden = [
     "maru_sidecar.backend.metrics",
     "maru_sidecar.backend.utils",
     "maru_sidecar.backend.utils.tts_text",
+    "maru_sidecar.backend.keyboard",
+    # pynput — acciones de teclado (action_type='keyboard'). Cross-platform.
+    # Los submódulos win32/xorg/darwin son lazy según OS al import — los
+    # listamos explícitos para que PyInstaller los embeba en Windows.
+    "pynput",
+    "pynput.keyboard",
+    "pynput.keyboard._win32",
+    "pynput.mouse",
+    "pynput.mouse._win32",
+    "pynput._util",
+    "pynput._util.win32",
+    # pygetwindow — filtro opcional de ventana enfocada para acciones
+    # de teclado. Si no está disponible, KeyboardService hace fail-soft
+    # (no aplica filtro). Aún así lo embebemos para que el filtro funcione.
+    "pygetwindow",
+    "pyrect",
     # core/ del LiveChaosEngine_Refactored — empaquetado vía datas.
     # Lo declaramos como hidden imports también para que PyInstaller
     # incluya sus deps transitivas (PyQt6, pygame, requests, etc).

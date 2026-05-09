@@ -72,6 +72,16 @@ const SoundsDialog = lazy(() =>
 const VoicesDialog = lazy(() =>
   import('./dialogs/tts/VoicesDialog.js').then((m) => ({ default: m.VoicesDialog })),
 );
+const BoostsDialog = lazy(() =>
+  import('./dialogs/boosts/index.js').then((m) => ({ default: m.BoostsDialog })),
+);
+// MARU-OVERLAYS-INTEGRATION (1/2 en ModalRoot): import lazy del panel
+// nuevo. El bundle de overlays NO se descarga hasta que el user abre
+// el modal — ahorro al boot ~70 KB JS y 0 KB de RAM mientras el panel
+// no se use. Carpeta aislada en components/overlays/.
+const OverlaysDialog = lazy(() =>
+  import('./overlays/index.js').then((m) => ({ default: m.OverlaysDialog })),
+);
 
 // Fallback discreto mientras se descarga el chunk del dialog.
 function DialogLoader(): ReactNode {
@@ -181,6 +191,11 @@ function renderModalFrame(
       return <TikTokSignKeyDialog key={id} />;
     case 'tiktok-api-info':
       return <TikTokApiInfoDialog key={id} />;
+    case 'boosts':
+      return <BoostsDialog key={id} />;
+    // MARU-OVERLAYS-INTEGRATION (2/2 en ModalRoot)
+    case 'overlays':
+      return <OverlaysDialog key={id} />;
     case 'rule': {
       const p = (payload ?? {}) as {
         gameId?: GameId;
@@ -372,5 +387,5 @@ const MODAL_META: Record<string, ModalMeta> = {
     title: '🔧 Diagnóstico TikTok API',
     phase: 'F1',
   },
-  // G13 (overlays-manager) deshabilitado en esta build.
+  // overlays: panel real (sin placeholder) — ver carpeta components/overlays/.
 };

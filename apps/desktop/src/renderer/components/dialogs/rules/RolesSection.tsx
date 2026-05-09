@@ -11,7 +11,10 @@ import { Switch } from '@maru/ui';
  *     cualquier regla que pida cualquiera de los suyos).
  *   - Si `excluded_ranks` no está vacía → si el user tiene ALGUNO de
  *     esos flags, la regla NO dispara.
- *   - Vacío en ambos = regla abierta (default).
+ *   - Si `is_member` está en required, además se valida `member_level` ∈
+ *     [member_level_min, member_level_max] cuando ambos están definidos.
+ *   - Mismo para `is_gift_giver` con `gifter_level_min/max`.
+ *   - Vacío en todos = regla abierta (default).
  *
  * Combinado con `allowed_users` (lista blanca por nombre) provee 3 ejes
  * de filtrado totalmente independientes.
@@ -22,6 +25,14 @@ export interface RolesSectionProps {
   excludedRanks: RankFlag[];
   onRequiredChange: (r: RankFlag[]) => void;
   onExcludedChange: (r: RankFlag[]) => void;
+  /** Rango de nivel para is_member (solo aplica si is_member en required). */
+  memberLevelMin?: number;
+  memberLevelMax?: number;
+  onMemberLevelChange?: (min: number | undefined, max: number | undefined) => void;
+  /** Rango de nivel para is_gift_giver (solo aplica si en required). */
+  gifterLevelMin?: number;
+  gifterLevelMax?: number;
+  onGifterLevelChange?: (min: number | undefined, max: number | undefined) => void;
   disabled?: boolean;
 }
 
@@ -30,6 +41,12 @@ export function RolesSection({
   excludedRanks,
   onRequiredChange,
   onExcludedChange,
+  memberLevelMin,
+  memberLevelMax,
+  onMemberLevelChange,
+  gifterLevelMin,
+  gifterLevelMax,
+  onGifterLevelChange,
   disabled = false,
 }: RolesSectionProps) {
   const reqSet = new Set(requiredRanks);
@@ -155,9 +172,37 @@ export function RolesSection({
             );
           })}
         </div>
+
+        {/* Filtros de nivel — solo cuando el rol con `hasLevel` está en required.
+            Permite ej. "solo miembros L5..L10" o "solo top-gifters rank 1..3". */}
+        {reqSet.has('is_member') && onMemberLevelChange && (
+          <LevelRangeRow
+            label="🌸 Nivel del miembro (fans club)"
+            min={memberLevelMin}
+            max={memberLevelMax}
+            onChange={onMemberLevelChange}
+            disabled={disabled}
+            placeholderMin="1"
+            placeholderMax="∞"
+            hint="Vacío = cualquier nivel."
+          />
+        )}
+        {reqSet.has('is_gift_giver') && onGifterLevelChange && (
+          <LevelRangeRow
+            label="🎁 Nivel del donador (1..50)"
+            min={gifterLevelMin}
+            max={gifterLevelMax}
+            onChange={onGifterLevelChange}
+            disabled={disabled}
+            placeholderMin="1"
+            placeholderMax="50"
+            hint="Vacío = cualquier nivel del ranking de gifters del live."
+          />
+        )}
       </div>
 
-      {/* Excluded */}
+      {/* Excluded - los niveles solo aplican al required (positivo).
+          Filtrar por "miembros L5..L10 NUNCA" no tiene un caso de uso real. */}
       <div className="space-y-1.5">
         <div className="text-[11px] font-semibold text-fg-default flex items-center gap-1.5">
           🚫 Bloquear si tiene alguno de estos
@@ -193,5 +238,81 @@ export function RolesSection({
         </div>
       </div>
     </fieldset>
+  );
+}
+
+/** Sub-control compacto: dos inputs numéricos (min, max) + botón limpiar.
+ *  Usado para filtrar por nivel de fans club / ranking de gifters. */
+function LevelRangeRow({
+  label,
+  min,
+  max,
+  onChange,
+  disabled,
+  placeholderMin,
+  placeholderMax,
+  hint,
+}: {
+  label: string;
+  min: number | undefined;
+  max: number | undefined;
+  onChange: (min: number | undefined, max: number | undefined) => void;
+  disabled?: boolean;
+  placeholderMin?: string;
+  placeholderMax?: string;
+  hint?: string;
+}) {
+  const empty = min === undefined && max === undefined;
+  return (
+    <div className="mt-1.5 rounded-md border border-success/30 bg-success/5 px-2.5 py-2 space-y-1">
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] font-semibold text-fg-default">{label}</span>
+        {!empty && (
+          <button
+            type="button"
+            onClick={() => onChange(undefined, undefined)}
+            disabled={disabled}
+            className="ml-auto text-[10px] text-fg-subtle hover:text-danger underline"
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 text-[11px]">
+        <span className="text-fg-subtle">Mín</span>
+        <input
+          type="number"
+          min={1}
+          value={min ?? ''}
+          onChange={(e) => {
+            const v = e.target.value.trim();
+            const n = v === '' ? undefined : Math.max(1, Number(v));
+            onChange(n, max);
+          }}
+          disabled={disabled}
+          placeholder={placeholderMin ?? '1'}
+          className="w-16 rounded border border-border bg-bg-base px-1.5 py-0.5 text-fg-default focus:border-accent focus:outline-none disabled:opacity-50"
+        />
+        <span className="text-fg-subtle">Máx</span>
+        <input
+          type="number"
+          min={1}
+          value={max ?? ''}
+          onChange={(e) => {
+            const v = e.target.value.trim();
+            const n = v === '' ? undefined : Math.max(1, Number(v));
+            onChange(min, n);
+          }}
+          disabled={disabled}
+          placeholder={placeholderMax ?? '∞'}
+          className="w-16 rounded border border-border bg-bg-base px-1.5 py-0.5 text-fg-default focus:border-accent focus:outline-none disabled:opacity-50"
+        />
+        {hint && (
+          <span className="text-[10px] text-fg-subtle ml-1.5 truncate" title={hint}>
+            {hint}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }

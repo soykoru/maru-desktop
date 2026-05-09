@@ -8,7 +8,8 @@
  * - Renderer ↔ updater: state, checkNow, installAndRestart, disable.
  */
 
-import { app, clipboard, ipcMain, shell, type BrowserWindow } from 'electron';
+import { app, clipboard, dialog, ipcMain, shell, type BrowserWindow } from 'electron';
+import { writeFile } from 'node:fs/promises';
 import type { RpcClient } from './rpc-client.js';
 import type { AutoUpdater } from './auto-updater.js';
 import { maybeNotifyPushEvent } from './notifications.js';
@@ -39,7 +40,10 @@ const FORWARDED_PUSH_EVENTS = [
   'spotify:now-playing',
   'spotify:queue', // cola actualizada en tiempo real
   'social:update',
+  'social:user-updated', // v1.0.90+ refresh single user (ej. perdió SuperFan)
+  'profiles:loaded', // v1.0.91+ perfil restaurado → invalidar caches
   'log:entry', // G11
+  'log:entry:updated', // v1.1.3 — promote-to-bottom de entries dedupadas
 ] as const;
 
 export function attachRpcClient(client: RpcClient, win: BrowserWindow | null): void {
@@ -137,6 +141,15 @@ export function installIpcHandlers(
   ipcMain.handle('window:close', () => getWindow()?.close());
   ipcMain.handle('window:is-maximized', () => getWindow()?.isMaximized() ?? false);
 
+  // Quit real: el botón "X" de la ventana esconde al tray (paridad MARU
+  // original); este endpoint expone la salida explícita para un botón
+  // de la UI del header. Dispara `before-quit` → drena sidecar/RPC
+  // limpiamente antes de exit. Sin esto el renderer no tenía forma de
+  // pedir un quit completo (terminaba sólo via tray > Salir).
+  ipcMain.handle('app:quit', () => {
+    app.quit();
+  });
+
   // Updater
   ipcMain.handle('updater:state', () => updater.getState());
   ipcMain.handle('updater:check-now', async () => {
@@ -160,4 +173,71 @@ export function installIpcHandlers(
       return false;
     }
   });
+
+  // v1.0.71: descarga de archivo de texto via save dialog nativo del SO.
+  // Usado por la UI para descargar la documentación de juegos como .md.
+  ipcMain.handle(
+    'dialog:save-text',
+    async (
+      _evt,
+      payload: unknown,
+    ): Promise<{ ok: boolean; path?: string; error?: string }> => {
+      if (
+        !payload ||
+        typeof payload !== 'object' ||
+        typeof (payload as { content?: unknown }).content !== 'string'
+      ) {
+        return { ok: false, error: 'payload inválido' };
+      }
+      const p = payload as { content: string; defaultPath?: string; filters?: Array<{ name: string; extensions: string[] }> };
+      const win = getWindow();
+      try {
+        const result = await (win
+          ? dialog.showSaveDialog(win, {
+              defaultPath: p.defaultPath ?? 'archivo.txt',
+              filters: p.filters ?? [{ name: 'Markdown', extensions: ['md'] }, { name: 'Todos', extensions: ['*'] }],
+            })
+          : dialog.showSaveDialog({
+              defaultPath: p.defaultPath ?? 'archivo.txt',
+              filters: p.filters ?? [{ name: 'Markdown', extensions: ['md'] }, { name: 'Todos', extensions: ['*'] }],
+            }));
+        if (result.canceled || !result.filePath) return { ok: false };
+        await writeFile(result.filePath, p.content, { encoding: 'utf-8' });
+        return { ok: true, path: result.filePath };
+      } catch (exc) {
+        return { ok: false, error: exc instanceof Error ? exc.message : String(exc) };
+      }
+    },
+  );
+
+  // v1.0.74: file picker para abrir un archivo (imagen). El renderer lo
+  // usa en el CustomGameDialog para que el user elija portada del disco.
+  // Devuelve el path absoluto seleccionado o cancelled=true.
+  ipcMain.handle(
+    'dialog:open-file',
+    async (
+      _evt,
+      payload: unknown,
+    ): Promise<{ ok: boolean; path?: string; cancelled?: boolean; error?: string }> => {
+      const p = (payload && typeof payload === 'object' ? payload : {}) as {
+        title?: string;
+        filters?: Array<{ name: string; extensions: string[] }>;
+      };
+      const win = getWindow();
+      try {
+        const opts: Electron.OpenDialogOptions = {
+          title: p.title ?? 'Seleccionar archivo',
+          filters: p.filters ?? [{ name: 'Imágenes', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+          properties: ['openFile'],
+        };
+        const result = await (win ? dialog.showOpenDialog(win, opts) : dialog.showOpenDialog(opts));
+        if (result.canceled || result.filePaths.length === 0) {
+          return { ok: false, cancelled: true };
+        }
+        return { ok: true, path: result.filePaths[0] };
+      } catch (exc) {
+        return { ok: false, error: exc instanceof Error ? exc.message : String(exc) };
+      }
+    },
+  );
 }

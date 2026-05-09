@@ -354,50 +354,77 @@ class LogsService:
     ) -> dict[str, Any]:
         """Agrega una entry al buffer y emite push event al renderer.
 
-        Dedupe ventana 500ms-2s para evitar duplicados por handlers
-        re-instalados / SocialSystem doble-fire. PERO algunos callers
-        (rule_dispatcher cuando se ejecuta una regla N veces seguidas
-        por un gift-streak) NECESITAN que cada disparo aparezca como
-        entry separado — para esos pasar `skip_dedupe=True`.
+        v1.1.3 — Modelo "promote-to-bottom" reemplaza el dedupe-discard:
+        cuando llega un mensaje idéntico dentro de la ventana de 5s, se
+        INCREMENTA el contador de la entry existente Y se mueve al final
+        del buffer (siempre visible al user). El frontend recibe un
+        `log:entry:updated` para reflejar el cambio in-place.
+
+        Antes (v1.1.2-): dups se descartaban silenciosamente → si un user
+        daba 30 likes seguidos, solo aparecía 1 entry "❤️ Tap @user" y
+        las siguientes ediciones quedaban "atrás" cuando llegaban
+        gifts/comentarios; el contador no existía. v1.1.3 cierra eso.
+
+        `skip_dedupe=True` mantiene el comportamiento de "siempre crear
+        entry nueva" — usado por rule_dispatcher cuando un gift-streak
+        ejecuta la misma regla N veces y el user QUIERE ver N entries.
         """
         cat = category if category in VALID_CATEGORIES else detect_category(
             message, level
         )
         now_ms = int(time.time() * 1000)
-        # Doble dedupe para cubrir dos clases de duplicados:
-        #   1. (level, source, message) en ventana 2s — caso típico de
-        #      handler conectado 2x via signal PyQt o reentry.
-        #   2. (level, message) en ventana 200ms — caso del SocialSystem
-        #      donde el callback emite `_logs.publish(source="social")`
-        #      Y ALSO `log.info(text)` que llega via LogsBridgeHandler con
-        #      source="maru_sidecar.backend.social". Mismo mensaje, dos
-        #      sources, milisegundos de diferencia → la 1ª clave no lo
-        #      detecta. La 2ª (más estricta en tiempo, más amplia en clave)
-        #      sí.
-        # Si skip_dedupe=True, salteamos AMBAS dedupes — caso del
-        # rule_dispatcher cuando un user dona 10 rosas y la regla
-        # spawn_slime se ejecuta 10 veces; el user QUIERE ver 10 entries
-        # en el log, no 1 colapsado.
+        # Ventana de agrupación: 5 segundos. Dentro de esta ventana,
+        # mensajes idénticos NO crean entry nueva — actualizan el
+        # contador de la existente y la mueven al final. Fuera de la
+        # ventana, sí se crea entry nueva.
+        DEDUPE_WINDOW_MS = 5000
+
         if not skip_dedupe:
-            narrow_key = f"{level.upper()}::{source}::{message[:200]}"
-            broad_key = f"{level.upper()}::{message[:200]}"
+            key = f"{level.upper()}::{source}::{message[:200]}"
             with self._lock:
-                last_narrow = self._recent_keys.get(narrow_key)
-                if last_narrow is not None and now_ms - last_narrow < 2000:
-                    return {"id": "", "ts": now_ms, "deduped": True}
-                last_broad = self._recent_keys.get(broad_key)
-                if last_broad is not None and now_ms - last_broad < 200:
-                    # Mismo mensaje desde otra source en <200ms — duplicado
-                    # casi seguro.
-                    return {"id": "", "ts": now_ms, "deduped": True}
-                self._recent_keys[narrow_key] = now_ms
-                self._recent_keys[broad_key] = now_ms
-                # Garbage collect del dict si crece (>500 keys).
-                if len(self._recent_keys) > 500:
-                    cutoff = now_ms - 5000
-                    self._recent_keys = {
-                        k: v for k, v in self._recent_keys.items() if v >= cutoff
+                # Buscar entry reciente con misma key.
+                existing = None
+                existing_idx = None
+                # Iteramos desde el final (más reciente) hacia atrás —
+                # típicamente el match es entre las últimas 5 entries.
+                for idx in range(len(self._buffer) - 1, -1, -1):
+                    e = self._buffer[idx]
+                    e_key = f"{e['level']}::{e['source']}::{e['message'][:200]}"
+                    if e_key == key:
+                        # Verificar ventana de tiempo (desde la última
+                        # actualización de esa entry).
+                        if now_ms - e["ts"] < DEDUPE_WINDOW_MS:
+                            existing = e
+                            existing_idx = idx
+                        break  # match encontrado o demasiado viejo
+                    # Optimización: si esta entry tiene >5s, las anteriores
+                    # también, no hace falta seguir buscando.
+                    if now_ms - e["ts"] > DEDUPE_WINDOW_MS:
+                        break
+
+                if existing is not None and existing_idx is not None:
+                    # MERGE: incrementar count + mover al final + emitir update.
+                    existing["count"] = (existing.get("count") or 1) + 1
+                    existing["ts"] = now_ms
+                    # Mover al final: borrar de su posición y re-agregar.
+                    # `del deque[i]` SÍ funciona en Python 3.5+.
+                    del self._buffer[existing_idx]
+                    self._buffer.append(existing)
+                    # Emitir push event de update para que el frontend
+                    # mueva la entry al final y refresque el contador.
+                    update_payload = {
+                        "id": existing["id"],
+                        "ts": existing["ts"],
+                        "count": existing["count"],
                     }
+                    try:
+                        get_event_bus().publish(
+                            "log:entry:updated", update_payload
+                        )
+                    except Exception:
+                        pass
+                    return existing
+
         entry: dict[str, Any] = {
             "id": f"l-{uuid.uuid4().hex[:10]}",
             "ts": now_ms,
@@ -406,6 +433,7 @@ class LogsService:
             "category": cat,
             "message": message,
             "meta": meta or {},
+            "count": 1,
         }
         with self._lock:
             self._buffer.append(entry)

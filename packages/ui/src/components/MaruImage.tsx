@@ -19,7 +19,9 @@ export type MaruImageScope =
   | 'templates'
   | 'game'
   | 'userdata'
-  | 'emotes';
+  | 'emotes'
+  | 'game_covers'
+  | 'profile_covers';
 
 export interface MaruImageProps
   extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'loading'> {

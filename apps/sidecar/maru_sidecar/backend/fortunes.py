@@ -67,6 +67,29 @@ class FortunesService:
     def attach_tts(self, tts: TtsService) -> None:
         self._tts = tts
 
+    def _mirror_volume_to_tts(self, volume_pct: int) -> None:
+        """Single source of truth: cuando el slider de Fortuna cambia,
+        propagamos a `tts.config.volume_fortune` (que es lo que el engine
+        realmente usa al reproducir). Sin esto el slider de Fortuna era
+        decorativo — el volumen real lo manejaba el panel TTS."""
+        if self._tts is None:
+            return
+        try:
+            self._tts.config_set({"patch": {"volume_fortune": int(volume_pct)}})
+        except Exception:
+            log.exception("fortunes: mirror volume → tts falló")
+
+    def _mirror_voice_to_tts(self, voice: str) -> None:
+        """Mirror análogo para la voz default — el chat_dispatcher pasa
+        explícitamente `voice` por evento, pero el panel TTS también
+        necesita reflejar la voz de fortuna por consistencia."""
+        if self._tts is None or not voice:
+            return
+        try:
+            self._tts.config_set({"patch": {"fortune_voice": voice}})
+        except Exception:
+            log.exception("fortunes: mirror voice → tts falló")
+
     def _load(self) -> dict[str, list[str]]:
         with self._lock:
             if self._cache is not None:
@@ -107,7 +130,18 @@ class FortunesService:
     # ── RPC handlers ──────────────────────────────────────────────────────
 
     def config_get(self, _params: dict[str, Any]) -> dict[str, Any]:
-        return {"config": self._config()}
+        cfg = self._config()
+        # Override del volumen con el valor REAL del engine TTS — single
+        # source of truth. El user mueve el slider en el Sidebar y se
+        # ve igual al volumen efectivo.
+        if self._tts is not None:
+            try:
+                tts_cfg = self._tts.config_get({}).get("config", {})
+                if "volume_fortune" in tts_cfg:
+                    cfg["volume_pct"] = int(tts_cfg["volume_fortune"])
+            except Exception:
+                pass
+        return {"config": cfg}
 
     def config_set(self, params: dict[str, Any]) -> dict[str, Any]:
         patch = params.get("patch") or {}
@@ -116,6 +150,15 @@ class FortunesService:
         current = self._config()
         merged = {**current, **patch}
         self._settings.set({"patch": {"fortunes": merged}})
+        # Mirror al TTS: si cambió volumen o voz, propagamos al engine
+        # TTS que es donde el audio realmente lo usa.
+        if "volume_pct" in patch:
+            try:
+                self._mirror_volume_to_tts(int(patch["volume_pct"]))
+            except (TypeError, ValueError):
+                pass
+        if "voice" in patch and isinstance(patch["voice"], str):
+            self._mirror_voice_to_tts(patch["voice"])
         return {"config": merged}
 
     def list_categories(self, _params: dict[str, Any]) -> dict[str, Any]:

@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { Toaster } from '@maru/ui';
+import { ErrorBoundary } from './components/ErrorBoundary.js';
 import { MainLayout } from './components/MainLayout.js';
 import { ModalRoot } from './components/ModalRoot.js';
+import { NotifyHost } from './components/NotifyHost.js';
 import { useGlobalShortcuts } from './lib/use-shortcuts.js';
 import { wireSidecarEvents } from './lib/event-wire.js';
 import { useAppStore } from './lib/store/index.js';
@@ -114,16 +116,18 @@ export function App() {
   useGlobalShortcuts();
 
   return (
-    <>
+    <ErrorBoundary>
       {/* Capa de fondo dedicada — fija, GPU-promoted, aislada de
           repaints. Reemplaza el gradient del <body> que parpadeaba al
           recomponer el backdrop-filter de paneles con cada push event. */}
       <div className="maru-bg-shell" aria-hidden="true" />
       <MainLayout />
       <ModalRoot />
+      {/* v1.0.94+: confirm dialog global (reemplaza window.confirm). */}
+      <NotifyHost />
       {/* UpdateBanner inferior removido v1.0.49 — el CTA en el
           HeaderGlobal cubre la misma funcionalidad sin duplicarla. */}
       <Toaster />
-    </>
+    </ErrorBoundary>
   );
 }

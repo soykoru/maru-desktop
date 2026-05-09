@@ -208,6 +208,29 @@ export function TriggerSection({
           </p>
         </div>
       )}
+
+      {/* Panel condicional: first_action — sin valor obligatorio */}
+      {triggerType === 'first_action' && (
+        <div className="rounded-lg border border-border bg-bg-elev p-3 space-y-2">
+          <Label htmlFor={`${idPrefix}-first`}>
+            🌟 Username del viewer (opcional)
+          </Label>
+          <Input
+            id={`${idPrefix}-first`}
+            value={triggerValue}
+            onChange={(e) => onTriggerValueChange(e.target.value)}
+            placeholder="Vacío = cualquier viewer · @username = solo ese"
+            disabled={disabled}
+            className="font-mono text-xs"
+          />
+          <p className="text-[11px] text-fg-subtle">
+            Dispara una sola vez por viewer en la sesión, en el momento de su
+            <strong> primera interacción</strong> (gift, comment, like, share,
+            follow). Reset automático al desconectar/reconectar el live. Vacío
+            = cualquier viewer; con username = solo ese viewer.
+          </p>
+        </div>
+      )}
     </fieldset>
   );
 }

@@ -89,6 +89,9 @@ _SEED_DIRS = (
     "donaciones",
     "icons_triggers",
     "game_images",
+    # v1.0.72: portadas de juegos para la galería visual del
+    # ManageGamesDialog. Se sirven via `maru://images/game_covers/<gid>.jpg`.
+    "game_covers",
 )
 
 
@@ -159,8 +162,55 @@ def run_bootstrap_if_needed() -> dict[str, int]:
         _seed_spotify_secrets(seed_for_spotify)
 
     if has_state and not needs_assets:
-        log.info("bootstrap: runtime_data completo (%d PNGs) — skip seed", asset_count)
-        return {"seeded": 0, "skipped": 0, "sourceDir": None}
+        # v1.0.76: AUNQUE el state esté completo, igualmente importamos seed
+        # files NUEVOS que no existan en el userdata (data_*.json y
+        # rules_*.json de juegos agregados en versiones nuevas). Es
+        # idempotente: si el archivo ya existe en userdata, NO se pisa.
+        # Sin esto, los users que actualicen de v1.0.75 → v1.0.76 NO
+        # verían las acciones pre-cargadas de Project Zomboid, ARK,
+        # Palworld, ICARUS porque sus userdata ya estaba "completo".
+        seed_for_globs = _resolve_seed_dir()
+        new_imports = 0
+        if seed_for_globs is not None:
+            for glob in _SEED_GLOBS:
+                for src in seed_for_globs.glob(glob):
+                    dst = DATA_DIR / src.name
+                    if dst.exists():
+                        continue
+                    try:
+                        shutil.copy2(src, dst)
+                        new_imports += 1
+                    except OSError as exc:
+                        log.warning("bootstrap incremental: error %s: %s", src.name, exc)
+            # Mismo flujo para subcarpetas (game_covers nuevas, etc).
+            for sub in _SEED_DIRS:
+                sub_src = seed_for_globs / sub
+                sub_dst = DATA_DIR / sub
+                if not sub_src.is_dir():
+                    continue
+                sub_dst.mkdir(parents=True, exist_ok=True)
+                for src_file in sub_src.rglob("*"):
+                    if not src_file.is_file():
+                        continue
+                    rel = src_file.relative_to(sub_src)
+                    dst_file = sub_dst / rel
+                    if dst_file.exists():
+                        continue
+                    try:
+                        dst_file.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(src_file, dst_file)
+                        new_imports += 1
+                    except OSError as exc:
+                        log.warning(
+                            "bootstrap incremental dir: error %s: %s", rel, exc,
+                        )
+        if new_imports:
+            log.info(
+                "bootstrap incremental: %d archivos nuevos del seed importados",
+                new_imports,
+            )
+        log.info("bootstrap: runtime_data completo (%d PNGs) — skip seed full", asset_count)
+        return {"seeded": new_imports, "skipped": 0, "sourceDir": None}
 
     seed = _resolve_seed_dir()
     if seed is None:

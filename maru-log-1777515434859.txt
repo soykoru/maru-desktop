@@ -1,0 +1,154 @@
+2026-04-30T02:15:00.000Z [INFO] [system] maru_sidecar.main: starting MARU sidecar (port=8770, log=INFO)
+2026-04-30T02:15:00.000Z [INFO] [system] maru_sidecar.backend.bootstrap: bootstrap: runtime_data completo (413 PNGs) — skip seed
+2026-04-30T02:15:00.000Z [INFO] [tiktok] maru_sidecar.backend.rule_dispatcher: RuleDispatcher: suscrito a tiktok:event
+2026-04-30T02:15:00.000Z [INFO] [tiktok] maru_sidecar.backend.chat_dispatcher: ChatDispatcher: suscrito a tiktok:event
+2026-04-30T02:15:00.000Z [INFO] [system] websockets.server: server listening on 127.0.0.1:8770
+2026-04-30T02:15:00.000Z [INFO] [system] maru_sidecar.server: rpc server listening on 127.0.0.1:8770
+2026-04-30T02:15:00.000Z [INFO] [system] websockets.server: connection open
+2026-04-30T02:15:00.000Z [INFO] [system] maru_sidecar.server: client connected: ('127.0.0.1', 55657)
+2026-04-30T02:15:00.000Z [INFO] [tiktok] maru_sidecar.core_bridge: core bridge: root=C:\Users\User\AppData\Local\Programs\MARU Live\resources\sidecar\_internal
+2026-04-30T02:15:01.000Z [INFO] [system] maru_sidecar.core_bridge: logger del sidecar restaurado tras install (handlers totales: 3)
+2026-04-30T02:15:01.000Z [INFO] [social] core.tts_engine: Audio: 3 canales independientes (Chat + Social + Fortuna)
+2026-04-30T02:15:00.254Z [INFO] [tiktok] maru_sidecar.core_bridge: core bridge: root=C:\Users\User\AppData\Local\Programs\MARU Live\resources\sidecar\_internal
+2026-04-30T02:15:01.007Z [INFO] [system] maru_sidecar.core_bridge: logger del sidecar restaurado tras install (handlers totales: 3)
+2026-04-30T02:15:01.847Z [INFO] [social] core.tts_engine: Audio: 3 canales independientes (Chat + Social + Fortuna)
+2026-04-30T02:15:15.154Z [INFO] [tiktok] tiktok: 🔌 Iniciando conexión a @soykoru
+2026-04-30T02:15:15.154Z [INFO] [tiktok] tiktok: 🔌 Iniciando conexión a @soykoru...
+2026-04-30T02:15:15.155Z [INFO] [tiktok] tiktok: 🔍 Verificando @soykoru...
+2026-04-30T02:15:15.217Z [INFO] [comment] maru_sidecar.core_bridge: core_bridge: handlers EmoteChat/Comment/RoomUserSeq registrados al client
+2026-04-30T02:15:15.217Z [INFO] [tiktok] maru_sidecar.core_bridge: TikTokLiveClient.__init__ patched: handlers extras (EmoteChat/CommentEnriched/RoomUserSeq) attached for worker=@soykoru
+2026-04-30T02:15:16.461Z [INFO] [tiktok] tiktok: ✅ @soykoru está EN VIVO!
+2026-04-30T02:15:16.461Z [INFO] [tiktok] tiktok: 🔌 Estableciendo conexión WebSocket...
+2026-04-30T02:15:21.022Z [INFO] [tiktok] tiktok: ✅ ¡Conexión WebSocket establecida!
+2026-04-30T02:15:21.022Z [INFO] [tiktok] tiktok: 📺 Escuchando eventos en vivo de @soykoru
+2026-04-30T02:15:21.024Z [INFO] [comment] tiktok: 💬 [mod][member L18][G5][friend][follower] @boni0175: te odio
+2026-04-30T02:15:21.024Z [INFO] [comment] tiktok: 💬 [mod][member L18][G5][friend][follower] @boni0175: siempre un paso delante de mi..
+2026-04-30T02:15:21.034Z [INFO] [system] maru_sidecar.backend.rule_dispatcher: RuleDispatcher: RuleEngine inicializado
+2026-04-30T02:15:21.034Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @boni0175 (no se envió al juego)
+2026-04-30T02:15:21.035Z [INFO] [comment] tiktok: 💬 [mod][member L18][G5][friend][follower] @boni0175: 🎨 emote(s): 7600250405494606600
+2026-04-30T02:15:21.036Z [INFO] [comment] tiktok: ⌨️ [mod][superfan][topgifter][L27][G16][friend] !skip de @cristian_rivasxd
+2026-04-30T02:15:21.037Z [INFO] [comment] tiktok: 💬 [member L8][friend][follower] @user7480290493135: ja ja ja
+2026-04-30T02:15:21.038Z [INFO] [comment] tiktok: 💬 [follower] @isxiverse: me escribió mi ex que hago o sea volvimos pero no 
+2026-04-30T02:15:21.038Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @cristian_rivasxd (no se envió al juego)
+2026-04-30T02:15:21.040Z [INFO] [social] social: ⚠️ cristian_rivasxd intentó skip pero Spotify no está conectado
+2026-04-30T02:15:21.040Z [INFO] [command] social: ✅ comando !skip procesado por @cristian_rivasxd
+2026-04-30T02:15:21.049Z [INFO] [tiktok] tiktok: ❤️ Likes iniciales: 21,282
+2026-04-30T02:15:21.049Z [INFO] [rule] rules: 🔴 Juegos OFF · command de @cristian_rivasxd (no se envió al juego)
+2026-04-30T02:15:21.050Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @user7480290493135 (no se envió al juego)
+2026-04-30T02:15:21.050Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @isxiverse (no se envió al juego)
+2026-04-30T02:15:21.244Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,297)
+2026-04-30T02:15:21.246Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:21.248Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:22.390Z [INFO] [comment] tiktok: 💬 [mod][superfan][topgifter][L27][G16][friend] @cristian_rivasxd: @isxiverse 🎨 [7499319811279489798]
+2026-04-30T02:15:22.876Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,312)
+2026-04-30T02:15:26.157Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,327)
+2026-04-30T02:15:26.158Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:26.160Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:29.553Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +14 likes (Total: 21,341)
+2026-04-30T02:15:29.554Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:29.555Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:38.518Z [INFO] [comment] tiktok: ⌨️ [mod][member L27][G9][friend][follower] !racja de @gottina
+2026-04-30T02:15:38.519Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @gottina (no se envió al juego)
+2026-04-30T02:15:38.519Z [WARNING] [command] social: ⚠️ comando !racja (@gottina) sin handler social
+2026-04-30T02:15:38.519Z [INFO] [rule] rules: 🔴 Juegos OFF · command de @gottina (no se envió al juego)
+2026-04-30T02:15:40.183Z [INFO] [comment] tiktok: ⌨️ [mod][superfan][topgifter][L27][G16][friend] !racha de @cristian_rivasxd
+2026-04-30T02:15:40.184Z [INFO] [comment] tiktok: 💬 [mod][topgifter][member L26][G13][friend][follower] @darklight_ofk: Racha
+2026-04-30T02:15:40.184Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @cristian_rivasxd (no se envió al juego)
+2026-04-30T02:15:40.186Z [INFO] [command] social: ✅ comando !racha procesado por @cristian_rivasxd
+2026-04-30T02:15:40.186Z [INFO] [social] social: 📢 RACHA TTS: texto='Cristianrivasxd tiene racha automática activa. Lle...', callback=True, vol=0.3
+2026-04-30T02:15:40.186Z [INFO] [rule] rules: 🔴 Juegos OFF · command de @cristian_rivasxd (no se envió al juego)
+2026-04-30T02:15:40.187Z [INFO] [social] social: 📢 RACHA TTS resultado: None
+2026-04-30T02:15:40.188Z [INFO] [social] social: 🔥 Racha cristian_rivasxd: 687 (auto: 17 restantes)
+2026-04-30T02:15:40.188Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @darklight_ofk (no se envió al juego)
+2026-04-30T02:15:40.928Z [INFO] [comment] tiktok: ⌨️ [topgifter][member L15][G9][follower] !racha de @honnie_008
+2026-04-30T02:15:40.929Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:40.931Z [INFO] [command] social: ✅ comando !racha procesado por @honnie_008
+2026-04-30T02:15:40.931Z [INFO] [social] social: 📢 RACHA TTS: texto='Honnie ya marcó su racha hoy. Llevas 1 días seguid...', callback=True, vol=0.3
+2026-04-30T02:15:40.931Z [INFO] [rule] rules: 🔴 Juegos OFF · command de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:40.931Z [INFO] [social] social: 🔥 Racha honnie_008: 1 (récord: 35)
+2026-04-30T02:15:45.040Z [INFO] [comment] tiktok: ⌨️ [mod][member L27][G9][friend][follower] !racha de @gottina
+2026-04-30T02:15:45.041Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @gottina (no se envió al juego)
+2026-04-30T02:15:45.042Z [INFO] [command] social: ✅ comando !racha procesado por @gottina
+2026-04-30T02:15:45.043Z [INFO] [social] social: 📢 RACHA TTS: texto='Gottina tiene racha automática activa. Llevas 547 ...', callback=True, vol=0.3
+2026-04-30T02:15:45.043Z [INFO] [social] social: 📢 RACHA TTS resultado: None
+2026-04-30T02:15:45.043Z [INFO] [rule] rules: 🔴 Juegos OFF · command de @gottina (no se envió al juego)
+2026-04-30T02:15:45.043Z [INFO] [social] social: 🔥 Racha gottina: 547 (auto: 24 restantes)
+2026-04-30T02:15:55.298Z [INFO] [comment] tiktok: 💬 [topgifter][member L15][G9][follower] @honnie_008: @isxiverse no q lo extrañabas o algo asi? 🎨 [7600256055855500040]
+2026-04-30T02:15:55.299Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:57.613Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +6 likes (Total: 21,347)
+2026-04-30T02:15:57.614Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:15:57.615Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:03.436Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,362)
+2026-04-30T02:16:03.437Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:03.438Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:05.960Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,377)
+2026-04-30T02:16:05.960Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:05.961Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:06.791Z [INFO] [comment] tiktok: 💬 [mod][superfan][topgifter][L27][G16][friend] @cristian_rivasxd: se repite 🎨 [7397160117315783430]
+2026-04-30T02:16:06.791Z [INFO] [rule] rules: 🔴 Juegos OFF · comment de @cristian_rivasxd (no se envió al juego)
+2026-04-30T02:16:09.203Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,392)
+2026-04-30T02:16:09.204Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:09.205Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:11.822Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,407)
+2026-04-30T02:16:11.822Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:11.824Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:15.128Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,422)
+2026-04-30T02:16:15.129Z [INFO] [rule] rules: 🔴 Juegos OFF · like de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:15.130Z [INFO] [rule] rules: 🔴 Juegos OFF · like_milestone de @honnie_008 (no se envió al juego)
+2026-04-30T02:16:17.560Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,437)
+2026-04-30T02:16:17.561Z [INFO] [comment] tiktok: 💬 [superfan][L20][G24][friend] @thekrampuz24: un koru
+2026-04-30T02:16:17.570Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:18.564Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC60E44F0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:20.808Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,452)
+2026-04-30T02:16:20.810Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:21.812Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FBA8C0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:24.122Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,467)
+2026-04-30T02:16:24.123Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:25.126Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC67EBCD0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:27.311Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,482)
+2026-04-30T02:16:27.312Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:28.314Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC68934F0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:29.809Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,497)
+2026-04-30T02:16:29.811Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:30.813Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6892830>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:31.498Z [INFO] [comment] tiktok: ⌨️ [superfan][L20][G24][friend] !racha de @thekrampuz24
+2026-04-30T02:16:31.500Z [INFO] [command] social: ✅ comando !racha procesado por @thekrampuz24
+2026-04-30T02:16:31.500Z [INFO] [social] social: 📢 RACHA TTS: texto='Thekrampuz tiene racha automática activa. Llevas 8...', callback=True, vol=0.3
+2026-04-30T02:16:31.500Z [INFO] [social] social: 📢 RACHA TTS resultado: None
+2026-04-30T02:16:31.500Z [INFO] [social] social: 🔥 Racha thekrampuz24: 86 (auto: 15 restantes)
+2026-04-30T02:16:33.931Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,512)
+2026-04-30T02:16:33.932Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:34.934Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6F7E590>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:36.461Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,527)
+2026-04-30T02:16:36.461Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:37.464Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC60E46A0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:39.715Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,542)
+2026-04-30T02:16:39.717Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:40.720Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FBA4A0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:43.849Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,557)
+2026-04-30T02:16:43.850Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:44.853Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FE5390>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:47.828Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,572)
+2026-04-30T02:16:47.829Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:48.680Z [INFO] [comment] tiktok: 💬 [follower] @isxiverse: @M4J0 si, yo lo amo y lo amaba mucho
+2026-04-30T02:16:48.831Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FE6230>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:51.252Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,587)
+2026-04-30T02:16:51.253Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:52.256Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FBA2F0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:54.548Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,602)
+2026-04-30T02:16:54.549Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:55.551Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FB86D0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:16:57.917Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,617)
+2026-04-30T02:16:57.918Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:16:58.921Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FBB430>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:17:00.494Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +15 likes (Total: 21,632)
+2026-04-30T02:17:00.498Z [INFO] [rule] rules: ✅ Sin nombre (trigger_event) → ⚡ max_stamina · @honnie_008 (🌸 miembro L15 · 🏆 top gifter · ➕ te sigue · 🎁 gifter)
+2026-04-30T02:17:00.498Z [INFO] [tiktok] tiktok: 🎁 @cristian_rivasxd envió: Rose
+2026-04-30T02:17:00.504Z [INFO] [rule] rules: ✅ JABALI (spawn) → 🐉 1x Boar · @cristian_rivasxd (🛡️ mod · ⭐ superfan · 🌸 miembro L27 · 🏆 top gifter · ➕ te sigue · 🤝 mutual · 🎁 gifter)
+2026-04-30T02:17:01.500Z [WARNING] [action] maru_sidecar.core_bridge: ⚡ valheim event max_stamina → http://localhost:5000/event ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /event (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FE5C00>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:17:01.505Z [WARNING] [action] maru_sidecar.core_bridge: 🐉 valheim spawn Boar x1 → http://localhost:5000/spawn ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /spawn (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FF7430>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:17:02.051Z [INFO] [tiktok] tiktok: ❤️ @honnie_008 +6 likes (Total: 21,638)
+2026-04-30T02:17:03.743Z [INFO] [tiktok] tiktok: 🎁 @keiner.sanchez51 envió: Rose
+2026-04-30T02:17:03.744Z [INFO] [rule] rules: ✅ JABALI (spawn) → 🐉 1x Boar · @keiner.sanchez51
+2026-04-30T02:17:04.744Z [WARNING] [action] maru_sidecar.core_bridge: 🐉 valheim spawn Boar x1 → http://localhost:5000/spawn ERROR: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /spawn (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x0000011FC6FF7FD0>, 'Connection to localhost timed out. (connect timeout=0.5)'))
+2026-04-30T02:17:11.084Z [INFO] [tiktok] tiktok: 🛑 Desconectado de @soykoru (manual)

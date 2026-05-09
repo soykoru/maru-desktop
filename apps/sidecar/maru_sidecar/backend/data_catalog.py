@@ -241,6 +241,29 @@ class DataService:
         self._lock = threading.Lock()
         self._backups = backups or BackupService(data_dir=data_dir)
         data_dir.mkdir(parents=True, exist_ok=True)
+        # v1.1.3: dispatcher inyectado para que el RuleEngine recargue
+        # el GameProfile cuando cambian entries del catálogo. Sin esto,
+        # `find_command(action_type, action_value)` puede devolver el
+        # comando viejo (o no encontrar entries recién agregadas) para
+        # juegos HTTP que resuelven action_value → command via catálogo.
+        self._dispatcher: Any = None
+
+    def attach_dispatcher(self, dispatcher: Any) -> None:
+        """v1.1.3: el RuleEngine cachea entities/items/events/valuables
+        del data_<gid>.json en `engine.profiles[gid]`. Mutar entries vía
+        `upsert/delete/bulk-delete/import` debe disparar refresh para
+        que el catálogo nuevo se vea inmediatamente al disparar reglas.
+        """
+        self._dispatcher = dispatcher
+
+    def _notify_engine(self, game_id: str) -> None:
+        """Recarga el GameProfile del engine tras mutar data_<gid>.json."""
+        if self._dispatcher is None:
+            return
+        try:
+            self._dispatcher.refresh_profile(game_id)
+        except Exception as exc:
+            log.warning("data._notify_engine fallo (%s): %s", game_id, exc)
 
     def _data_path(self, game_id: str) -> Path:
         return self._data_dir / f"data_{game_id}.json"
@@ -295,6 +318,7 @@ class DataService:
             else:
                 entries.append(entry)
             self._write_atomic(gid, doc)
+        self._notify_engine(gid)
         return {"entry": entry}
 
     def delete(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -309,7 +333,49 @@ class DataService:
             entries = doc.get(kind, [])
             doc[kind] = [e for e in entries if e.get("name") != name]
             self._write_atomic(gid, doc)
+        self._notify_engine(gid)
         return {"ok": True}
+
+    def bulk_delete(self, params: dict[str, Any]) -> dict[str, Any]:
+        """v1.0.91+ — borrado masivo atómico de N entries por nombre.
+
+        UN backup + UN write al disco (vs N backups + N writes si llamáramos
+        `delete` en loop desde el frontend). Pensado para el modo "selección
+        múltiple" del DataDialog donde el user puede borrar 20-100 entries
+        de una sola vez.
+
+        Devuelve {removed: int, remaining: int, missing: list[str]} para
+        que la UI sepa cuántas se borraron y cuáles no existían.
+        """
+        gid = _validate_game(params.get("gameId"))
+        kind = _validate_kind(params.get("kind"))
+        names = params.get("names")
+        if not isinstance(names, list):
+            raise TypeError("names debe ser lista de strings")
+        targets = {
+            n.strip()
+            for n in names
+            if isinstance(n, str) and n.strip()
+        }
+        if not targets:
+            return {"removed": 0, "remaining": 0, "missing": []}
+        with self._lock:
+            self._maybe_backup(gid)
+            doc = self._read(gid)
+            entries = doc.get(kind, [])
+            existing_names = {e.get("name") for e in entries if isinstance(e, dict)}
+            missing = sorted(targets - existing_names)
+            kept = [e for e in entries if e.get("name") not in targets]
+            removed = len(entries) - len(kept)
+            doc[kind] = kept
+            self._write_atomic(gid, doc)
+        if removed > 0:
+            self._notify_engine(gid)
+        return {
+            "removed": int(removed),
+            "remaining": int(len(kept)),
+            "missing": missing,
+        }
 
     def import_(self, params: dict[str, Any]) -> dict[str, Any]:
         gid = _validate_game(params.get("gameId"))
@@ -331,6 +397,7 @@ class DataService:
                 by_name[e["name"]] = e
             doc[kind] = list(by_name.values())
             self._write_atomic(gid, doc)
+        self._notify_engine(gid)
         return {"added": added, "total": len(doc[kind])}
 
     def export(self, params: dict[str, Any]) -> dict[str, Any]:

@@ -25,8 +25,12 @@ const ALLOWED_CHANNELS = new Set<string>([
   'spotify:status', // G14
   'spotify:now-playing',
   'spotify:queue',
+  'spotify:playfan-state',
   'social:update',
+  'social:user-updated', // v1.0.90+ refresh single user (ej. perdió SuperFan)
+  'profiles:loaded', // v1.0.91+ perfil restaurado → invalidar caches data/rules
   'log:entry', // G11
+  'log:entry:updated', // v1.1.3 promote-to-bottom de entries dedupadas
   'window:state',
   'updater:state',
 ]);
@@ -53,6 +57,10 @@ const api = {
     getVersion(): Promise<{ version: string }> {
       return ipcRenderer.invoke('app:get-version');
     },
+    /** Cierra la app (quit real, no minimize-to-tray). */
+    quit(): Promise<void> {
+      return ipcRenderer.invoke('app:quit');
+    },
   },
   shell: {
     openExternal(url: string): Promise<void> {
@@ -65,6 +73,30 @@ const api = {
      * puede silenciar fallar sin foco). */
     write(text: string): Promise<boolean> {
       return ipcRenderer.invoke('clipboard:write', text);
+    },
+  },
+  dialog: {
+    /**
+     * v1.0.71: abre el save dialog nativo del SO y escribe `content` al
+     * archivo elegido. Devuelve `{ ok, path?, error? }`. `ok=false` con
+     * sin error significa que el user canceló.
+     */
+    saveText(payload: {
+      content: string;
+      defaultPath?: string;
+      filters?: Array<{ name: string; extensions: string[] }>;
+    }): Promise<{ ok: boolean; path?: string; error?: string }> {
+      return ipcRenderer.invoke('dialog:save-text', payload);
+    },
+    /**
+     * v1.0.74: file picker nativo. Devuelve `{ok, path}` con el path
+     * absoluto. `ok=false` + `cancelled=true` cuando el user cancela.
+     */
+    openFile(payload?: {
+      title?: string;
+      filters?: Array<{ name: string; extensions: string[] }>;
+    }): Promise<{ ok: boolean; path?: string; cancelled?: boolean; error?: string }> {
+      return ipcRenderer.invoke('dialog:open-file', payload ?? {});
     },
   },
   /**

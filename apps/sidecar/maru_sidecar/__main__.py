@@ -77,6 +77,24 @@ async def _run(args: argparse.Namespace) -> int:
     chat_dispatcher = getattr(registry, "chat_dispatcher", None)
     if chat_dispatcher is not None:
         chat_dispatcher.install(asyncio.get_running_loop())
+    # MARU-OVERLAYS-INTEGRATION (1/1 en __main__): arranca el WS uplink
+    # del relay. Suscriptor pasivo del bus + reconexión automática.
+    overlays_svc = getattr(registry, "overlays_svc", None)
+    if overlays_svc is not None:
+        overlays_svc.install(asyncio.get_running_loop())
+    # MARU-HEALTH-INTEGRATION: arranca loop async del healthcheck.
+    # Ping cada 30s al juego ACTIVO (no a los 7) → publica `game:health`.
+    health_svc = getattr(registry, "health_svc", None)
+    if health_svc is not None:
+        health_svc.install(asyncio.get_running_loop())
+    # Optimización RAM: forzar GC después del bootstrap. Los imports
+    # iniciales (registry building, instanciación de services) dejan
+    # bastante objeto temporal — un ciclo de gc libera ~10-20 MB.
+    try:
+        import gc
+        gc.collect()
+    except Exception:
+        pass
     server = RpcServer(registry, port=args.rpc_port)
     ready: asyncio.Future[int] = asyncio.get_running_loop().create_future()
 
@@ -152,20 +170,38 @@ async def _run(args: argparse.Namespace) -> int:
         last_queue_key: str | None = None
         while True:
             try:
-                payload = spotify_svc.poll_now_playing_for_push()
+                # CRÍTICO v1.0.61: estos calls hacen HTTP a Spotify Web API.
+                # Antes corrían SÍNCRONOS en el loop asyncio cada 5s,
+                # bloqueándolo durante el request (200ms-3s típico, hasta
+                # 30s si Spotify rate-limita). Eso era invisible en uso
+                # normal pero durante el OAuth manual del user TAMBIÉN
+                # corría → bloqueo combinado → renderer pierde RPC →
+                # pantalla negra. Ahora delegamos a thread y el loop
+                # asyncio queda libre para procesar otros RPCs.
+                payload = await asyncio.to_thread(
+                    spotify_svc.poll_now_playing_for_push
+                )
                 if payload is not None:
                     bus.publish("spotify:now-playing", payload)
                 # Cola: cada ciclo (5s) re-pulamos y publicamos si cambió.
                 # Sin esto, la UI solo veía el snapshot al abrir el diálogo.
-                queue_payload = spotify_svc.queue_list({})
-                items = queue_payload.get("items") or []
-                key = "|".join(
-                    f"{i.get('trackId','')}:{i.get('requestedBy','')}"
-                    for i in items
-                )
-                if key != last_queue_key:
-                    last_queue_key = key
-                    bus.publish("spotify:queue", {"items": items, "total": len(items)})
+                # Suprimida durante OAuth para no competir con el
+                # authenticate() en thread.
+                if not spotify_svc.is_oauth_in_progress:
+                    queue_payload = await asyncio.to_thread(
+                        spotify_svc.queue_list, {}
+                    )
+                    items = queue_payload.get("items") or []
+                    key = "|".join(
+                        f"{i.get('trackId','')}:{i.get('requestedBy','')}"
+                        for i in items
+                    )
+                    if key != last_queue_key:
+                        last_queue_key = key
+                        bus.publish(
+                            "spotify:queue",
+                            {"items": items, "total": len(items)},
+                        )
             except Exception:
                 log.exception("scheduler: spotify now-playing/queue")
             # Más frecuente que antes (10s → 5s) para que el "en cola"
@@ -174,11 +210,18 @@ async def _run(args: argparse.Namespace) -> int:
 
     spotify_np_task = asyncio.create_task(_spotify_nowplaying_scheduler())
 
-    # Idle GC scheduler — cuando NO hay TikTok conectado, llamamos
-    # gc.collect() periódicamente para liberar al SO la memoria de
-    # objetos transitorios (RPC payloads, parsing JSON, etc). Sin esto,
-    # la RSS del sidecar crece lentamente con uso normal y solo baja
-    # cuando el GC generacional decide. En idle queremos baseline mínima.
+    # GC scheduler — corre SIEMPRE para liberar memoria de objetos
+    # transitorios (RPC payloads, parsing JSON, eventos del bus, etc).
+    #
+    # v1.0.69: doble política según estado de conexión:
+    #   - IDLE (sin live): full collect cada 2 min (gen=2). Libera todo.
+    #   - LIVE ACTIVO: gen=0 cada 3 min. Solo objetos jóvenes (rápido,
+    #     <1ms, sin microhipos perceptibles en el processing de eventos).
+    #
+    # Sin esto, la RSS del sidecar crece monotonicamente durante un live
+    # de 6h porque el GC generacional default solo corre cuando llena
+    # thresholds internos — en bursts de likes (50-200/seg) los objetos
+    # transitorios se acumulan más rápido de lo que el GC libera.
     async def _idle_gc_scheduler() -> None:
         import gc as _gc
         # Esperar 60s post-boot antes del primer ciclo (no interferir
@@ -186,17 +229,19 @@ async def _run(args: argparse.Namespace) -> int:
         await asyncio.sleep(60)
         while True:
             try:
-                # Solo hacer GC si no estamos en plena conexión live —
-                # durante un live activo el GC genera microhipos en el
-                # processing de eventos. Lo detectamos viendo si el
-                # TikTokService publicó status:connected recientemente.
                 tiktok_svc = getattr(registry, "tiktok_svc", None)
                 connected = bool(getattr(tiktok_svc, "_connected", False)) if tiktok_svc else False
-                if not connected:
+                if connected:
+                    # Live activo: solo gen=0 (rápido, libera objetos jóvenes).
+                    _gc.collect(0)
+                    sleep_s = 180  # cada 3 min
+                else:
+                    # Idle: full collect (gen=2, libera todo).
                     _gc.collect()
+                    sleep_s = 120  # cada 2 min
             except Exception:
-                pass
-            await asyncio.sleep(120)  # cada 2 min en idle
+                sleep_s = 180
+            await asyncio.sleep(sleep_s)
 
     idle_gc_task = asyncio.create_task(_idle_gc_scheduler())
 
@@ -229,6 +274,10 @@ async def _run(args: argparse.Namespace) -> int:
     cleanup_task.cancel()
     spotify_np_task.cancel()
     idle_gc_task.cancel()
+    # MARU-HEALTH-INTEGRATION: cancelar loop del healthcheck en shutdown
+    # para no dejarlo corriendo huérfano.
+    if health_svc is not None:
+        await health_svc.stop()
     return 0
 
 

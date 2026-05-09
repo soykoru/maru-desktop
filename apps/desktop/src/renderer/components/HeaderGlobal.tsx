@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Download, RefreshCw, Sparkles } from 'lucide-react';
+import { Download, Power, RefreshCw, Sparkles } from 'lucide-react';
 import { useAppStore } from '../lib/store/index.js';
 import { THEME_LIST, type ThemeId } from '../lib/store/ui-slice.js';
 import { rpcCall } from '../lib/rpc.js';
@@ -114,8 +114,39 @@ export function HeaderGlobal(): ReactNode {
             pulse={pulse}
           />
         )}
+        <QuitButton />
       </div>
     </header>
+  );
+}
+
+/**
+ * Botón "Salir" — quit REAL de la app.
+ *
+ * La X de la ventana esconde al tray (paridad MARU). Este botón es la
+ * salida explícita que cierra el proceso, drena sidecar/RPC limpio.
+ * Discreto a propósito (icon-only, opacity baja) para no competir con
+ * los CTAs de actualizador/temas. Hover sube opacidad + tinte rojo.
+ */
+function QuitButton() {
+  const handleQuit = () => {
+    void window.maruApi.app.quit();
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleQuit}
+      title="Salir de MARU (cerrar la app)"
+      aria-label="Salir de MARU"
+      className={[
+        'inline-flex h-7 w-7 items-center justify-center rounded-md',
+        'border border-fg/10 bg-bg-elevated/30 text-fg-muted/70',
+        'hover:border-danger/40 hover:bg-danger/10 hover:text-danger',
+        'transition-colors duration-150',
+      ].join(' ')}
+    >
+      <Power className="h-3.5 w-3.5" />
+    </button>
   );
 }
 

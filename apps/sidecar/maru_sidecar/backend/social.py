@@ -275,6 +275,20 @@ def _user_to_dto(
         }
     if auto is not None:
         auto["kind"] = auto_racha_kind
+        # Defensa: cuando `users_activate_auto_racha` recibe `kind=super_fan`
+        # internamente persiste `days=365` (sentinel para que el contador
+        # del core no expire mientras el user mantenga el rol). Si el
+        # marcador `super_fan_rachas.json` se pierde por algún motivo
+        # (corrupción del JSON, race con escritura) `is_super_fan_racha`
+        # retorna False → caller pasa `kind=manual` → la UI muestra
+        # "365/365 días restantes" en vez de "hasta que finalice la sub".
+        # Detectamos el sentinel y forzamos kind=super_fan al exportar.
+        if (
+            auto.get("active")
+            and _safe_int(auto.get("total_days")) >= 365
+            and auto["kind"] == "manual"
+        ):
+            auto["kind"] = "super_fan"
     # stats puede venir nested en `stats={"duelos_ganados":N, ...}` o flat.
     stats_raw = raw.get("stats") if isinstance(raw.get("stats"), dict) else {}
     return {
@@ -777,6 +791,20 @@ class SocialService:
         # Garantizar todos los campos esperados.
         for k, v in DEFAULT_CONFIG.items():
             cfg.setdefault(k, v)
+        # Single source of truth: el volumen y la voz que el slider del
+        # SocialDialog muestra DEBE coincidir con lo que el engine TTS usa
+        # realmente al reproducir. Sin esto el slider era decorativo —
+        # el SocialSystem guardaba `volume` interno pero el TTS usaba
+        # `tts.config.volume_social`.
+        if self._tts is not None:
+            try:
+                tts_cfg = self._tts.config_get({}).get("config", {})
+                if "volume_social" in tts_cfg:
+                    cfg["volume"] = int(tts_cfg["volume_social"])
+                if "social_voice" in tts_cfg and not cfg.get("voice"):
+                    cfg["voice"] = tts_cfg["social_voice"]
+            except Exception:
+                pass
         return {"config": cfg}
 
     def config_set(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -797,6 +825,23 @@ class SocialService:
                             setattr(s, k, v)
                 if hasattr(s, "_save_data"):
                     s._save_data()
+            # Mirror al TTS engine — ver comentario en config_get. El
+            # slider de volumen del SocialDialog ahora SÍ afecta el
+            # audio porque escribimos en `tts.config.volume_social`.
+            if self._tts is not None:
+                tts_patch: dict[str, Any] = {}
+                if "volume" in patch:
+                    try:
+                        tts_patch["volume_social"] = int(patch["volume"])
+                    except (TypeError, ValueError):
+                        pass
+                if "voice" in patch and isinstance(patch["voice"], str):
+                    tts_patch["social_voice"] = patch["voice"]
+                if tts_patch:
+                    try:
+                        self._tts.config_set({"patch": tts_patch})
+                    except Exception:
+                        log.exception("social.config_set: mirror tts falló")
             return {"ok": True}
         except Exception as exc:
             log.warning("social.config_set: %s", exc)

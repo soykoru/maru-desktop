@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections import OrderedDict
 from typing import Any
 
 from ..event_bus import get_event_bus
@@ -92,7 +93,11 @@ class TikTokService:
         # Cache de rangos por user (lower) — alimentado por comment_enriched
         # y consumido al re-emitir gift/follow/like para que las reglas
         # filtren por rol incluso en eventos sin user_identity.
-        self._user_ranks_cache: dict[str, dict[str, Any]] = {}
+        # v1.0.69: LRU con cap 5000 para evitar crecimiento sin tope en
+        # lives masivos (50K+ chatters únicos antes hacían crecer este
+        # dict hasta 15-20MB sostenidos sin liberarse hasta disconnect).
+        self._user_ranks_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self._USER_RANKS_CACHE_MAX = 5000
         # Cache de avatares por user (lower) — solo en memoria, durante
         # la sesión activa del live. Se vacía en disconnect/reconnect.
         # Tamaño máximo 500 entries para evitar crecimiento indefinido en
@@ -122,6 +127,16 @@ class TikTokService:
         # de evento (RuleEngine) sigue recibiendo el 100%.
         self._join_log_user_ts: dict[str, float] = {}
         self._JOIN_LOG_USER_COOLDOWN_S: float = 30.0
+        # Tracker de "primera acción" por sesión — usado por el trigger
+        # `first_action` (v1.0.90+). Cada user que entra al set ya emitió
+        # algún evento (gift/comment/like/share/follow); la PRIMERA vez
+        # publicamos un evento sintético `first_action` además del original
+        # para que reglas con ese trigger se disparen una sola vez.
+        # Se vacía en disconnect/reconnect (nueva sesión = todos primerizos).
+        self._first_action_seen: set[str] = set()
+        self._FIRST_ACTION_TRACKED_TYPES = (
+            "gift", "comment", "like", "share", "follow", "subscribe",
+        )
 
     def attach_donations(self, donations: Any) -> None:
         self._donations = donations
@@ -386,6 +401,10 @@ class TikTokService:
             # Cooldowns de log de joins se vacían — al reconectar
             # queremos que TODOS los joins se loguen una vez.
             self._join_log_user_ts.clear()
+            # Reset del tracker de primera acción — nueva sesión = todos
+            # los users vuelven a ser "primerizos" para el trigger
+            # `first_action`.
+            self._first_action_seen.clear()
             # Limpiar el set de users diagnosticados (DIAG @user) — vuelve
             # a emitir DIAG en el próximo connect si algo cambió.
             try:
@@ -643,7 +662,11 @@ class TikTokService:
             # filtrar por rol — paridad con la nueva feature
             # required_ranks/excluded_ranks de Rule.
             user = str(data.get("user") or "?")
-            ranks = self._user_ranks_cache.get(user.lower())
+            user_key = user.lower()
+            ranks = self._user_ranks_cache.get(user_key)
+            # LRU touch: si encontramos ranks, mover al final (más reciente).
+            if ranks is not None:
+                self._user_ranks_cache.move_to_end(user_key)
             merged = dict(data)
             if ranks:
                 for k, v in ranks.items():
@@ -657,6 +680,38 @@ class TikTokService:
                 "data": merged,
             }
             bus.publish("tiktok:event", payload)
+
+            # Trigger sintético `first_action` (v1.0.90+).
+            # Se dispara una sola vez por user en la sesión cuando hace su
+            # primera interacción real (no joins — los joins son entradas
+            # silenciosas que no deberían contar como "primera acción").
+            # Usado por reglas tipo bienvenida única por viewer.
+            if (
+                event_type in self._FIRST_ACTION_TRACKED_TYPES
+                and user_key
+                and user_key != "?"
+                and user_key not in self._first_action_seen
+            ):
+                self._first_action_seen.add(user_key)
+                # Cap de seguridad: 10K users (sesión muy larga). Sin esto
+                # un live de 12h con 50K chatters únicos crecería sin tope.
+                if len(self._first_action_seen) > 10000:
+                    # Simple drop a la mitad — no necesitamos LRU acá
+                    # porque solo lo usamos para "ya disparé esto antes".
+                    sample = list(self._first_action_seen)[5000:]
+                    self._first_action_seen = set(sample)
+                first_payload = {
+                    "type": "first_action",
+                    "user": user,
+                    "nickname": data.get("nickname"),
+                    "avatar": data.get("avatar"),
+                    "timestamp": data.get("timestamp"),
+                    "data": {
+                        **merged,
+                        "kind": event_type,  # qué acción originó la primera vez
+                    },
+                }
+                bus.publish("tiktok:event", first_payload)
             # Log INDIVIDUAL por cada gift recibido (1 entry por evento,
             # no resumen por streak). El worker emite N events para un
             # streak de N rosas → vemos N entries "@user envió: rose"
@@ -972,7 +1027,27 @@ class TikTokService:
                 )
                 if k in info
             }
-            self._user_ranks_cache[user.lower()] = keep
+            ranks_key = user.lower()
+            # Detectar transición True→False de is_super_fan ANTES de
+            # sobreescribir el cache. Si el user PIERDE el rol acá,
+            # vamos a publicar log + push event después del sync para
+            # que el user vea visualmente que el cleanup ocurrió.
+            prev_entry = self._user_ranks_cache.get(ranks_key) or {}
+            had_super_fan = bool(prev_entry.get("is_super_fan"))
+            now_super_fan = bool(keep.get("is_super_fan")) if "is_super_fan" in keep else had_super_fan
+            super_fan_lost = (
+                "is_super_fan" in keep
+                and had_super_fan
+                and not now_super_fan
+            )
+            # LRU: si ya existía, mover al final (más reciente);
+            # luego asignar el valor actualizado.
+            if ranks_key in self._user_ranks_cache:
+                self._user_ranks_cache.move_to_end(ranks_key)
+            self._user_ranks_cache[ranks_key] = keep
+            # Eviccion del más viejo si superamos el cap.
+            while len(self._user_ranks_cache) > self._USER_RANKS_CACHE_MAX:
+                self._user_ranks_cache.popitem(last=False)
             # Sync con SpotifyService.priority_users si tiene el flag.
             if self._spotify is not None and "is_super_fan" in info:
                 try:
@@ -999,6 +1074,32 @@ class TikTokService:
                         )
                 except Exception:
                     log.exception("sync_super_fan_status fallo (user=%s)", user)
+
+            # Visibilidad del cleanup en transición True→False (v1.0.90+).
+            # El cleanup automático ya corrió arriba; acá emitimos:
+            #   1. Log visible al panel: "@user perdió Super Fan — limpieza
+            #      automática aplicada" para que el user sepa qué pasó.
+            #   2. Push event `social:user-updated` para que el SocialDialog
+            #      repinte el badge dorado / ring de avatar sin esperar a
+            #      que el user cierre+abra el modal.
+            if super_fan_lost:
+                try:
+                    if self._logs is not None:
+                        self._logs.publish(
+                            f"⭐➡️🚫 @{user} perdió el rol Super Fan — "
+                            f"limpiados: prioridad PlayFan, racha automática "
+                            f"y badge dorado",
+                            level="INFO",
+                            source="social",
+                            category="social",
+                            meta={"user": user, "event": "super_fan_lost"},
+                        )
+                except Exception:
+                    log.exception("super_fan_lost log fallo (user=%s)", user)
+                try:
+                    bus.publish("social:user-updated", {"user": user})
+                except Exception:
+                    log.exception("social:user-updated publish fallo (user=%s)", user)
 
         def _on_comment_enriched(user: str, info: dict[str, Any]) -> None:
             """Comment con flags super_fan/moderator/top_gifter/etc.

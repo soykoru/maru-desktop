@@ -489,6 +489,15 @@ class TtsService:
         if text:
             from .utils.tts_text import sanitize_text_usernames
             text = sanitize_text_usernames(text)
+            # v1.0.69: convertir números grandes (>=1000) a palabras en
+            # español ANTES de mandar a TTS. La API TikTok lee dígitos
+            # individualmente ("uno-dos-cuatro-cero-mil") cuando ve un
+            # número grande → audio ininteligible. Ahora "1240000 likes"
+            # se convierte a "un millón doscientos cuarenta mil likes".
+            # Aplica AL FINAL del pipeline → cubre TTS de chat, suerte,
+            # IA, social y cualquier otro path que termine acá.
+            from .utils.numbers_es import expand_numbers_in_text
+            text = expand_numbers_in_text(text)
         # Dedupe defensiva: si llega `(channel, text[:120])` idéntico
         # en <1.5s, devolvemos OK silencioso. Garantiza que el bot NO
         # hable lo mismo dos veces en esa ventana, sea cual sea el

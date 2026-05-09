@@ -63,6 +63,14 @@ export interface SocialSlice {
   setSocialStats: (stats: SocialStats) => void;
   setSocialTaps: (period: TapsPeriod, total: number, ranking: TapsRankingEntry[]) => void;
   setSocialCommandsMeta: (m: Record<string, SocialCategoryMeta>) => void;
+  /**
+   * v1.0.69: libera la lista de usuarios sociales del store. Se llama
+   * cuando el SocialConfigDialog se cierra. La lista puede crecer a
+   * 5K-15K entries (~5-15 MB) y permanece tatuada en memoria hasta
+   * cerrar la app si no se limpia. Re-abrir el dialog la re-pide al
+   * sidecar (~100-300ms, imperceptible).
+   */
+  clearSocialUsers: () => void;
 }
 
 export const createSocialSlice: StateCreator<SocialSlice, [], [], SocialSlice> = (set) => ({
@@ -111,4 +119,13 @@ export const createSocialSlice: StateCreator<SocialSlice, [], [], SocialSlice> =
   setSocialTaps: (socialTapsPeriod, socialTapsTotal, socialTapsRanking) =>
     set({ socialTapsPeriod, socialTapsTotal, socialTapsRanking }),
   setSocialCommandsMeta: (socialCommandsMeta) => set({ socialCommandsMeta }),
+
+  clearSocialUsers: () =>
+    set({
+      socialUsers: [],
+      socialUsersStatus: 'idle',
+      socialUsersError: null,
+      socialUsersSearch: '',
+      socialSelectedUsername: null,
+    }),
 });

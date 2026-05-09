@@ -44,6 +44,10 @@ export interface UseGamesResult {
     id: GameId,
     connection?: GameConnection,
   ) => Promise<{ ok: boolean; message: string }>;
+  /** v1.0.75: cambia la portada custom (file picker / drag-drop). */
+  setCover: (id: GameId, sourcePath: string) => Promise<GameProfile>;
+  /** v1.0.75: elimina la portada custom (vuelve a usar la del bundle). */
+  removeCover: (id: GameId) => Promise<GameProfile>;
 
   selectedId: GameId | null;
   setSelectedId: (id: GameId | null) => void;
@@ -142,6 +146,51 @@ export function useGames(options?: { autoLoad?: boolean }): UseGamesResult {
     [],
   );
 
+  /**
+   * v1.0.75: cambia la portada de un juego en una sola operación.
+   *
+   * Flujo:
+   *   1. Sube el archivo al backend (`images.set-game-cover`).
+   *   2. Persiste el filename como `coverImage` en el GameProfile
+   *      (`games.update`).
+   *   3. Actualiza el store local con el profile devuelto.
+   *
+   * El caller le pasa el path absoluto del archivo (obtenido vía
+   * `window.maruApi.dialog.openFile()` o `window.maruApi.getPathForFile(file)`
+   * en drag-drop).
+   */
+  const setCover = useCallback(
+    async (id: GameId, sourcePath: string): Promise<GameProfile> => {
+      const upload = (await rpcCall('images.set-game-cover', {
+        gameId: id,
+        sourcePath,
+      })) as { ok: boolean; filename?: string; message?: string };
+      if (!upload.ok || !upload.filename) {
+        throw new Error(upload.message || 'No se pudo subir la portada');
+      }
+      const res = await rpcCall('games.update', {
+        gameId: id,
+        patch: { coverImage: upload.filename },
+      });
+      upsertLocal(res.profile);
+      return res.profile;
+    },
+    [upsertLocal],
+  );
+
+  const removeCover = useCallback(
+    async (id: GameId): Promise<GameProfile> => {
+      await rpcCall('images.delete-game-cover', { gameId: id });
+      const res = await rpcCall('games.update', {
+        gameId: id,
+        patch: { coverImage: null },
+      });
+      upsertLocal(res.profile);
+      return res.profile;
+    },
+    [upsertLocal],
+  );
+
   useEffect(() => {
     if (!autoLoad) return;
     if (status === 'idle') void refresh();
@@ -176,6 +225,8 @@ export function useGames(options?: { autoLoad?: boolean }): UseGamesResult {
     duplicate,
     deleteCustom,
     testConnection,
+    setCover,
+    removeCover,
     selectedId,
     setSelectedId,
   };

@@ -1,7 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '../utils/cn.js';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'glass';
 type Size = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -36,6 +36,13 @@ const variantClasses: Record<Variant, string> = {
     'hover:brightness-110 ' +
     'hover:shadow-[0_0_0_1px_rgb(231_76_60_/_0.5),_0_8px_24px_rgb(231_76_60_/_0.3)] ' +
     'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]',
+  // v1.0.85 — glass = botón translúcido premium con backdrop-filter.
+  // El blur strength + saturate vienen de variables del tema activo,
+  // así que cada tema tiene su propio look de cristal (Tokyo Night
+  // = saturate 200% neón, Pure Dark = blur intenso minimal, etc).
+  // La clase real `.maru-btn-glass` está en globals.css y consume
+  // las variables --maru-theme-glass-* dinámicamente.
+  glass: 'maru-btn-glass',
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -51,8 +58,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ) => (
     <button
       ref={ref}
+      // v1.0.85: border-radius dinámico via variable de tema. Los temas
+      // override --maru-theme-radius-button para variar la "shape language"
+      // (Pure Dark sharp, Dracula rounded, Tokyo cyberpunk, etc).
+      style={{ borderRadius: 'var(--maru-theme-radius-button)' }}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg',
+        'inline-flex items-center justify-center gap-2',
         'transition-all duration-fast ease-maru will-change-transform',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-elev-1',

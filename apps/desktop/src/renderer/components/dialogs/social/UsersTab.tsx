@@ -18,7 +18,8 @@ import {
   Input,
   Spinner,
 } from '@maru/ui';
-import type { SocialUser } from '@maru/shared';
+import type { SocialUser, UserTopCounts } from '@maru/shared';
+import { rpcCall } from '../../../lib/rpc.js';
 import { AutoRachaModal } from './AutoRachaModal.js';
 
 /**
@@ -98,6 +99,29 @@ export function UsersTab({
 
   useEffect(() => {
     setOpError(null);
+  }, [selectedUsername]);
+
+  // Counters de Top Lives del user seleccionado (v1.0.56) — se muestran
+  // como badges 🥇/🥈/🥉 en la tarjeta de detalle. El sidecar persiste
+  // estos contadores cada vez que el user aparece en un top 3 al cierre
+  // del live.
+  const [topCounts, setTopCounts] = useState<UserTopCounts>({
+    top1: 0, top2: 0, top3: 0, total: 0,
+  });
+  useEffect(() => {
+    if (!selectedUsername) {
+      setTopCounts({ top1: 0, top2: 0, top3: 0, total: 0 });
+      return;
+    }
+    let cancelled = false;
+    void rpcCall('top-lives.user-counts', { username: selectedUsername })
+      .then((r) => {
+        if (!cancelled) setTopCounts(r);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, [selectedUsername]);
 
   function cellKey(username: string, field: string): string {
@@ -475,6 +499,33 @@ export function UsersTab({
               {selectedUser.registered ? '✅ Registrado' : '❌ No registrado'}
             </span>
           </div>
+          {/* Top Lives counters — solo si el user fue top alguna vez. */}
+          {topCounts.total > 0 && (
+            <div className="flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning/10 px-2.5 py-1.5">
+              <span className="text-base">🏆</span>
+              <span className="text-[11px] font-semibold text-warning">
+                Top de live · {topCounts.total}{' '}
+                {topCounts.total === 1 ? 'vez' : 'veces'}
+              </span>
+              <div className="flex gap-1.5 ml-auto text-[10px] font-mono">
+                {topCounts.top1 > 0 && (
+                  <span title={`${topCounts.top1} podios · 1er lugar`}>
+                    🥇 {topCounts.top1}
+                  </span>
+                )}
+                {topCounts.top2 > 0 && (
+                  <span title={`${topCounts.top2} podios · 2do lugar`}>
+                    🥈 {topCounts.top2}
+                  </span>
+                )}
+                {topCounts.top3 > 0 && (
+                  <span title={`${topCounts.top3} podios · 3er lugar`}>
+                    🥉 {topCounts.top3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
           <div className="text-[11px] text-fg-muted leading-relaxed">
             🔥 Racha: {selectedUser.racha} | Récord: {selectedUser.record_racha} ·
             ⚔️ Ganados: {selectedUser.duelos_ganados} | Perdidos: {selectedUser.duelos_perdidos}

@@ -5,9 +5,9 @@
  */
 
 import type {
+  GameHealthState,
   LogEntry,
   SpotifyNowPlaying,
-  TikTokEvent,
   TikTokStats,
 } from '@maru/shared';
 import { useAppStore } from './store/index.js';
@@ -65,15 +65,11 @@ export function wireSidecarEvents(): () => void {
       useAppStore.getState().setTikTokStatus(next, p.username, p.avatarUrl);
     }),
   );
-  offs.push(
-    window.maruApi.on('tiktok:event' as never, (payload: unknown) => {
-      const evt = payload as TikTokEvent;
-      // Solo el feed visual — el LogPanel ya recibe los mismos eventos
-      // vía `log:entry` desde el sidecar (`worker.log_message` → LogsService).
-      // Sintetizar acá causaba entries duplicados en el log.
-      useAppStore.getState().pushTikTokEvent(evt);
-    }),
-  );
+  // tiktok:event NO se suscribe en el renderer: el LogPanel ya recibe los
+  // mismos eventos vía `log:entry` desde el sidecar. El feed Zustand era
+  // consumidor-fantasma (clonaba un array de 200 refs en cada like/gift sin
+  // que ningún componente lo leyera) → causaba gc pressure masivo en lives
+  // largos. v1.0.69: eliminado.
   offs.push(
     window.maruApi.on('tiktok:stats' as never, (payload: unknown) => {
       useAppStore.getState().setTikTokStats(payload as TikTokStats);
@@ -92,6 +88,46 @@ export function wireSidecarEvents(): () => void {
       useAppStore.getState().pushLogEntry(payload as LogEntry);
     }),
   );
+
+  // v1.1.3 — promote-to-bottom: cuando un mensaje se dedupea (ej.
+  // taps repetidos del mismo user), el sidecar emite `log:entry:updated`
+  // con {id, ts, count} para actualizar la entry existente y moverla
+  // al final del buffer. Sin esto, las agrupaciones quedaban
+  // "enterradas" arriba al llegar entries nuevas.
+  offs.push(
+    window.maruApi.on('log:entry:updated' as never, (payload: unknown) => {
+      const p = payload as { id?: string; ts?: number; count?: number };
+      if (
+        p &&
+        typeof p.id === 'string' &&
+        typeof p.ts === 'number' &&
+        typeof p.count === 'number'
+      ) {
+        useAppStore
+          .getState()
+          .updateLogEntry({ id: p.id, ts: p.ts, count: p.count });
+      }
+    }),
+  );
+
+  // v1.0.72: healthcheck del juego activo. Cada 30s el sidecar pinguea el
+  // mod y publica el resultado. UI pinta pill verde/amarillo/rojo.
+  offs.push(
+    window.maruApi.on('game:health' as never, (payload: unknown) => {
+      useAppStore.getState().setGameHealth(payload as GameHealthState);
+    }),
+  );
+  // Snapshot inicial al conectar — evita esperar 30s al primer tick para
+  // que el dialog tenga estado.
+  void window.maruApi.rpc
+    .call('games.health.snapshot', {})
+    .then((r) => {
+      const games = (r as { games?: Record<string, GameHealthState> }).games;
+      if (games && Object.keys(games).length > 0) {
+        useAppStore.getState().setGameHealthBulk(games);
+      }
+    })
+    .catch(() => undefined);
 
   // (nota) `tiktok:log` ya no se publica desde el sidecar — toda la info
   // detallada del worker viaja via `log:entry` para evitar duplicados.
@@ -116,6 +152,60 @@ export function wireSidecarEvents(): () => void {
   // tiktok:error → solo actualiza el state (banner de error). El sidecar
   // ya publica un log:entry con level=ERROR para cada error de TikTok,
   // así que NO hacemos pushLogEntry sintético acá (eso duplicaba).
+
+  // social:user-updated (v1.0.90+) — el sidecar publica este event cuando
+  // detecta cambio de estado relevante de un user (típico: pérdida de
+  // SuperFan). Refrescamos la entry específica en el store sin recargar
+  // toda la lista — así el badge dorado se quita sin esperar refresh
+  // manual del SocialDialog.
+  offs.push(
+    window.maruApi.on('social:user-updated' as never, (payload: unknown) => {
+      const p = payload as { user?: string };
+      const username = typeof p?.user === 'string' ? p.user.trim() : '';
+      if (!username) return;
+      void window.maruApi.rpc
+        .call('social.users.get', { username })
+        .then((r) => {
+          const u = (r as { user?: unknown }).user;
+          if (u) useAppStore.getState().upsertSocialUserLocal(u as never);
+        })
+        .catch(() => undefined);
+    }),
+  );
+
+  // profiles:loaded (v1.0.91+) — el sidecar restauró un perfil. Invalidamos
+  // los caches de data (entries del catálogo) y rules del juego afectado
+  // para que useData/useRules hagan refetch automático en su próximo
+  // render. Sin esto el user veía las entries/reglas viejas en pantalla
+  // hasta cerrar+abrir las pestañas.
+  offs.push(
+    window.maruApi.on('profiles:loaded' as never, (payload: unknown) => {
+      const p = payload as {
+        gameId?: string | null;
+        isPerGame?: boolean;
+      };
+      const state = useAppStore.getState();
+      const gid = p?.gameId;
+      if (gid) {
+        // Per-game: invalidar buckets de ese juego (todos los kinds).
+        const prefix = `${gid}::`;
+        for (const key of Object.keys(state.dataBuckets)) {
+          if (key.startsWith(prefix)) {
+            state.setDataBucket(key as never, { status: 'idle' });
+          }
+        }
+        state.setRulesBucket(gid as never, { status: 'idle' });
+      } else {
+        // Legacy completo: invalidar TODOS los buckets de todos los juegos.
+        for (const key of Object.keys(state.dataBuckets)) {
+          state.setDataBucket(key as never, { status: 'idle' });
+        }
+        for (const k of Object.keys(state.rulesBuckets)) {
+          state.setRulesBucket(k as never, { status: 'idle' });
+        }
+      }
+    }),
+  );
 
   // G14: Spotify push events (now-playing + queue + status).
   offs.push(

@@ -51,7 +51,14 @@ def _emit(
 
 
 def _ranks(params: dict[str, Any]) -> dict[str, Any]:
-    """Extrae flags de rango de usuario del simulador."""
+    """Extrae flags de rango de usuario del simulador.
+
+    Paridad CRÍTICA con `core_bridge._extract_user_ranks` (path real
+    del live): el simulador DEBE emitir EXACTAMENTE las mismas keys que
+    el live real, sino las reglas con `required_ranks` y los boosts
+    nunca matchean para eventos simulados (bug reportado v1.0.66 con
+    super fan + rosa + boost super_fan no aplicaba).
+    """
     ranks: dict[str, Any] = {}
     if params.get("isSuperFan") or params.get("is_super_fan"):
         ranks["is_super_fan"] = True
@@ -62,9 +69,16 @@ def _ranks(params: dict[str, Any]) -> dict[str, Any]:
     ml = params.get("memberLevel") or params.get("member_level")
     if isinstance(ml, (int, str)) and str(ml).strip():
         try:
-            ranks["member_level"] = int(ml)
+            level = int(ml)
         except (TypeError, ValueError):
-            pass
+            level = 0
+        if level > 0:
+            ranks["member_level"] = level
+            # Paridad core_bridge: si `member_level > 0`, el user ES
+            # miembro del fans club. Sin esto, los boosts kind=member
+            # filtraban sólo por `is_member` y nunca matcheaban un
+            # simulado con nivel L20.
+            ranks["is_member"] = True
     gl = params.get("gifterLevel") or params.get("gifter_level")
     if isinstance(gl, (int, str)) and str(gl).strip():
         try:
@@ -88,6 +102,7 @@ _LOG_CAT_BY_TYPE = {
     "follow": "follow",
     "share": "share",
     "like": "like",
+    "like_milestone": "like",
     "comment": "comment",
     "command": "command",
     "subscribe": "subscribe",
@@ -112,12 +127,20 @@ class SimulatorService:
         if self._logs is None:
             return
         try:
+            # `skip_dedupe=True` es CRÍTICO: el burst del simulador con
+            # stagger 200ms emite el MISMO mensaje (source=simulator,
+            # mismo user, mismo gift) varias veces en ventana <2s. La
+            # dedupe global de LogsService colapsaba las N a 1 entry y
+            # el user veía "se ejecuta una sola vez". Cada simulación
+            # del burst DEBE aparecer en el log como entry separado, ese
+            # es el punto del simulador.
             self._logs.publish(
                 message,
                 level="INFO",
                 source="simulator",
                 category=_LOG_CAT_BY_TYPE.get(evt_type, "tiktok"),
                 meta=extra,
+                skip_dedupe=True,
             )
         except Exception:
             pass
@@ -167,6 +190,33 @@ class SimulatorService:
             f"❤️ {rank_label}@{user} dio {count} {'likes' if count > 1 else 'like'}",
             "like",
             {"count": count, **ranks},
+        )
+        return {"ok": True}
+
+    def like_milestone(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Simula un milestone de likes acumulados del live (ej. "se llegó
+        a 10000 likes"). El RuleEngine matchea reglas tipo `like_milestone`
+        contra `data.total` y dispara cuando supera el `trigger_value`
+        configurado.
+
+        Params:
+          - user: usuario simulado (default "tester").
+          - total: total acumulado de likes del live (int).
+        """
+        user = str(params.get("user") or "tester")
+        total = int(params.get("total") or 0)
+        ranks = _ranks(params)
+        _emit(
+            "like_milestone",
+            user,
+            {"total": total, **ranks},
+            target_game=_target(params),
+            user_ranks=ranks if ranks else None,
+        )
+        self._log_event(
+            f"🏆 Milestone de likes: {total} totales en el live",
+            "like_milestone",
+            {"total": total, **ranks},
         )
         return {"ok": True}
 
@@ -297,12 +347,22 @@ class SimulatorService:
         user = str(params.get("user") or "tester")
         text = str(params.get("text") or "hola")
         ranks = _ranks(params)
+        # FIX: SIEMPRE incluir `is_super_fan` explícito (true o false) en
+        # el comment-enriched, no por ausencia. Si el user NO marcó el
+        # toggle super fan, debe llegar `is_super_fan: false` para que
+        # spotify.notify_super_fan() lo quite de priority_users si estaba.
+        # Sin esto, el user queda PERMANENTEMENTE como super fan tras una
+        # marca vieja, aunque ahora el simulador no lo marque.
+        ranks_explicit = dict(ranks)
+        ranks_explicit["is_super_fan"] = bool(
+            params.get("isSuperFan") or params.get("is_super_fan")
+        )
         _emit(
             "comment",
             user,
             {"text": text, "comment": text, **ranks},
             target_game=_target(params),
-            user_ranks=ranks if ranks else None,
+            user_ranks=ranks_explicit,  # SIEMPRE emitir comment-enriched
         )
         rank_label = self._rank_label(ranks)
         self._log_event(

@@ -235,6 +235,12 @@ export function LogPanel(): ReactNode {
         case 'sound':
           out.audio = (out.audio ?? 0) + 1;
           break;
+        case 'fortune':
+          out.fortune = (out.fortune ?? 0) + 1;
+          break;
+        case 'join':
+          out.joins = (out.joins ?? 0) + 1;
+          break;
         case 'error':
         case 'warn':
           out.errores = (out.errores ?? 0) + 1;
@@ -262,6 +268,9 @@ export function LogPanel(): ReactNode {
             onSetAll={(g) => {
               // Aplica el set objetivo: vacío = desactivar TODOS,
               // lleno = activar todos. Toggle individual donde difiere.
+              // DEBE incluir TODOS los LogGroup (espejo de log-slice
+              // ALL_GROUPS y log-meta LOG_GROUPS) — sino el botón
+              // "todos" deja afuera grupos como fortune/joins.
               for (const grp of [
                 'comments',
                 'commands',
@@ -275,6 +284,8 @@ export function LogPanel(): ReactNode {
                 'social',
                 'music',
                 'ia',
+                'fortune',
+                'joins',
                 'audio',
                 'sistema',
                 'errores',

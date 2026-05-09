@@ -67,8 +67,11 @@ def test_import_replace(svc: DataService) -> None:
 
 
 def test_invalid_kind_raises(svc: DataService) -> None:
+    """La validación de kind es SINTÁCTICA (regex), no whitelist —
+    permite kinds custom (ej. 'weapons', 'spells') para juegos custom.
+    Solo falla con strings que rompan el shape de identificador."""
     with pytest.raises(ValueError):
-        svc.list({"gameId": "valheim", "kind": "invalid"})
+        svc.list({"gameId": "valheim", "kind": "in valid!"})  # espacio + bang
 
 
 def test_export_returns_array(svc: DataService) -> None:

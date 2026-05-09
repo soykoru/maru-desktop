@@ -15,6 +15,7 @@ import { createTikTokSlice, type TikTokSlice } from './tiktok-slice.js';
 import { createTtsSlice, type TtsSlice } from './tts-slice.js';
 import { createUiSlice, type UiSlice } from './ui-slice.js';
 import { createUpdaterSlice, type UpdaterSlice } from './updater-slice.js';
+import { createNotifySlice, type NotifySlice } from './notify-slice.js';
 
 export type AppStore = ConnectionSlice &
   TikTokSlice &
@@ -31,7 +32,8 @@ export type AppStore = ConnectionSlice &
   SoundsSlice &
   LogSlice &
   BackupsSlice &
-  SpotifySlice;
+  SpotifySlice &
+  NotifySlice;
 
 export const useAppStore = create<AppStore>()((...a) => ({
   ...createConnectionSlice(...a),
@@ -50,4 +52,5 @@ export const useAppStore = create<AppStore>()((...a) => ({
   ...createLogSlice(...a),
   ...createBackupsSlice(...a),
   ...createSpotifySlice(...a),
+  ...createNotifySlice(...a),
 }));

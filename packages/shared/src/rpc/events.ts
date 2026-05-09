@@ -10,6 +10,7 @@ import type {
   TikTokEvent,
   TikTokStats,
 } from '../types/index.js';
+import type { GameHealthState } from './methods.js';
 
 export interface RpcPushEventMap {
   'sidecar:ready': { rpcPort: number; pid: number };
@@ -65,11 +66,40 @@ export interface RpcPushEventMap {
 
   'spotify:status': { connected: boolean; account?: { id?: string; name?: string } | null };
   'spotify:now-playing': SpotifyNowPlaying;
+  /** Cambio en el estado de PlayFan: usos restantes por user, super_fans
+   *  resync, etc. */
+  'spotify:playfan-state': {
+    perUser?: Record<string, number>;
+    defaultUses?: number;
+    items?: Array<{ user: string; playfan_uses?: number }>;
+  };
+  'spotify:queue': { items: unknown[]; total: number };
 
   'social:update': { kind: string; user?: string; payload: Record<string, unknown> };
 
+  /** v1.0.90+ — refresh de UN user específico en el SocialDialog. Lo
+   *  emite el sidecar al detectar transiciones relevantes (ej. pérdida
+   *  del rol SuperFan → ring dorado debe quitarse en vivo). El renderer
+   *  hace `social.users.get` solo de ese user (no recarga lista entera). */
+  'social:user-updated': { user: string };
+
+  /** v1.0.91+ — emitido por el sidecar después de restaurar un perfil de
+   *  stream. El renderer debe invalidar caches de `useData` y `useRules`
+   *  del juego restaurado (las entries del catálogo + reglas pueden
+   *  haber cambiado) sin esperar a que el user cierre+abra las pestañas. */
+  'profiles:loaded': {
+    profileId: string;
+    gameId: string | null;
+    isPerGame: boolean;
+  };
+
   /** G11 — log estructurado en tiempo real desde el LogsService. */
   'log:entry': LogEntry;
+
+  /** v1.0.72 — healthcheck periódico del juego activo. Cada 30s el sidecar
+   *  pinguea el mod del juego y publica el resultado. UI consume para
+   *  pintar pill verde/amarillo/rojo en cada perfil de juego. */
+  'game:health': GameHealthState;
 }
 
 export type RpcPushEventName = keyof RpcPushEventMap;

@@ -6,6 +6,9 @@ import {
   Search,
   Upload,
   Package,
+  CheckSquare,
+  Trash2,
+  X,
 } from 'lucide-react';
 import {
   Button,
@@ -13,11 +16,13 @@ import {
   Empty,
   Input,
   Spinner,
+  toast,
 } from '@maru/ui';
 import type { DataEntry, DataKind, GameId } from '@maru/shared';
 import { useAppStore } from '../../../lib/store/index.js';
 import { useData } from '../../../lib/use-data.js';
 import { useGames } from '../../../lib/use-games.js';
+import { useConfirm } from '../../../lib/use-notify.js';
 import { EntryCard } from './EntryCard.js';
 import { EntryEditForm } from './EntryEditForm.js';
 import { EntryPreviewPanel } from './EntryPreviewPanel.js';
@@ -59,12 +64,20 @@ export function DataDialog() {
   const profile = byId(gameId);
 
   const data = useData(open ? gameId : null, kind, { autoLoad: open });
+  const confirm = useConfirm();
 
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [tutorial, setTutorial] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  // v1.0.91+ — modo selección múltiple para borrar varias entries de
+  // una sola vez (pedido del user para customizar perfiles rápido).
+  // Al activarse, los clicks en EntryCard hacen toggle del Set en lugar
+  // de seleccionar para edit. Las acciones masivas viven en el aside.
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedSet, setSelectedSet] = useState<Set<string>>(new Set());
 
   // Resetear cuando cierra o cambia (gid, kind).
   useEffect(() => {
@@ -74,8 +87,74 @@ export function DataDialog() {
       setTutorial(null);
       setShowTutorial(false);
       setImportStatus(null);
+      setSelectionMode(false);
+      setSelectedSet(new Set());
     }
   }, [open, gameId, kind]);
+
+  // Salir del modo selección al cambiar de juego/categoría — la selección
+  // anterior no aplica al nuevo contexto y arrastrarla confunde al user.
+  useEffect(() => {
+    setSelectionMode(false);
+    setSelectedSet(new Set());
+  }, [gameId, kind]);
+
+  function toggleSelected(name: string) {
+    setSelectedSet((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  function selectAllVisible() {
+    setSelectedSet(new Set(data.entries.map((e) => e.name)));
+  }
+
+  function clearSelection() {
+    setSelectedSet(new Set());
+  }
+
+  function exitSelectionMode() {
+    setSelectionMode(false);
+    setSelectedSet(new Set());
+  }
+
+  async function handleBulkDelete() {
+    const names = Array.from(selectedSet);
+    if (names.length === 0) return;
+    const ok = await confirm({
+      icon: '🗑️',
+      title: `Borrar ${names.length} entrada${names.length === 1 ? '' : 's'}`,
+      message: `¿Eliminar las ${names.length} entrada${names.length === 1 ? '' : 's'} seleccionada${names.length === 1 ? '' : 's'} del catálogo?`,
+      footnote:
+        'Se hace un backup automático antes — recuperable desde ' +
+        'Configuración → Backups. Esta acción NO se puede deshacer desde la UI.',
+      variant: 'danger',
+      confirmLabel: `Borrar ${names.length}`,
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await data.bulkRemove(names);
+      exitSelectionMode();
+      const detail =
+        `${res.removed} eliminada${res.removed === 1 ? '' : 's'} · ` +
+        `${res.remaining} restante${res.remaining === 1 ? '' : 's'}` +
+        (res.missing.length > 0
+          ? ` · ${res.missing.length} no encontrada${res.missing.length === 1 ? '' : 's'}`
+          : '');
+      toast.success('Entradas eliminadas', detail);
+    } catch (ex) {
+      toast.error(
+        'No se pudieron eliminar',
+        ex instanceof Error ? ex.message : String(ex),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (!open || !gameId) return null;
 
@@ -227,12 +306,46 @@ export function DataDialog() {
         </Button>
 
         <Button
+          variant={selectionMode ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => {
+            if (selectionMode) {
+              exitSelectionMode();
+            } else {
+              setSelectionMode(true);
+              setCreating(false);
+              data.setSelectedName(null);
+            }
+          }}
+          disabled={busy || totalCount === 0}
+          title={
+            selectionMode
+              ? 'Salir del modo selección múltiple'
+              : 'Seleccionar varias entries para borrar de una vez'
+          }
+        >
+          {selectionMode ? (
+            <>
+              <X className="h-3.5 w-3.5" />
+              Salir selección
+            </>
+          ) : (
+            <>
+              <CheckSquare className="h-3.5 w-3.5" />
+              Seleccionar varias
+            </>
+          )}
+        </Button>
+
+        <Button
           variant="primary"
           size="sm"
           onClick={() => {
             setCreating(true);
             data.setSelectedName(null);
+            exitSelectionMode();
           }}
+          disabled={selectionMode}
         >
           <Plus className="h-3.5 w-3.5" />
           Nueva
@@ -294,10 +407,15 @@ export function DataDialog() {
                   entry={e}
                   gameId={gameId}
                   category={kind}
-                  selected={e.name === data.selectedName}
+                  selected={!selectionMode && e.name === data.selectedName}
+                  inSelection={selectionMode && selectedSet.has(e.name)}
                   onSelect={(en) => {
-                    data.setSelectedName(en.name);
-                    setCreating(false);
+                    if (selectionMode) {
+                      toggleSelected(en.name);
+                    } else {
+                      data.setSelectedName(en.name);
+                      setCreating(false);
+                    }
                   }}
                 />
               ))}
@@ -306,7 +424,101 @@ export function DataDialog() {
         </div>
 
         <aside className="w-[320px] shrink-0 border-l border-border bg-bg-elev/30 overflow-y-auto">
-          {creating ? (
+          {selectionMode ? (
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold">
+                  ✓ Selección múltiple
+                </h3>
+                <button
+                  type="button"
+                  onClick={exitSelectionMode}
+                  className="text-[11px] text-fg-subtle hover:text-fg-default underline"
+                  disabled={busy}
+                >
+                  Salir
+                </button>
+              </div>
+              <div className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs">
+                <p className="text-fg-default">
+                  <strong className="text-accent">{selectedSet.size}</strong>
+                  {' '}
+                  de {data.entries.length} visible{data.entries.length === 1 ? '' : 's'} seleccionada{selectedSet.size === 1 ? '' : 's'}
+                </p>
+                <p className="mt-1 text-fg-subtle leading-snug">
+                  Tocá las entries para marcar/desmarcar. Al borrar, se hace
+                  un backup automático antes — recuperable desde
+                  Configuración → Backups.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={selectAllVisible}
+                  disabled={busy || data.entries.length === 0}
+                  title={
+                    data.search
+                      ? `Marcar las ${data.entries.length} que coinciden con "${data.search}"`
+                      : 'Marcar todas las entries visibles'
+                  }
+                >
+                  Todas ({data.entries.length})
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelection}
+                  disabled={busy || selectedSet.size === 0}
+                >
+                  Ninguna
+                </Button>
+              </div>
+
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => void handleBulkDelete()}
+                disabled={busy || selectedSet.size === 0}
+                className="w-full !bg-danger hover:!bg-danger/90"
+              >
+                <Trash2 className="h-4 w-4" />
+                Borrar {selectedSet.size > 0 && `(${selectedSet.size})`}
+              </Button>
+
+              {selectedSet.size > 0 && (
+                <details className="rounded-md border border-border bg-bg-base/40 px-2 py-1.5 text-[11px]">
+                  <summary className="cursor-pointer text-fg-subtle hover:text-fg-default">
+                    Ver lista ({selectedSet.size})
+                  </summary>
+                  <ul className="mt-1.5 space-y-0.5 max-h-[200px] overflow-y-auto">
+                    {Array.from(selectedSet)
+                      .sort()
+                      .map((name) => (
+                        <li
+                          key={name}
+                          className="flex items-center justify-between gap-1 truncate"
+                          title={name}
+                        >
+                          <span className="truncate text-fg-default">
+                            {name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleSelected(name)}
+                            className="text-fg-subtle hover:text-danger shrink-0"
+                            aria-label={`Quitar ${name} de la selección`}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          ) : creating ? (
             <div className="p-4">
               <h3 className="mb-3 text-sm font-semibold">Nueva entrada</h3>
               <EntryEditForm

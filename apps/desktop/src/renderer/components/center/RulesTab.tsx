@@ -12,13 +12,14 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import { Button, Empty, Input, Select, Spinner } from '@maru/ui';
+import { Button, Empty, Input, Select, Spinner, toast } from '@maru/ui';
 import type { GameId, GameProfile } from '@maru/shared';
 import { useAppStore } from '../../lib/store/index.js';
 import { useRules } from '../../lib/use-rules.js';
 import { useGifts } from '../../lib/use-gifts.js';
 import { rpcCall } from '../../lib/rpc.js';
-import { RuleListItem } from '../dialogs/rules/RuleListItem.js';
+import { useConfirm } from '../../lib/use-notify.js';
+import { RuleListItem, type RuleDensity } from '../dialogs/rules/RuleListItem.js';
 import {
   TRIGGER_KEYS,
   triggerMeta,
@@ -99,12 +100,68 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
   }
 
   const [busy, setBusy] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [testTrace, setTestTrace] = useState<{
-    title: string;
-    messages: string[];
-    ok: boolean;
-  } | null>(null);
+  const confirm = useConfirm();
+
+  // Densidad de cards de regla — persistida en settings.json `rulesDensity`.
+  // Toggle ciclea compact → normal → large → compact. Inicializa con
+  // `normal` y se actualiza cuando llega la config del sidecar.
+  const [density, setDensity] = useState<RuleDensity>('normal');
+  // v1.1.4: layout SEPARADO de density. Botones independientes para que
+  // el user pueda combinar (ej. "cuadrícula con cards normales" o
+  // "lista con cards compactas"). Persistido en `rulesLayout`.
+  const [layout, setLayout] = useState<'list' | 'grid'>('list');
+
+  useEffect(() => {
+    let cancelled = false;
+    void rpcCall('settings.get', {})
+      .then((r) => {
+        if (cancelled) return;
+        const cfg = (r as { config?: Record<string, unknown> }).config || {};
+        const v = cfg['rulesDensity'];
+        if (v === 'compact' || v === 'normal' || v === 'large') {
+          setDensity(v);
+        }
+        const lay = cfg['rulesLayout'];
+        if (lay === 'list' || lay === 'grid') {
+          setLayout(lay);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  function cycleDensity() {
+    const next: RuleDensity =
+      density === 'compact' ? 'normal'
+      : density === 'normal' ? 'large'
+      : 'compact';
+    setDensity(next);
+    void rpcCall('settings.set', { patch: { rulesDensity: next } }).catch(() => undefined);
+  }
+  function toggleLayout() {
+    const next: 'list' | 'grid' = layout === 'list' ? 'grid' : 'list';
+    setLayout(next);
+    void rpcCall('settings.set', { patch: { rulesLayout: next } }).catch(() => undefined);
+  }
+  const densityIcon =
+    density === 'compact' ? '▤'
+    : density === 'normal' ? '▦'
+    : '▥';
+  const densityLabel =
+    density === 'compact' ? 'Compacto'
+    : density === 'normal' ? 'Normal'
+    : 'Grande';
+  const layoutIcon = layout === 'grid' ? '⊞' : '☰';
+  const layoutLabel = layout === 'grid' ? 'Cuadrícula' : 'Lista';
+
+  // v1.0.95+: testTrace fue removido — ahora "Probar" emite un toast
+  // ("Comando enviado, ver log") y el resultado real del RCON aparece
+  // en el panel de Log (vía `_logs.publish` en `execute_rule_now` desde
+  // v1.0.94). El testTrace inline mentía: decía "✓ Ejecutada" aunque
+  // el RCON fallara después porque `MinecraftGame.execute_commands` es
+  // fire-and-forget (devuelve True inmediato sin esperar respuesta del
+  // server). El log SÍ refleja el resultado real.
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [validation, setValidation] = useState<{
     problems: Array<{ rule_name?: string; message: string; suggestion?: string | null; type: string }>;
@@ -265,12 +322,30 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
     });
   }
 
-  async function handleDelete() {
-    if (!pendingDeleteId) return;
+  /** v1.0.95+: el confirm inline (ventanita en bottom-right) fue
+   *  reemplazado por `useConfirm()` global del design system. El dialog
+   *  aparece centrado, no se sobrepone con otros, respeta el tema dark. */
+  async function handleDelete(id: string) {
+    const rule = allRules.find((r) => r.id === id);
+    if (!rule) return;
+    const ok = await confirm({
+      icon: '🗑️',
+      title: `Eliminar "${rule.name}"`,
+      message: '¿Eliminar esta regla?',
+      footnote: 'Esta acción no se puede deshacer. La regla se quita del catálogo del juego.',
+      variant: 'danger',
+      confirmLabel: 'Eliminar',
+    });
+    if (!ok) return;
     setBusy(true);
     try {
-      await remove(pendingDeleteId);
-      setPendingDeleteId(null);
+      await remove(id);
+      toast.success('Regla eliminada', rule.name);
+    } catch (ex) {
+      toast.error(
+        'No se pudo eliminar',
+        ex instanceof Error ? ex.message : String(ex),
+      );
     } finally {
       setBusy(false);
     }
@@ -296,16 +371,29 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
     }
   }
 
+  /** v1.0.96+: "Probar" SIN toast. El user pidió quitar la ventanita —
+   *  el panel de Log ya muestra TODO el resultado:
+   *    - Si OK: "✅ {regla} ({action}) → {message} [PROBAR]" (verde)
+   *    - Si fallo síncrono (regla/perfil/juego no existe): "❌ ... [PROBAR]" (rojo)
+   *    - Si fallo del RCON async: el `[Minecraft RCON] FAIL ...` del logger
+   *      del juego también llega al panel
+   *  Backend `execute_rule_now` v1.0.96 publica al log también los errores
+   *  tempranos (engine caído, regla inexistente, etc.) que antes pasaban
+   *  silenciosos.
+   *
+   *  Excepción de network (sidecar caído / desconectado): tampoco se
+   *  toastea — si el sidecar está down hay otros indicadores en la UI.
+   */
   async function handleTest(id: string) {
-    const rule = allRules.find((r) => r.id === id);
     setBusy(true);
     try {
-      const res = await test(id);
-      setTestTrace({
-        title: rule?.name ?? id,
-        messages: res.messages,
-        ok: res.ok,
-      });
+      await test(id);
+      // No toast. El log dice el resultado.
+    } catch (ex) {
+      // Excepción de RPC (no es error del backend, sino del transport).
+      // Lo tiramos a console para diagnóstico — el log del panel viene
+      // del sidecar y si éste está caído no hay log.
+      console.warn('[rules.test] RPC failure:', ex);
     } finally {
       setBusy(false);
     }
@@ -404,6 +492,33 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
           })}
         </Select>
         <Button
+          variant="ghost"
+          size="sm"
+          onClick={cycleDensity}
+          title={`Tamaño: ${densityLabel}. Click para ciclar (Compacto → Normal → Grande). Persiste entre sesiones.`}
+        >
+          <span className="text-base leading-none">{densityIcon}</span>
+          {densityLabel}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleLayout}
+          title={`Disposición: ${layoutLabel}. Click para alternar entre Lista y Cuadrícula. Persiste entre sesiones.`}
+        >
+          <span className="text-base leading-none">{layoutIcon}</span>
+          {layoutLabel}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => openModal('boosts')}
+          title="Multiplicadores acumulables: x2/x3/x4 a las reglas según el rol o el usuario que las dispare"
+        >
+          🚀
+          Boosts
+        </Button>
+        <Button
           variant="primary"
           size="sm"
           onClick={openNewRule}
@@ -475,7 +590,7 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => selectedRuleId && setPendingDeleteId(selectedRuleId)}
+          onClick={() => selectedRuleId && void handleDelete(selectedRuleId)}
           disabled={busy || !selectedRuleId}
           title="Eliminar"
         >
@@ -532,7 +647,33 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
             }
           />
         ) : (
-          <div className="space-y-1.5">
+          // v1.1.4: layout independiente de density. Si layout='grid',
+          // cards en cuadrícula 2 columnas (3 en pantallas anchas xl+).
+          // Combinable con cualquier density (compact/normal/large).
+          <div
+            className={
+              layout === 'grid'
+                // v1.1.6: ADAPTATIVO con CSS auto-fit. El browser decide
+                // cuántas columnas entran según el ancho disponible y el
+                // mínimo de card. Sin esto las cards en pantalla ancha
+                // se veían gigantes (3 cols a 600px cada una).
+                //
+                // minmax(MIN, 1fr): cada card mide al menos MIN pixels.
+                // Si entra una más, se agrega columna. Cards estiran
+                // proporcionalmente para llenar el espacio sobrante.
+                //
+                // density define el tamaño mínimo:
+                //   compact = 150px (cards chicas, muchas por fila)
+                //   normal  = 200px (mediana)
+                //   large   = 260px (grandes, menos por fila)
+                ? density === 'compact'
+                  ? 'grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2'
+                  : density === 'large'
+                  ? 'grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3'
+                  : 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5'
+                : 'space-y-1.5'
+            }
+          >
             {visibleRules.map((r) => (
               <div
                 key={r.id}
@@ -556,12 +697,14 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
                   giftIcons={giftIcons}
                   giftCoins={giftCoins}
                   nameToCommand={nameToCommand}
+                  density={density}
+                  layout={layout}
                   selected={r.id === selectedRuleId}
                   onSelect={(id) => setSelectedRuleId(id)}
                   onToggle={(id, v) => void toggle(id, v)}
                   onEdit={openEditRule}
                   onDuplicate={(id) => void handleDuplicate(id)}
-                  onDelete={(id) => setPendingDeleteId(id)}
+                  onDelete={(id) => void handleDelete(id)}
                   onTest={(id) => void handleTest(id)}
                   onQuickChangeGift={handleQuickChangeGift}
                   onQuickChangeAction={handleQuickChangeAction}
@@ -612,68 +755,12 @@ export function RulesTab({ gameId, profile }: RulesTabProps) {
         </p>
       </footer>
 
-      {/* Confirm delete */}
-      {pendingDeleteId && (
-        <div className="absolute bottom-12 right-4 z-50 max-w-[300px] rounded-xl border border-warning/40 bg-bg-surface p-3 shadow-lg">
-          <p className="text-xs">
-            ¿Eliminar regla{' '}
-            <strong>
-              {allRules.find((r) => r.id === pendingDeleteId)?.name ??
-                pendingDeleteId}
-            </strong>
-            ?
-          </p>
-          <p className="mt-1 text-[10px] text-fg-subtle">
-            Esta acción no se puede deshacer.
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPendingDeleteId(null)}
-              disabled={busy}
-            >
-              No
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => void handleDelete()}
-              disabled={busy}
-            >
-              Sí, eliminar
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Test trace toast */}
-      {testTrace && (
-        <div
-          className={[
-            'absolute bottom-12 right-4 z-50 max-w-[400px] rounded-xl border bg-bg-surface p-3 shadow-lg',
-            testTrace.ok ? 'border-success/40' : 'border-danger/40',
-          ].join(' ')}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-xs font-semibold">
-              {testTrace.ok ? '✅ Ejecutada' : '❌ Falló'}: {testTrace.title}
-            </p>
-            <button
-              type="button"
-              onClick={() => setTestTrace(null)}
-              className="text-fg-subtle hover:text-fg text-xs"
-            >
-              ✕
-            </button>
-          </div>
-          <ul className="mt-2 space-y-0.5 text-[11px] font-mono text-fg-muted">
-            {testTrace.messages.map((m, i) => (
-              <li key={i}>{m}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* v1.0.95+: confirm de eliminar y feedback de probar fueron
+          MIGRADOS al sistema global (`useConfirm` + `toast`). Antes los
+          divs inline en `bottom-12 right-4 z-50` se sobreponían entre
+          sí (el delete con el test trace) — UX rota. Ahora cada uno
+          va por su canal apropiado: confirm = ConfirmDialog centrado;
+          test = toast en bottom-right del singleton. */}
 
       {/* Validation results */}
       {validation && (

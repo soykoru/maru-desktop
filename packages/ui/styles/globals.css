@@ -558,6 +558,155 @@
   --maru-z-modal: 5001;
   --maru-z-toast: 9000;
   --maru-z-splash: 9500;
+
+  /* ─────────────────────────────────────────────────────────────────
+   * v1.0.85 — VARIABLES DE PERSONALIDAD por TEMA
+   *
+   * Defaults para Midnight (signature). Cada otro tema los override
+   * para diferenciarse visualmente más allá de solo colores. Esto hace
+   * que cada tema tenga "personalidad" propia en geometría, animación
+   * y luminosidad, no solo paleta.
+   * ───────────────────────────────────────────────────────────────── */
+
+  /* Radii específicos del tema (override para variar shape language) */
+  --maru-theme-radius-button: 0.625rem;     /* 10px Midnight (default) */
+  --maru-theme-radius-card: 0.875rem;       /* 14px */
+  --maru-theme-radius-input: 0.5rem;        /* 8px */
+
+  /* Hover lift de botones (translateY en hover) */
+  --maru-theme-button-lift: 2px;            /* Midnight clásico */
+
+  /* Glow spread/intensity para shadows accent */
+  --maru-theme-glow-spread: 32px;
+  --maru-theme-glow-intensity: 0.22;
+
+  /* Animation easing por tema */
+  --maru-theme-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --maru-theme-dur-hover: 200ms;
+
+  /* Border style por tema (puede variar entre solid, double, etc) */
+  --maru-theme-border-style: solid;
+
+  /* Glass intensity para .maru-glass-* (varía por tema) */
+  --maru-theme-glass-blur-strength: 16px;   /* default medium */
+  --maru-theme-glass-saturate: 150%;
+  --maru-theme-glass-opacity: 0.65;
+
+  /* Card hover lift y glow */
+  --maru-theme-card-lift: 1px;
+  --maru-theme-card-glow: 0 8px 24px rgb(0 0 0 / 0.25);
+
+  /* Backdrop noise/texture intensity */
+  --maru-theme-noise-opacity: 0;            /* default off, algunos temas on */
+}
+
+/* ──── Override por tema (NO Midnight, queda en defaults arriba) ──── */
+
+[data-theme='dracula'] {
+  /* Dracula: ORGÁNICO, ROUNDED, GLOW INTENSO PINK
+     - Esquinas más redondeadas (16px)
+     - Hover lift más alto (3px)
+     - Glow más amplio (40px) y más intenso
+     - Easing spring (rebote leve) */
+  --maru-theme-radius-button: 1rem;
+  --maru-theme-radius-card: 1.25rem;
+  --maru-theme-radius-input: 0.875rem;
+  --maru-theme-button-lift: 3px;
+  --maru-theme-glow-spread: 40px;
+  --maru-theme-glow-intensity: 0.32;
+  --maru-theme-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --maru-theme-dur-hover: 240ms;
+  --maru-theme-glass-blur-strength: 18px;
+  --maru-theme-glass-saturate: 180%;
+  --maru-theme-glass-opacity: 0.62;
+  --maru-theme-card-lift: 2px;
+  --maru-theme-card-glow: 0 12px 32px rgb(255 121 198 / 0.20);
+}
+
+[data-theme='tokyo-night'] {
+  /* Tokyo Night: CYBERPUNK, FILOSO, NEON PRECISO
+     - Esquinas más cortantes (4-6px)
+     - Hover lift sutil (1px)
+     - Glow estrecho pero brillante
+     - Easing recto (no spring) */
+  --maru-theme-radius-button: 0.375rem;
+  --maru-theme-radius-card: 0.5rem;
+  --maru-theme-radius-input: 0.375rem;
+  --maru-theme-button-lift: 1px;
+  --maru-theme-glow-spread: 24px;
+  --maru-theme-glow-intensity: 0.40;
+  --maru-theme-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --maru-theme-dur-hover: 160ms;
+  --maru-theme-glass-blur-strength: 14px;
+  --maru-theme-glass-saturate: 200%;
+  --maru-theme-glass-opacity: 0.58;
+  --maru-theme-card-lift: 1px;
+  --maru-theme-card-glow: 0 6px 20px rgb(122 162 247 / 0.28);
+}
+
+[data-theme='catppuccin-mocha'] {
+  /* Catppuccin Mocha: PASTEL, SUAVE, GENEROSO
+     - Esquinas amplias suaves (14px)
+     - Hover lift moderado (2px)
+     - Glow tibio con saturate más alto
+     - Easing suave */
+  --maru-theme-radius-button: 0.875rem;
+  --maru-theme-radius-card: 1.125rem;
+  --maru-theme-radius-input: 0.75rem;
+  --maru-theme-button-lift: 2px;
+  --maru-theme-glow-spread: 36px;
+  --maru-theme-glow-intensity: 0.28;
+  --maru-theme-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --maru-theme-dur-hover: 240ms;
+  --maru-theme-glass-blur-strength: 20px;
+  --maru-theme-glass-saturate: 165%;
+  --maru-theme-glass-opacity: 0.60;
+  --maru-theme-card-lift: 2px;
+  --maru-theme-card-glow: 0 10px 28px rgb(203 166 247 / 0.18);
+}
+
+[data-theme='pure-dark'] {
+  /* Pure Dark: MINIMALISTA, GEOMÉTRICO, OLED
+     - Esquinas casi rectas (2-3px)
+     - SIN hover lift (estático, brutal)
+     - Glow MUY reducido (8px) — minimalismo
+     - Easing recto rápido
+     - Animaciones más cortas (estética técnica) */
+  --maru-theme-radius-button: 0.125rem;
+  --maru-theme-radius-card: 0.25rem;
+  --maru-theme-radius-input: 0.125rem;
+  --maru-theme-button-lift: 0;
+  --maru-theme-glow-spread: 12px;
+  --maru-theme-glow-intensity: 0.15;
+  --maru-theme-ease: cubic-bezier(0.4, 0, 1, 1);
+  --maru-theme-dur-hover: 120ms;
+  --maru-theme-glass-blur-strength: 24px;
+  --maru-theme-glass-saturate: 130%;
+  --maru-theme-glass-opacity: 0.78;
+  --maru-theme-card-lift: 0;
+  --maru-theme-card-glow: 0 4px 12px rgb(0 0 0 / 0.6);
+  --maru-theme-border-style: solid;
+}
+
+[data-theme='nord'] {
+  /* Nord: CRISTALINO, FROST, ESTILO ÁRTICO
+     - Esquinas suaves redondeadas (10px)
+     - Hover lift suave (1.5px)
+     - Glow azul-cyan amplio
+     - Easing fluido */
+  --maru-theme-radius-button: 0.625rem;
+  --maru-theme-radius-card: 0.875rem;
+  --maru-theme-radius-input: 0.5rem;
+  --maru-theme-button-lift: 1.5px;
+  --maru-theme-glow-spread: 32px;
+  --maru-theme-glow-intensity: 0.26;
+  --maru-theme-ease: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  --maru-theme-dur-hover: 200ms;
+  --maru-theme-glass-blur-strength: 16px;
+  --maru-theme-glass-saturate: 140%;
+  --maru-theme-glass-opacity: 0.62;
+  --maru-theme-card-lift: 1.5px;
+  --maru-theme-card-glow: 0 8px 24px rgb(143 188 187 / 0.22);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -789,8 +938,15 @@ select:focus-visible {
     user-select: none;
   }
 
-  /* Botones premium con gradient interno + inset highlight + hover lift */
+  /* v1.0.85 — botones primarios usan variables de personalidad por tema:
+     radii, lift y duración cambian según el tema activo (dracula = más
+     rounded + lift fuerte, pure-dark = sharp + sin lift, etc.) */
   .maru-btn-primary {
+    border-radius: var(--maru-theme-radius-button);
+    transition:
+      background var(--maru-theme-dur-hover) var(--maru-theme-ease),
+      box-shadow var(--maru-theme-dur-hover) var(--maru-theme-ease),
+      transform var(--maru-theme-dur-hover) var(--maru-theme-ease) !important;
     background: linear-gradient(
       180deg,
       rgb(var(--maru-mn-button)) 0%,
@@ -814,7 +970,7 @@ select:focus-visible {
       rgb(var(--maru-mn-button)) 100%
     );
     box-shadow: var(--maru-glow-blue), var(--maru-inset-top-strong);
-    transform: translateY(-1px);
+    transform: translateY(calc(-1 * var(--maru-theme-button-lift)));
   }
   .maru-btn-primary:active:not(:disabled) {
     transform: translateY(0);
@@ -937,6 +1093,94 @@ select:focus-visible {
     -webkit-backdrop-filter: var(--maru-glass-blur);
     border: 1px solid rgb(var(--maru-fg) / 0.08);
     box-shadow: var(--maru-elev-3), var(--maru-inset-top);
+  }
+
+  /* v1.0.85 — variantes glass con fuerza variable POR TEMA.
+     Cada tema personaliza --maru-theme-glass-blur-strength,
+     --maru-theme-glass-saturate y --maru-theme-glass-opacity para
+     conseguir su propio "look" de cristal. */
+
+  .maru-glass-sm {
+    background: rgb(var(--maru-bg-base) / var(--maru-theme-glass-opacity));
+    backdrop-filter:
+      blur(calc(var(--maru-theme-glass-blur-strength) / 2))
+      saturate(var(--maru-theme-glass-saturate));
+    -webkit-backdrop-filter:
+      blur(calc(var(--maru-theme-glass-blur-strength) / 2))
+      saturate(var(--maru-theme-glass-saturate));
+    border: 1px solid rgb(var(--maru-fg) / 0.08);
+  }
+
+  .maru-glass-md {
+    background: rgb(var(--maru-bg-base) / var(--maru-theme-glass-opacity));
+    backdrop-filter:
+      blur(var(--maru-theme-glass-blur-strength))
+      saturate(var(--maru-theme-glass-saturate));
+    -webkit-backdrop-filter:
+      blur(var(--maru-theme-glass-blur-strength))
+      saturate(var(--maru-theme-glass-saturate));
+    border: 1px solid rgb(var(--maru-fg) / 0.10);
+    box-shadow: var(--maru-elev-2), var(--maru-inset-top);
+  }
+
+  .maru-glass-lg {
+    background: rgb(var(--maru-bg-base) / calc(var(--maru-theme-glass-opacity) - 0.05));
+    backdrop-filter:
+      blur(calc(var(--maru-theme-glass-blur-strength) * 1.5))
+      saturate(calc(var(--maru-theme-glass-saturate) + 20%));
+    -webkit-backdrop-filter:
+      blur(calc(var(--maru-theme-glass-blur-strength) * 1.5))
+      saturate(calc(var(--maru-theme-glass-saturate) + 20%));
+    border: 1px solid rgb(var(--maru-fg) / 0.12);
+    box-shadow: var(--maru-elev-3), var(--maru-inset-top-strong);
+  }
+
+  /* v1.0.85 — botón glass: translúcido bonito, hereda accent del tema.
+     User pidió: "botones translúcidos todos hermosos". Backdrop-filter
+     se sintoniza por --maru-theme-glass-blur-strength del tema activo. */
+  .maru-btn-glass {
+    background: rgb(var(--maru-fg) / 0.06);
+    color: rgb(var(--maru-fg));
+    font-weight: 600;
+    padding: 0.625rem 1.125rem;
+    border-radius: var(--maru-theme-radius-button);
+    border: 1px solid rgb(var(--maru-fg) / 0.14);
+    backdrop-filter:
+      blur(calc(var(--maru-theme-glass-blur-strength) * 0.75))
+      saturate(var(--maru-theme-glass-saturate));
+    -webkit-backdrop-filter:
+      blur(calc(var(--maru-theme-glass-blur-strength) * 0.75))
+      saturate(var(--maru-theme-glass-saturate));
+    box-shadow:
+      var(--maru-elev-1),
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      inset 0 -1px 0 rgb(0 0 0 / 0.10);
+    transition:
+      background var(--maru-theme-dur-hover) var(--maru-theme-ease),
+      box-shadow var(--maru-theme-dur-hover) var(--maru-theme-ease),
+      transform var(--maru-theme-dur-hover) var(--maru-theme-ease),
+      border-color var(--maru-theme-dur-hover) var(--maru-theme-ease);
+  }
+  .maru-btn-glass:hover:not(:disabled) {
+    background: rgb(var(--maru-fg) / 0.10);
+    border-color: rgb(var(--maru-accent) / 0.45);
+    box-shadow:
+      0 0 0 1px rgb(var(--maru-accent) / 0.30),
+      0 var(--maru-theme-button-lift) var(--maru-theme-glow-spread)
+        rgb(var(--maru-accent) / var(--maru-theme-glow-intensity)),
+      inset 0 1px 0 rgb(255 255 255 / 0.12);
+    transform: translateY(calc(-1 * var(--maru-theme-button-lift)));
+  }
+  .maru-btn-glass:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow:
+      0 0 0 1px rgb(var(--maru-accent) / 0.30),
+      inset 0 2px 4px rgb(0 0 0 / 0.15);
+  }
+  .maru-btn-glass:disabled {
+    background: rgb(var(--maru-fg) / 0.03);
+    color: rgb(var(--maru-fg-subtle));
+    cursor: not-allowed;
   }
 
   /* Modal backdrop premium */
@@ -1692,6 +1936,45 @@ select:focus-visible {
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   opacity: 0.85;
+}
+
+/* v1.1.3 — badge de contador para entries dedupadas (promote-to-bottom).
+ * Aparece a la derecha del mensaje en pill compacto con tinte accent.
+ * El sidecar incrementa `count` cada vez que llega un mensaje idéntico
+ * dentro de la ventana de 5s; al mismo tiempo mueve la entry al final
+ * del log. Sin el badge, el user no ve cuántas veces se repitió. */
+.maru-event-count {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 6px;
+  height: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--maru-accent));
+  background: rgb(var(--maru-accent) / 0.12);
+  border: 1px solid rgb(var(--maru-accent) / 0.28);
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  /* Animación pop sutil cuando count cambia (visible apenas — UX
+   * "viste algo nuevo" sin distracción). */
+  animation: maru-event-count-pop 220ms ease-out;
+}
+@keyframes maru-event-count-pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Variantes coloreadas por categoría — solo cambia color del icono y un

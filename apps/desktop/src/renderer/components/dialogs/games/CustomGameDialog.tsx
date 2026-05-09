@@ -1,16 +1,22 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { ImagePlus, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { Button, Dialog, Input, Label, Select, Switch } from '@maru/ui';
+import { rpcCall } from '../../../lib/rpc.js';
 import type {
   CreateCustomGameInput,
   GameCategory,
   GameConnectionType,
   GameId,
   GameProfile,
+  HttpAuthConfig,
 } from '@maru/shared';
 import { useGames } from '../../../lib/use-games.js';
 import { CategoriesEditor } from './CategoriesEditor.js';
 import { CUSTOM_GAME_PRESETS } from './presets.js';
+
+/** v1.0.72: tipos discriminados de auth para el form (más amigable que el
+ *  union de HttpAuthConfig que viene de @maru/shared). */
+type AuthKind = 'none' | 'basic' | 'bearer' | 'apiKey';
 
 /**
  * `CustomGameDialog` — crear / editar perfil de juego custom.
@@ -74,6 +80,24 @@ export function CustomGameDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // v1.0.72: auth/headers HTTP opcional. Solo aplica a connectionType=http.
+  // Defaults: 'none' + array vacío de headers → comportamiento idéntico a
+  // versiones anteriores (zero impact en juegos sin auth).
+  const [authKind, setAuthKind] = useState<AuthKind>('none');
+  const [authBasicUser, setAuthBasicUser] = useState('');
+  const [authBasicPass, setAuthBasicPass] = useState('');
+  const [authBearerToken, setAuthBearerToken] = useState('');
+  const [authApiKeyName, setAuthApiKeyName] = useState('');
+  const [authApiKeyValue, setAuthApiKeyValue] = useState('');
+  const [customHeaders, setCustomHeaders] = useState<{ key: string; value: string }[]>([]);
+
+  // v1.0.74: portada custom. `coverImage` es el filename (ej "valheim.jpg")
+  // que se guarda en GameProfile.coverImage. `coverBust` cambia al subir
+  // una nueva para forzar re-render del <img> (vencer caché del browser).
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverBust, setCoverBust] = useState(0);
+  const [coverBusy, setCoverBusy] = useState(false);
+
   const idPrefix = useId();
 
   // Snapshot del estado inicial — capturado UNA SOLA VEZ cuando el
@@ -111,8 +135,20 @@ export function CustomGameDialog({
       tabEntities: string;
       tabItems: string;
       tabEvents: string;
+      authKind: AuthKind;
+      authBasicUser: string;
+      authBasicPass: string;
+      authBearerToken: string;
+      authApiKeyName: string;
+      authApiKeyValue: string;
+      customHeaders: { key: string; value: string }[];
     };
+    setCoverImage(editing?.coverImage ?? null);
+    setCoverBust(0);
+
     if (editing) {
+      const auth = editing.connection.httpAuth;
+      const headersObj = editing.connection.httpHeaders ?? {};
       next = {
         id: editing.id,
         name: editing.name,
@@ -127,6 +163,16 @@ export function CustomGameDialog({
         tabEntities: editing.tabNames?.entities ?? '',
         tabItems: editing.tabNames?.items ?? '',
         tabEvents: editing.tabNames?.events ?? '',
+        authKind: (auth?.type ?? 'none') as AuthKind,
+        authBasicUser: auth?.type === 'basic' ? auth.user : '',
+        authBasicPass: auth?.type === 'basic' ? auth.password : '',
+        authBearerToken: auth?.type === 'bearer' ? auth.token : '',
+        authApiKeyName: auth?.type === 'apiKey' ? auth.headerName : '',
+        authApiKeyValue: auth?.type === 'apiKey' ? auth.headerValue : '',
+        customHeaders: Object.entries(headersObj).map(([key, value]) => ({
+          key,
+          value: String(value),
+        })),
       };
     } else {
       next = {
@@ -143,6 +189,13 @@ export function CustomGameDialog({
         tabEntities: '',
         tabItems: '',
         tabEvents: '',
+        authKind: 'none',
+        authBasicUser: '',
+        authBasicPass: '',
+        authBearerToken: '',
+        authApiKeyName: '',
+        authApiKeyValue: '',
+        customHeaders: [],
       };
     }
     setId(next.id);
@@ -158,6 +211,13 @@ export function CustomGameDialog({
     setTabEntities(next.tabEntities);
     setTabItems(next.tabItems);
     setTabEvents(next.tabEvents);
+    setAuthKind(next.authKind);
+    setAuthBasicUser(next.authBasicUser);
+    setAuthBasicPass(next.authBasicPass);
+    setAuthBearerToken(next.authBearerToken);
+    setAuthApiKeyName(next.authApiKeyName);
+    setAuthApiKeyValue(next.authApiKeyValue);
+    setCustomHeaders(next.customHeaders);
     initialSnapshotRef.current = JSON.stringify(next);
     setError(null);
     setBusy(false);
@@ -198,12 +258,96 @@ export function CustomGameDialog({
       tabEntities,
       tabItems,
       tabEvents,
+      authKind,
+      authBasicUser,
+      authBasicPass,
+      authBearerToken,
+      authApiKeyName,
+      authApiKeyValue,
+      customHeaders,
     });
     return current !== initialSnapshotRef.current;
   }, [
     id, name, icon, host, port, password, connectionType, categories,
     shareSounds, shareVoices, tabEntities, tabItems, tabEvents,
+    authKind, authBasicUser, authBasicPass, authBearerToken,
+    authApiKeyName, authApiKeyValue, customHeaders,
   ]);
+
+  /** Construye el objeto httpAuth a enviar al backend según el tipo seleccionado.
+   *  Para 'none' devuelve undefined → no se persiste el campo (defensivo). */
+  function buildHttpAuth(): HttpAuthConfig | undefined {
+    switch (authKind) {
+      case 'basic':
+        return { type: 'basic', user: authBasicUser, password: authBasicPass };
+      case 'bearer':
+        return { type: 'bearer', token: authBearerToken.trim() };
+      case 'apiKey':
+        return {
+          type: 'apiKey',
+          headerName: authApiKeyName.trim(),
+          headerValue: authApiKeyValue,
+        };
+      case 'none':
+      default:
+        return { type: 'none' };
+    }
+  }
+
+  /** Convierte la lista de pares key/value a Record<string, string>, dropea
+   *  filas vacías (key trim vacío). */
+  function buildCustomHeaders(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const { key, value } of customHeaders) {
+      const k = key.trim();
+      if (!k) continue;
+      out[k] = value;
+    }
+    return out;
+  }
+
+  /** v1.0.74: abre file picker, sube la imagen al backend y actualiza el
+   *  state local. La persistencia al GameProfile se hace en handleSubmit
+   *  (junto con el resto del form). */
+  async function handleChangeCover() {
+    if (!id || coverBusy) return;
+    setCoverBusy(true);
+    try {
+      const picked = await window.maruApi.dialog.openFile({
+        title: `Cambiar portada de ${name || id}`,
+        filters: [{ name: 'Imágenes', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+      });
+      if (!picked.ok || !picked.path) return;
+      const res = (await rpcCall('images.set-game-cover', {
+        gameId: id,
+        sourcePath: picked.path,
+      })) as { ok: boolean; filename?: string; message?: string };
+      if (!res.ok || !res.filename) {
+        setError(res.message || 'No se pudo subir la portada');
+        return;
+      }
+      setCoverImage(res.filename);
+      setCoverBust((b) => b + 1);
+    } catch (ex) {
+      setError(ex instanceof Error ? ex.message : String(ex));
+    } finally {
+      setCoverBusy(false);
+    }
+  }
+
+  async function handleRemoveCover() {
+    if (!id || coverBusy) return;
+    setCoverBusy(true);
+    try {
+      await rpcCall('images.delete-game-cover', { gameId: id });
+      setCoverImage(null);
+      setCoverBust((b) => b + 1);
+    } catch (ex) {
+      setError(ex instanceof Error ? ex.message : String(ex));
+    } finally {
+      setCoverBusy(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -228,10 +372,21 @@ export function CustomGameDialog({
     setBusy(true);
     setError(null);
     try {
-      const conn = { host, port, password };
+      // v1.0.72: incluir auth/headers en connection. Solo aplican a HTTP
+      // pero los persistimos siempre por consistencia (si el user
+      // cambia entre HTTP/RCON, no pierde su config de auth).
+      const httpAuth = buildHttpAuth();
+      const httpHeaders = buildCustomHeaders();
+      const conn = {
+        host,
+        port,
+        password,
+        httpAuth,
+        httpHeaders,
+      };
       if (isEdit) {
         if (isStandard) {
-          // Standard: solo conexión + tab_names.
+          // Standard: solo conexión + tab_names + coverImage.
           const tabNames = {
             entities: tabEntities || undefined,
             items: tabItems || undefined,
@@ -240,6 +395,7 @@ export function CustomGameDialog({
           const profile = await updateGame(editing!.id, {
             connection: conn,
             tabNames,
+            coverImage,
           });
           onSaved?.(profile);
         } else {
@@ -251,6 +407,7 @@ export function CustomGameDialog({
             categories,
             shareSounds,
             shareVoices,
+            coverImage,
           });
           onSaved?.(profile);
         }
@@ -264,6 +421,7 @@ export function CustomGameDialog({
           categories,
           shareSounds,
           shareVoices,
+          coverImage,
         };
         const profile = await createCustom(input);
         onSaved?.(profile);
@@ -359,6 +517,58 @@ export function CustomGameDialog({
                 />
               </div>
             </div>
+
+            {/* v1.0.74: portada del juego (galería visual). */}
+            <div className="flex items-center gap-3 pt-1">
+              {/* Preview de la portada actual (60x90 ratio Steam) */}
+              <div className="h-[90px] w-[60px] flex-none overflow-hidden rounded-md border border-border/60 bg-bg-elev">
+                {coverImage ? (
+                  <img
+                    src={`maru://images/game_covers/${coverImage}?v=${coverBust}`}
+                    alt="Portada"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-bg-elev to-bg-base">
+                    <span className="font-emoji text-2xl opacity-50">{icon}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <Label>Portada del juego</Label>
+                <p className="text-[11px] text-fg-subtle leading-tight">
+                  {coverImage
+                    ? 'Imagen actual visible en la galería y el selector lateral.'
+                    : 'Sin portada — la galería usará un gradient con el emoji.'}
+                </p>
+                <div className="flex gap-1.5">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void handleChangeCover()}
+                    disabled={busy || coverBusy || !id}
+                    title="Subir imagen desde tu PC (jpg/png/webp)"
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    {coverBusy ? 'Subiendo…' : coverImage ? 'Cambiar portada' : 'Subir portada'}
+                  </Button>
+                  {coverImage && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void handleRemoveCover()}
+                      disabled={busy || coverBusy}
+                      title="Quitar la portada custom"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Quitar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
           </fieldset>
 
           {/* 🔌 Tipo de Conexión + 🔗 Conexión */}
@@ -439,6 +649,183 @@ export function CustomGameDialog({
             </div>
           </fieldset>
 
+          {/* v1.0.72: 🔐 Autenticación HTTP + Headers personalizados.
+              Solo se muestra para connectionType=http (auth no aplica a RCON). */}
+          {!isStandard && connectionType === 'http' && (
+            <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-3">
+              <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+                🔐 Autenticación HTTP (opcional)
+              </legend>
+
+              <div className="space-y-2">
+                <Label htmlFor={`${idPrefix}-authkind`}>Tipo de autenticación</Label>
+                <Select
+                  id={`${idPrefix}-authkind`}
+                  value={authKind}
+                  onChange={(e) => setAuthKind(e.target.value as AuthKind)}
+                  disabled={busy}
+                >
+                  <option value="none">Sin autenticación</option>
+                  <option value="basic">Basic Auth (user / password)</option>
+                  <option value="bearer">Bearer Token</option>
+                  <option value="apiKey">API Key (header personalizado)</option>
+                </Select>
+              </div>
+
+              {authKind === 'basic' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor={`${idPrefix}-basic-user`} required>
+                      Usuario
+                    </Label>
+                    <Input
+                      id={`${idPrefix}-basic-user`}
+                      value={authBasicUser}
+                      onChange={(e) => setAuthBasicUser(e.target.value)}
+                      placeholder="admin"
+                      disabled={busy}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`${idPrefix}-basic-pass`} required>
+                      Contraseña
+                    </Label>
+                    <Input
+                      id={`${idPrefix}-basic-pass`}
+                      type="password"
+                      value={authBasicPass}
+                      onChange={(e) => setAuthBasicPass(e.target.value)}
+                      placeholder="••••••••"
+                      disabled={busy}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {authKind === 'bearer' && (
+                <div>
+                  <Label htmlFor={`${idPrefix}-bearer`} required>
+                    Token Bearer
+                  </Label>
+                  <Input
+                    id={`${idPrefix}-bearer`}
+                    type="password"
+                    value={authBearerToken}
+                    onChange={(e) => setAuthBearerToken(e.target.value)}
+                    placeholder="eyJhbGciOiJ..."
+                    disabled={busy}
+                    className="font-mono text-xs"
+                  />
+                  <p className="mt-1 text-[11px] text-fg-subtle">
+                    Se enviará como <code>Authorization: Bearer &lt;token&gt;</code>
+                  </p>
+                </div>
+              )}
+
+              {authKind === 'apiKey' && (
+                <div className="grid grid-cols-[1fr_2fr] gap-2">
+                  <div>
+                    <Label htmlFor={`${idPrefix}-apikey-name`} required>
+                      Nombre del Header
+                    </Label>
+                    <Input
+                      id={`${idPrefix}-apikey-name`}
+                      value={authApiKeyName}
+                      onChange={(e) => setAuthApiKeyName(e.target.value)}
+                      placeholder="X-API-Key"
+                      disabled={busy}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`${idPrefix}-apikey-value`} required>
+                      Valor
+                    </Label>
+                    <Input
+                      id={`${idPrefix}-apikey-value`}
+                      type="password"
+                      value={authApiKeyValue}
+                      onChange={(e) => setAuthApiKeyValue(e.target.value)}
+                      placeholder="••••••••"
+                      disabled={busy}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Headers personalizados — siempre visibles, complementan
+                  la auth (ej: agregar X-Forwarded-For además de Bearer). */}
+              <div className="space-y-2 pt-2 border-t border-border/50">
+                <div className="flex items-center justify-between">
+                  <Label>📋 Headers personalizados</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setCustomHeaders((prev) => [...prev, { key: '', value: '' }])
+                    }
+                    disabled={busy}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Agregar
+                  </Button>
+                </div>
+                {customHeaders.length === 0 ? (
+                  <p className="text-[11px] text-fg-subtle italic">
+                    Sin headers personalizados. Útil para X-Custom-*, X-Forwarded-*, etc.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {customHeaders.map((h, idx) => (
+                      <div key={idx} className="grid grid-cols-[1fr_2fr_auto] gap-1.5">
+                        <Input
+                          value={h.key}
+                          onChange={(e) =>
+                            setCustomHeaders((prev) =>
+                              prev.map((x, i) =>
+                                i === idx ? { ...x, key: e.target.value } : x,
+                              ),
+                            )
+                          }
+                          placeholder="X-Custom-Header"
+                          disabled={busy}
+                          className="font-mono text-xs"
+                        />
+                        <Input
+                          value={h.value}
+                          onChange={(e) =>
+                            setCustomHeaders((prev) =>
+                              prev.map((x, i) =>
+                                i === idx ? { ...x, value: e.target.value } : x,
+                              ),
+                            )
+                          }
+                          placeholder="valor"
+                          disabled={busy}
+                          className="font-mono text-xs"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setCustomHeaders((prev) => prev.filter((_, i) => i !== idx))
+                          }
+                          disabled={busy}
+                          title="Eliminar header"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </fieldset>
+          )}
+
           {/* 🎯 Presets — solo CUSTOM */}
           {!isStandard && (
             <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
@@ -478,6 +865,7 @@ export function CustomGameDialog({
                 onChange={setCategories}
                 connectionType={connectionType}
                 disabled={busy}
+                gameId={id}
               />
             </fieldset>
           ) : (

@@ -49,7 +49,9 @@ export type ActiveModal =
   | 'spotify-config'
   | 'emotes'
   | 'tiktok-sign-key'
-  | 'tiktok-api-info';
+  | 'tiktok-api-info'
+  | 'boosts'
+  | 'overlays';
 
 export interface ModalFrame {
   id: Exclude<ActiveModal, null>;

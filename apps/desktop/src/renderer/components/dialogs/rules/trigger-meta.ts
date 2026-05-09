@@ -63,6 +63,13 @@ export const TRIGGER_META: Record<
     color: 'text-cyan-400',
     hint: 'Se activa cuando un viewer entra al live. Si dejás el campo vacío, vale para cualquier viewer.',
   },
+  first_action: {
+    label: 'Primera acción del viewer',
+    emoji: '🌟',
+    color: 'text-fuchsia-400',
+    hint:
+      'Se activa la PRIMERA vez que un viewer interactúa en la sesión (comment / gift / like / share / follow). Útil para mensajes de bienvenida únicos.',
+  },
 };
 
 export const TRIGGER_KEYS: RuleTriggerType[] = [
@@ -75,6 +82,7 @@ export const TRIGGER_KEYS: RuleTriggerType[] = [
   'like_milestone',
   'emote',
   'join',
+  'first_action',
 ];
 
 export function triggerMeta(t: string) {

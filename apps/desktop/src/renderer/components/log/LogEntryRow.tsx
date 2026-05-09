@@ -277,6 +277,19 @@ export const LogEntryRow = memo(function LogEntryRow({
           )}
           {who && <span className="who">{who}</span>}
           <span className="what">{what}</span>
+          {/* v1.1.3: badge de contador cuando la entry agrupó N
+              ocurrencias idénticas. Solo se muestra si count > 1.
+              El sidecar mantiene el campo via `log:entry:updated`
+              push events. */}
+          {typeof entry.count === 'number' && entry.count > 1 && (
+            <span
+              className="maru-event-count"
+              title={`Se repitió ${entry.count} veces — última a las ${fmtTime(entry.ts)}`}
+              aria-label={`Repetido ${entry.count} veces`}
+            >
+              ×{entry.count}
+            </span>
+          )}
         </div>
       </div>
 

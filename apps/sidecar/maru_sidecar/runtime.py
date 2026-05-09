@@ -101,6 +101,8 @@ BUNDLE_DONACIONES_DIR: Final[Path] = BUNDLE_DATA_DIR / "donaciones"
 BUNDLE_TRIGGERS_DIR: Final[Path] = BUNDLE_DATA_DIR / "icons_triggers"
 BUNDLE_GAME_IMAGES_DIR: Final[Path] = BUNDLE_DATA_DIR / "game_images"
 BUNDLE_TEMPLATES_DIR: Final[Path] = BUNDLE_GAME_IMAGES_DIR / "_templates"
+# v1.0.72: portadas de juegos para la galería visual (read-only en .exe).
+BUNDLE_GAME_COVERS_DIR: Final[Path] = BUNDLE_DATA_DIR / "game_covers"
 
 # User data (writable) — donde se guardan PNGs auto-descargados runtime.
 USERDATA_DONACIONES_DIR: Final[Path] = DATA_DIR / "donaciones"
@@ -109,6 +111,13 @@ USERDATA_DONACIONES_DIR: Final[Path] = DATA_DIR / "donaciones"
 # busca primero acá, después en BUNDLE_GAME_IMAGES_DIR (que es
 # read-only en el .exe instalado). Mismo layout: <gid>/<cat>/<file>.png.
 USERDATA_GAME_IMAGES_DIR: Final[Path] = DATA_DIR / "game_images"
+# v1.0.74: portadas custom subidas por el user via UI. Sobreescriben las
+# del bundle. Layout: <gid>.<ext> (jpg/png/webp).
+USERDATA_GAME_COVERS_DIR: Final[Path] = DATA_DIR / "game_covers"
+# v1.0.94+: portadas custom de PERFILES de stream. Layout: <profileId>.<ext>.
+# El user puede subir una imagen distinta para cada perfil (drag-drop o
+# file picker). Sin imagen el frontend pinta gradient + emoji del juego.
+USERDATA_PROFILE_COVERS_DIR: Final[Path] = DATA_DIR / "profile_covers"
 
 
 def ensure_runtime_dirs() -> None:
@@ -122,6 +131,8 @@ def ensure_runtime_dirs() -> None:
         SPOTIFY_SECRETS_DIR,
         USERDATA_DONACIONES_DIR,
         USERDATA_GAME_IMAGES_DIR,
+        USERDATA_GAME_COVERS_DIR,
+        USERDATA_PROFILE_COVERS_DIR,
     ):
         d.mkdir(parents=True, exist_ok=True)
 
@@ -143,9 +154,12 @@ __all__ = [
     "BUNDLE_DONACIONES_DIR",
     "BUNDLE_TRIGGERS_DIR",
     "BUNDLE_GAME_IMAGES_DIR",
+    "BUNDLE_GAME_COVERS_DIR",
     "USERDATA_GAME_IMAGES_DIR",
+    "USERDATA_GAME_COVERS_DIR",
     "BUNDLE_TEMPLATES_DIR",
     "USERDATA_DONACIONES_DIR",
+    "USERDATA_PROFILE_COVERS_DIR",
     "ensure_runtime_dirs",
     "resolve_spotify_secret",
 ]

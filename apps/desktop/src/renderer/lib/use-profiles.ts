@@ -33,8 +33,17 @@ export function useProfiles(options?: { autoLoad?: boolean }) {
   }, [setProfiles, setError, setStatus]);
 
   const save = useCallback(
-    async (name: string, description?: string) => {
-      const res = await rpcCall('profiles.save', { name, description });
+    /**
+     * v1.0.86: si se pasa `gameId`, el perfil se guarda en modo per-game
+     * (solo rules + sounds + boosts del juego). Si NO, modo legacy
+     * (snapshot completo). Default: per-game con el juego activo.
+     */
+    async (name: string, description?: string, gameId?: string) => {
+      const res = await rpcCall('profiles.save', {
+        name,
+        description,
+        gameId: gameId || undefined,
+      });
       upsertLocal(res.profile);
       return res.profile;
     },
@@ -93,6 +102,39 @@ export function useProfiles(options?: { autoLoad?: boolean }) {
     [upsertLocal],
   );
 
+  const update = useCallback(
+    /** v1.0.95+: actualizar un perfil existente con el estado actual del
+     *  juego — sin crear duplicado. Solo aplica a perfiles per-game. */
+    async (id: string): Promise<ProfileSnapshot> => {
+      const res = await rpcCall('profiles.update', { id });
+      upsertLocal(res.profile);
+      return res.profile;
+    },
+    [upsertLocal],
+  );
+
+  const setCover = useCallback(
+    /** v1.0.94+: subir imagen custom como portada del perfil. */
+    async (id: string, sourcePath: string) => {
+      const res = await rpcCall('profiles.set-cover', { id, sourcePath });
+      if (!res.ok) {
+        throw new Error(res.message || 'set-cover falló');
+      }
+      // Refresh para que el nuevo coverImage llegue al store.
+      await refresh();
+      return res.filename;
+    },
+    [refresh],
+  );
+
+  const deleteCover = useCallback(
+    async (id: string) => {
+      await rpcCall('profiles.delete-cover', { id });
+      await refresh();
+    },
+    [refresh],
+  );
+
   useEffect(() => {
     if (!autoLoad) return;
     if (status === 'idle') void refresh();
@@ -112,5 +154,8 @@ export function useProfiles(options?: { autoLoad?: boolean }) {
     remove,
     exportProfile,
     importProfile,
+    setCover,
+    deleteCover,
+    update,
   };
 }

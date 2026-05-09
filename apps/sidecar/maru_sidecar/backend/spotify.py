@@ -29,7 +29,7 @@ from typing import Any
 
 from ..event_bus import get_event_bus
 from ..logger import get_logger
-from ..runtime import DATA_DIR
+from ..runtime import DATA_DIR, SPOTIFY_SECRETS_DIR
 
 log = get_logger(__name__)
 
@@ -179,13 +179,198 @@ class SpotifyService:
         self._bus_subscribed: bool = False
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self._config = self._read_config()
-        # Suscribirse al bus para capturar comment-enriched de
-        # CUALQUIER fuente — worker real Y simulator. Antes
-        # `notify_super_fan` solo se invocaba desde
-        # `tiktok._cache_ranks` que solo corre con la señal del
-        # worker → al simular un super fan desde el simulador,
-        # la lista PlayFan no se actualizaba.
+        # Migrar cache viejo (data/.spotify_cache, bug del path relativo)
+        # al path persistente correcto. Lo hacemos UNA VEZ al boot.
+        self._migrate_legacy_cache()
         self._install_bus_listener()
+        # EAGER warm-start: si hay credenciales guardadas, instanciar el
+        # cliente y conectar AL ARRANCAR el sidecar (sin esperar a que el
+        # user toque "Conectar" o que llegue tiktok:status). Esto evita el
+        # bug donde el primer click a Conectar abría browser porque el
+        # cliente todavía no había hecho try_auto_connect.
+        if self._has_credentials():
+            threading.Thread(
+                target=self._eager_warmup, name="spotify-eager-warmup", daemon=True
+            ).start()
+
+    def _has_credentials(self) -> bool:
+        cid = str(self._config.get("client_id") or "").strip()
+        csec = str(self._config.get("client_secret") or "").strip()
+        if cid and csec:
+            return True
+        # Si no hay en config pero sí hay accounts guardadas, también vale.
+        try:
+            accounts = _read_accounts()
+            return any(
+                isinstance(a, dict) and a.get("client_id") and a.get("client_secret")
+                for a in accounts
+            )
+        except Exception:
+            return False
+
+    def _eager_warmup(self) -> None:
+        """Instancia el cliente y conecta SIN abrir browser apenas arranca
+        el sidecar. Usa try_auto_connect del refresh_token cacheado."""
+        try:
+            # Si necesita hidratar credenciales desde accounts.json.
+            cid = str(self._config.get("client_id") or "").strip()
+            csec = str(self._config.get("client_secret") or "").strip()
+            if not cid or not csec:
+                accounts = _read_accounts()
+                first = next(
+                    (a for a in accounts if isinstance(a, dict)
+                     and a.get("client_id") and a.get("client_secret")),
+                    None,
+                )
+                if first is not None:
+                    with self._lock:
+                        self._config["client_id"] = str(first.get("client_id"))
+                        self._config["client_secret"] = str(first.get("client_secret"))
+                        self._config["enabled"] = True
+                        self._write_config()
+            # Restaurar cache desde backup si fue borrado por algún error
+            # transitorio del polling anterior.
+            self._restore_cache_from_backup()
+            # _ensure_client llama try_auto_connect internamente.
+            self._ensure_client()
+            connected = bool(getattr(self._client, "is_connected", False))
+            log.info("spotify eager warmup: is_connected=%s", connected)
+            if connected:
+                # Backup del cache válido para sobrevivir errores futuros.
+                self._backup_cache_if_valid()
+        except Exception:
+            log.exception("spotify eager warmup fallo")
+
+    @staticmethod
+    def _patch_safe_cached_token(client: Any) -> None:
+        """Reemplaza `_try_cached_token` del SpotifyClient con una versión
+        SEGURA que NO borra el cache file en errores transitorios.
+
+        Bug raíz del MARU core (core/spotify_client.py:_try_cached_token):
+        ```python
+        except Exception as e:
+            if not rate_limit:
+                os.remove(self._cache_path)  # ← borra el refresh token
+        ```
+        Esto destruye la persistencia: cualquier glitch de red durante el
+        polling normal borra el refresh_token → próxima reconexión obliga
+        a OAuth browser.
+
+        Versión safe: capturamos exception, NO borramos cache, retornamos
+        None — el caller (`_authenticate_inner`/`try_auto_connect`) maneja
+        el None correctamente y reintenta sin perder el refresh_token.
+        """
+        if not hasattr(client, "_try_cached_token"):
+            return
+        # Captura no-bound del client en el closure.
+        client_ref = client
+
+        def _safe_try_cached_token() -> Any:
+            auth = getattr(client_ref, "_auth", None)
+            if auth is None:
+                return None
+            try:
+                return auth.get_cached_token()
+            except Exception as e:
+                log.warning(
+                    "safe _try_cached_token: error=%s (cache PRESERVADO)", e,
+                )
+                return None
+
+        try:
+            client._try_cached_token = _safe_try_cached_token
+            log.info("spotify: _try_cached_token patched safe (no borra cache en error)")
+        except Exception:
+            log.exception("spotify: no se pudo monkey-patch _try_cached_token")
+
+    def _safe_cleanup_client(self, client: Any) -> None:
+        """v1.0.69: cierre explícito de un SpotifyClient descartado.
+
+        Llamado después de un reset exitoso para liberar el HTTP server
+        local del OAuth (puerto 8888) y disparar `disconnect()`. Sin
+        esto, el cliente viejo retiene 5-10MB de callbacks/threads
+        daemon hasta que el GC lo recolecte. Best-effort, no propaga
+        errores."""
+        if client is None:
+            return
+        try:
+            srv = getattr(client, "_auth_server", None)
+            if srv is not None:
+                try:
+                    srv.server_close()
+                except Exception:
+                    pass
+                try:
+                    client._auth_server = None
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            if hasattr(client, "disconnect"):
+                client.disconnect()
+        except Exception:
+            pass
+
+    def _backup_cache_if_valid(self) -> None:
+        """Copia el cache de spotify a un .bak si es válido. Se llama
+        después de cada conexión exitosa para preservar el refresh_token
+        ante el comportamiento del MARU core que borra el cache al primer
+        error transitorio (network glitch, etc)."""
+        try:
+            cache = SPOTIFY_SECRETS_DIR / "cache"
+            backup = SPOTIFY_SECRETS_DIR / "cache.bak"
+            if cache.exists() and cache.stat().st_size > 0:
+                content = cache.read_bytes()
+                # Solo escribimos si cambió (evita IO innecesario).
+                if not backup.exists() or backup.read_bytes() != content:
+                    backup.write_bytes(content)
+                    log.info("spotify cache backup actualizado (%d bytes)", len(content))
+        except Exception:
+            log.exception("spotify _backup_cache_if_valid fallo")
+
+    def _restore_cache_from_backup(self) -> bool:
+        """Si el cache primary fue borrado pero hay backup válido, restaurar.
+        Devuelve True si se restauró."""
+        try:
+            cache = SPOTIFY_SECRETS_DIR / "cache"
+            backup = SPOTIFY_SECRETS_DIR / "cache.bak"
+            primary_missing = not cache.exists() or cache.stat().st_size == 0
+            if primary_missing and backup.exists() and backup.stat().st_size > 0:
+                cache.parent.mkdir(parents=True, exist_ok=True)
+                cache.write_bytes(backup.read_bytes())
+                log.info("spotify cache RESTAURADO desde backup (%d bytes)", cache.stat().st_size)
+                return True
+        except Exception:
+            log.exception("spotify _restore_cache_from_backup fallo")
+        return False
+
+    def _migrate_legacy_cache(self) -> None:
+        """Copia el cache viejo (`data/.spotify_cache`, path relativo del
+        bug histórico) al path nuevo de SECRETS si el nuevo no existe.
+        Una sola vez. Idempotente."""
+        try:
+            new_path = SPOTIFY_SECRETS_DIR / "cache"
+            if new_path.exists() and new_path.stat().st_size > 0:
+                return  # ya hay cache nuevo, nada que hacer
+            # Buscar candidatos del path viejo en lugares conocidos.
+            from pathlib import Path as _P
+            candidates = [
+                _P("data/.spotify_cache"),
+                _P("./data/.spotify_cache"),
+                DATA_DIR / ".spotify_cache",
+            ]
+            for cand in candidates:
+                try:
+                    if cand.exists() and cand.stat().st_size > 0:
+                        new_path.parent.mkdir(parents=True, exist_ok=True)
+                        new_path.write_bytes(cand.read_bytes())
+                        log.info("spotify cache migrado: %s → %s", cand, new_path)
+                        return
+                except Exception:
+                    continue
+        except Exception:
+            log.exception("spotify _migrate_legacy_cache fallo")
 
     def _install_bus_listener(self) -> None:
         if self._bus_subscribed:
@@ -209,19 +394,19 @@ class SpotifyService:
 
     def _on_tiktok_status_bus(self, payload: dict[str, Any]) -> None:
         """Cuando TikTok pasa a connected, intenta warm-start de Spotify
-        en background.
-
-        v1.0.47 fix raíz: antes el guard exigía `client_id`/`client_secret`
-        en `self._config`. Pero el user puede tener cuentas guardadas en
-        `spotify_accounts.json` SIN haberlas hidratado al config (caso
-        común: cerró la app sin clickear "conectar" tras guardar). Ahora
-        si NO hay credenciales en config pero SÍ hay accounts guardadas,
-        cargamos la primera (preferentemente la que estaba "current").
+        en background. Match permisivo: acepta `connected: true`,
+        `state: "connected"`, `status: "connected"`.
         """
         if not isinstance(payload, dict):
             return
-        if not payload.get("connected"):
+        is_connected = (
+            bool(payload.get("connected"))
+            or str(payload.get("state") or "").lower() == "connected"
+            or str(payload.get("status") or "").lower() == "connected"
+        )
+        if not is_connected:
             return
+        log.info("spotify: tiktok connected — disparando warm-start")
         # Si ya tenemos cliente conectado, no hay nada que hacer.
         if self._client is not None and getattr(self._client, "is_connected", False):
             return
@@ -325,13 +510,39 @@ class SpotifyService:
             log.warning("spotify: core no disponible: %s", exc)
             return None
         try:
-            self._client = SpotifyClient()
+            # FIX RAÍZ: pasar cache_path apuntando al path persistente real
+            # del sidecar (`runtime_data/secrets/spotify/cache`). Sin esto
+            # SpotifyClient usa el default `data/.spotify_cache` relativo al
+            # cwd → el refresh_token nunca se encuentra → try_auto_connect
+            # siempre falla → SIEMPRE abre browser al conectar.
+            try:
+                SPOTIFY_SECRETS_DIR.mkdir(parents=True, exist_ok=True)
+            except Exception:
+                pass
+            cache_path = str(SPOTIFY_SECRETS_DIR / "cache")
+            try:
+                self._client = SpotifyClient(cache_path=cache_path)
+            except TypeError:
+                # Fallback si la firma del SpotifyClient no acepta kw.
+                self._client = SpotifyClient()
+                try:
+                    self._client._cache_path = cache_path
+                except Exception:
+                    pass
             # Registrar el callback ANTES de cualquier acción que pueda
             # tocar `_playfan_used` (el reset diario también lo dispara).
             try:
                 self._client.on_playfan_state_changed = self._on_playfan_state_changed
             except Exception:
                 log.exception("spotify: no se pudo registrar callback playfan")
+            # ── PATCH RAÍZ: el MARU core `_try_cached_token` BORRA el
+            # refresh_token cache en CUALQUIER error transitorio. Eso
+            # causa que la próxima reconexión exija OAuth browser. Lo
+            # reemplazamos con una versión segura que NO borra. ──
+            try:
+                self._patch_safe_cached_token(self._client)
+            except Exception:
+                log.exception("spotify: patch_safe_cached_token fallo")
             # Restaurar credenciales guardadas. Sin esto `try_auto_connect`
             # falla silencioso porque `client_id`/`client_secret` están en
             # blanco después de reiniciar la app.
@@ -390,7 +601,19 @@ class SpotifyService:
 
     # ── RPC: status / now-playing ────────────────────────────────────────
 
-    def status(self, _params: dict[str, Any]) -> dict[str, Any]:
+    async def status(self, _params: dict[str, Any]) -> dict[str, Any]:
+        # v1.0.61 RAÍZ: async + to_thread porque la primera llamada
+        # invoca `_ensure_client()` que hace `core_bridge.install` (~1-3s)
+        # + `try_auto_connect()` HTTP (~1-5s). Sin esto, el primer
+        # `status()` del boot bloqueaba el loop entero ~3-8s y otros
+        # RPCs paralelos timeouteaban → renderer crash.
+        if self.is_oauth_in_progress:
+            # Si OAuth corre, el cliente puede estar a medio configurar.
+            # Devolvemos snapshot conservador sin tocar el cliente.
+            return {"connected": False, "available": True, "oauthInProgress": True}
+        return await asyncio.to_thread(self._sync_status)
+
+    def _sync_status(self) -> dict[str, Any]:
         c = self._ensure_client()
         if c is None:
             return {"connected": False, "available": False}
@@ -411,15 +634,57 @@ class SpotifyService:
             ),
         }
 
-    def now_playing(self, _params: dict[str, Any]) -> dict[str, Any]:
+    async def now_playing(self, _params: dict[str, Any]) -> dict[str, Any]:
+        if self.is_oauth_in_progress:
+            return {"isPlaying": False}
+        return await asyncio.to_thread(self._sync_now_playing)
+
+    def _sync_now_playing(self) -> dict[str, Any]:
         c = self._ensure_client()
         if c is None or not getattr(c, "is_connected", False):
             return {"isPlaying": False}
+        # Llamada UNICA al playback raw — el getter público de
+        # SpotifyClient no retorna track.id ni album.images, así que
+        # vamos directo al spotipy. Mismo número de requests al API.
+        np = self._get_now_playing_rich(c)
+        if np is None:
+            try:
+                np = c.get_now_playing() or {}
+            except Exception:
+                np = {}
+        return self._serialize_now_playing(np or {})
+
+    @staticmethod
+    def _get_now_playing_rich(c: Any) -> dict[str, Any] | None:
+        """Obtiene playback raw vía spotipy y arma un dict completo con
+        id + image_url. Devuelve None si no hay sp o falla."""
+        sp = getattr(c, "_sp", None)
+        if sp is None:
+            return None
         try:
-            np = c.get_now_playing() or {}
+            pb = sp.current_playback() if hasattr(sp, "current_playback") else None
+            if not pb or not pb.get("item"):
+                return None
+            item = pb["item"]
+            album = item.get("album") or {}
+            images = album.get("images") or []
+            # Elegir image mid-size (300px) si hay 3 (640/300/64), sino la más grande.
+            image_url = ""
+            if images:
+                # Spotify ordena de mayor a menor — ideal index 1 (300px).
+                image_url = (images[1] if len(images) > 1 else images[0]).get("url", "")
+            return {
+                "id": item.get("id", ""),
+                "name": item.get("name", ""),
+                "artist": ", ".join(a.get("name", "") for a in item.get("artists", [])),
+                "album": album.get("name", ""),
+                "progress_ms": int(pb.get("progress_ms") or 0),
+                "duration_ms": int(item.get("duration_ms") or 0),
+                "is_playing": bool(pb.get("is_playing", False)),
+                "image_url": image_url,
+            }
         except Exception:
-            return {"isPlaying": False}
-        return self._serialize_now_playing(np)
+            return None
 
     # ── RPC: control de reproducción ─────────────────────────────────────
 
@@ -486,11 +751,15 @@ class SpotifyService:
             track = r.get("track") if isinstance(r.get("track"), dict) else {}
             name = track.get("name") or r.get("name") or r.get("trackName") or ""
             artist = track.get("artist") or r.get("artist") or ""
+            # search_track del SpotifyClient solo guarda uri/name/artist/...
+            # y NO el id, así que lo extraemos del URI ("spotify:track:XXX").
+            uri = str(track.get("uri") or "")
             track_id = (
                 track.get("id")
                 or track.get("trackId")
                 or r.get("track_id")
                 or r.get("trackId")
+                or (uri.split(":")[-1] if uri.startswith("spotify:track:") else "")
                 or ""
             )
             items.append(
@@ -658,10 +927,16 @@ class SpotifyService:
             log.exception("spotify.accounts_save fallo")
             return {"ok": False, "message": str(exc)}
 
-    def accounts_load(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def accounts_load(self, params: dict[str, Any]) -> dict[str, Any]:
         """Cambiar a una cuenta guardada — usa switch_account(cid, csec).
         Persistimos las credenciales nuevas en spotify.json y notificamos
-        al SocialSystem para que social._sys.spotify apunte a la nueva."""
+        al SocialSystem para que social._sys.spotify apunte a la nueva.
+
+        Async: `try_auto_connect()` puede hacer llamadas HTTP al OAuth
+        de Spotify para refrescar el token. Si el cache caducó o
+        Spotify está lento, eso podía bloquear el loop asyncio. Igual
+        que `connect`, usamos `asyncio.to_thread`.
+        """
         c = self._ensure_client()
         if c is None:
             return {"ok": False, "message": "spotify no disponible"}
@@ -680,18 +955,30 @@ class SpotifyService:
         if not cid or not csec:
             return {"ok": False, "message": "cuenta sin credenciales válidas"}
         try:
-            if hasattr(c, "switch_account"):
-                c.switch_account(cid, csec)
-            elif hasattr(c, "configure"):
-                c.configure(client_id=cid, client_secret=csec)
-            else:
-                c.client_id = cid
-                c.client_secret = csec
-            if hasattr(c, "try_auto_connect"):
-                try:
-                    c.try_auto_connect()
-                except Exception:
-                    pass
+            def _switch_and_refresh() -> None:
+                if hasattr(c, "switch_account"):
+                    c.switch_account(cid, csec)
+                elif hasattr(c, "configure"):
+                    c.configure(client_id=cid, client_secret=csec)
+                else:
+                    c.client_id = cid
+                    c.client_secret = csec
+                if hasattr(c, "try_auto_connect"):
+                    try:
+                        c.try_auto_connect()
+                    except Exception:
+                        pass
+            try:
+                await asyncio.wait_for(
+                    asyncio.to_thread(_switch_and_refresh),
+                    timeout=30.0,
+                )
+            except asyncio.TimeoutError:
+                log.warning("spotify.accounts_load: timeout 30s en switch_account")
+                return {
+                    "ok": False,
+                    "message": "Timeout al cambiar de cuenta — intentá de nuevo.",
+                }
             self._persist_credentials(cid, csec)
             self._notify_social()
             log.info("spotify.accounts_load: cuenta '%s' activada", name.strip())
@@ -721,56 +1008,250 @@ class SpotifyService:
 
     # ── RPC: connect / disconnect / credentials ──────────────────────────
 
-    def connect(self, params: dict[str, Any]) -> dict[str, Any]:
+    @property
+    def is_oauth_in_progress(self) -> bool:
+        """Flag consultado por el scheduler de now-playing para suprimir
+        polls HTTP durante el OAuth — esos polls bloquean el loop asyncio
+        si llegan en mal momento (cliente a medio inicializar) y causan
+        pantalla negra. v1.0.61 RAÍZ."""
+        return getattr(self, "_oauth_in_progress", False)
+
+    async def connect(self, params: dict[str, Any]) -> dict[str, Any]:
         """Inicia OAuth flow del SpotifyClient (paridad MARU original).
 
-        El método del core se llama `authenticate()`, retorna `(ok: bool,
-        message: str)`. Antes se llamaba `c.connect()` que NO EXISTE → fallo
-        silencioso. Ahora ejecutamos el auth real:
-          1. Set credentials si vinieron por params.
-          2. Llamar `authenticate()` que abre navegador + servidor OAuth :8888.
-          3. Devolver resultado al frontend.
+        BUG RAÍZ FIX v1.0.59 (definitivo):
+        El v1.0.58 solo migró `c.authenticate()` a `to_thread`, pero el
+        resto del flujo (`_ensure_client()`, `set_credentials`,
+        `_persist_credentials`, `_auto_save_connected_account`,
+        `_notify_social`) seguía corriendo SYNC en el loop asyncio.
+        Y `_ensure_client()` la primera vez:
+          - Hace `core_bridge.install()` (patches PyQt6 + rule_engine).
+          - Construye `SpotifyClient()` (importa spotipy, abre cache).
+          - Llama `try_auto_connect()` que hace HTTP request al
+            accounts.spotify.com para refresh del token cacheado.
 
-        Como `authenticate()` puede tardar hasta 90s (espera del usuario),
-        lo corremos en thread aparte vía run_in_executor para no bloquear
-        el loop del sidecar."""
-        c = self._ensure_client()
-        if c is None:
-            return {"ok": False, "message": "spotify no disponible"}
+        Cualquiera de esos puede tardar 1-10s la PRIMERA vez. Durante
+        esos segundos el loop asyncio queda BLOQUEADO — el renderer no
+        recibe respuestas a `tts.queue-sizes`, `social.users.list`,
+        etc. (todos polling cada 1-3s) y pierde heartbeat. Con suerte
+        algún hook lanza throw → React unhandled → pantalla negra.
+
+        Fix definitivo: TODO el flujo de connect corre dentro de un
+        SOLO `asyncio.to_thread`. El loop queda 100% libre durante
+        toda la operación. El user puede seguir interactuando con la
+        UI mientras espera el OAuth.
+        """
         client_id = str(params.get("clientId") or "").strip()
         client_secret = str(params.get("clientSecret") or "").strip()
-        try:
-            if client_id and client_secret and hasattr(c, "set_credentials"):
-                c.set_credentials(client_id, client_secret)
-            elif client_id and client_secret:
-                # Fallback: setear directamente si el método no existe.
-                c.client_id = client_id
-                c.client_secret = client_secret
 
-            if not hasattr(c, "authenticate"):
-                return {
-                    "ok": False,
-                    "message": "core.spotify_client.authenticate no disponible",
-                }
-            res = c.authenticate()
-            # `authenticate()` retorna (ok: bool, message: str).
-            if isinstance(res, tuple) and len(res) == 2:
-                ok, msg = bool(res[0]), str(res[1])
-                if ok:
+        # CRÍTICO v1.0.61: marcar OAuth en progreso para que el scheduler
+        # `_spotify_nowplaying_scheduler` no haga polls HTTP a Spotify
+        # mientras el cliente está a medio configurar. Esos polls,
+        # ejecutados desde el LOOP asyncio (no thread), bloqueaban el
+        # loop entero durante el OAuth → renderer perdía RPC → pantalla
+        # negra. El flag se borra en finally.
+        self._oauth_in_progress = True
+
+        def _sync_full_connect() -> dict[str, Any]:
+            """Todo el flujo sync — corre en thread del executor."""
+            c = self._ensure_client()
+            if c is None:
+                return {"ok": False, "message": "spotify no disponible"}
+            try:
+                # FIX v1.0.68: si YA está conectado (refresh token válido en
+                # cache), NO abrir browser. Confirmar y salir.
+                if getattr(c, "is_connected", False):
+                    self._notify_social()
+                    return {
+                        "ok": True,
+                        "message": "Ya conectado (refresh token válido)",
+                        "noBrowser": True,
+                    }
+
+                if client_id and client_secret and hasattr(c, "set_credentials"):
+                    c.set_credentials(client_id, client_secret)
+                elif client_id and client_secret:
+                    c.client_id = client_id
+                    c.client_secret = client_secret
+
+                # PRIMER STEP: si el cache primary fue borrado por algún
+                # error transitorio anterior, restaurar desde el backup
+                # antes de intentar try_auto_connect.
+                self._restore_cache_from_backup()
+
+                # Intento de re-auth via refresh_token cacheado ANTES de
+                # abrir el OAuth flow. Estrategia escalonada:
+                #   - 3 intentos directos try_auto_connect con 0.5s de gap.
+                #   - Si todos fallan, RESETEAR el cliente (re-instanciar)
+                #     y reintentar 2 veces más antes de caer al OAuth.
+                if hasattr(c, "try_auto_connect"):
+                    import time as _t
+                    def _diagnose_auto_connect(client):
+                        """Loguea por qué try_auto_connect podría retornar
+                        False sin excepción."""
+                        info = {
+                            "_connecting": getattr(client, "_connecting", "?"),
+                            "_connected": getattr(client, "_connected", "?"),
+                            "has_client_id": bool(getattr(client, "client_id", "")),
+                            "has_client_secret": bool(getattr(client, "client_secret", "")),
+                            "_cache_path": getattr(client, "_cache_path", "?"),
+                        }
+                        try:
+                            from pathlib import Path as _P
+                            cp = info.get("_cache_path")
+                            if cp:
+                                p = _P(str(cp))
+                                info["cache_exists"] = p.exists()
+                                info["cache_size"] = p.stat().st_size if p.exists() else 0
+                        except Exception:
+                            pass
+                        log.info("spotify connect diag: %s", info)
+
+                    # ── PASO 1: 3 intentos directos ──
+                    for _attempt in range(3):
+                        try:
+                            res = c.try_auto_connect()
+                            log.info(
+                                "spotify connect: try_auto_connect attempt=%d ret=%s is_connected=%s",
+                                _attempt + 1, res, getattr(c, "is_connected", False),
+                            )
+                            if getattr(c, "is_connected", False):
+                                self._persist_credentials(client_id, client_secret)
+                                self._auto_save_connected_account(c)
+                                self._notify_social()
+                                self._backup_cache_if_valid()
+                                return {
+                                    "ok": True,
+                                    "message": "Reconectado sin abrir navegador",
+                                    "noBrowser": True,
+                                }
+                        except Exception as exc:
+                            log.warning("spotify connect: try_auto_connect attempt=%d EXC=%s", _attempt + 1, exc)
+                        _t.sleep(0.5)
+                    _diagnose_auto_connect(c)
+
+                    # ── PASO 2: RESET cliente y reintentar ──
+                    # Si try_auto_connect falló 3 veces, puede que el cliente
+                    # esté en estado roto (post-disconnect, _auth=None, etc.)
+                    # Re-instanciamos limpio y reintentamos.
+                    log.info("spotify connect: reseteando cliente y reintentando con cache fresh")
+                    try:
+                        cache_path = str(SPOTIFY_SECRETS_DIR / "cache")
+                        old_client = self._client
+                        self._client = None
+                        try:
+                            from core.spotify_client import SpotifyClient as _SC  # type: ignore
+                            try:
+                                self._client = _SC(cache_path=cache_path)
+                            except TypeError:
+                                self._client = _SC()
+                                self._client._cache_path = cache_path
+                            # Re-aplicar el patch safe al nuevo cliente.
+                            try:
+                                self._patch_safe_cached_token(self._client)
+                            except Exception:
+                                pass
+                            # Re-aplicar credenciales del config.
+                            cid_cfg = self._config.get("client_id") or ""
+                            csec_cfg = self._config.get("client_secret") or ""
+                            if cid_cfg and csec_cfg and hasattr(self._client, "configure"):
+                                self._client.configure(
+                                    client_id=cid_cfg,
+                                    client_secret=csec_cfg,
+                                    device_id=self._config.get("device_id", ""),
+                                )
+                            for _attempt in range(2):
+                                try:
+                                    res = self._client.try_auto_connect()
+                                    log.info(
+                                        "spotify connect (post-reset): attempt=%d ret=%s is_connected=%s",
+                                        _attempt + 1, res, getattr(self._client, "is_connected", False),
+                                    )
+                                    if getattr(self._client, "is_connected", False):
+                                        self._persist_credentials(client_id, client_secret)
+                                        self._auto_save_connected_account(self._client)
+                                        self._notify_social()
+                                        self._backup_cache_if_valid()
+                                        # v1.0.69: cleanup explícito del
+                                        # cliente viejo. Ahora que el nuevo
+                                        # está conectado, ya no necesitamos
+                                        # el fallback al old_client.
+                                        self._safe_cleanup_client(old_client)
+                                        return {
+                                            "ok": True,
+                                            "message": "Reconectado tras reset (sin browser)",
+                                            "noBrowser": True,
+                                        }
+                                except Exception as exc:
+                                    log.warning("spotify connect (post-reset) attempt=%d EXC=%s", _attempt + 1, exc)
+                                _t.sleep(0.5)
+                            c = self._client  # usar el nuevo cliente abajo
+                        except Exception as exc:
+                            log.warning("spotify connect: reset fallo: %s — restaurando cliente viejo", exc)
+                            self._client = old_client
+                            c = old_client
+                    except Exception:
+                        log.exception("spotify connect: reset path fallo (continuando con OAuth)")
+
+                # Última verificación antes de caer al OAuth con browser.
+                if getattr(c, "is_connected", False):
+                    self._notify_social()
+                    return {"ok": True, "message": "Conectado", "noBrowser": True}
+                log.warning("spotify connect: try_auto_connect agotado y reset falló, abriendo OAuth flow (browser)")
+
+                if not hasattr(c, "authenticate"):
+                    return {
+                        "ok": False,
+                        "message": "core.spotify_client.authenticate no disponible",
+                    }
+                res = c.authenticate()
+                if isinstance(res, tuple) and len(res) == 2:
+                    ok, msg = bool(res[0]), str(res[1])
+                    if ok:
+                        self._persist_credentials(client_id, client_secret)
+                        self._auto_save_connected_account(c)
+                        self._notify_social()
+                    return {"ok": ok, "message": msg}
+                if bool(res):
                     self._persist_credentials(client_id, client_secret)
                     self._auto_save_connected_account(c)
-                    # Wire SpotifyClient en el SocialSystem para que `!play`
-                    # encuentre `self.spotify` no-None y anuncie por TTS.
                     self._notify_social()
-                return {"ok": ok, "message": msg}
-            if bool(res):
-                self._persist_credentials(client_id, client_secret)
-                self._auto_save_connected_account(c)
-                self._notify_social()
-            return {"ok": bool(res)}
+                return {"ok": bool(res)}
+            except Exception as exc:
+                log.exception("spotify.connect (sync_full) fallo")
+                return {"ok": False, "message": str(exc)}
+
+        try:
+            return await asyncio.wait_for(
+                asyncio.to_thread(_sync_full_connect),
+                timeout=140.0,
+            )
+        except asyncio.TimeoutError:
+            log.warning("spotify.connect timeout 140s — abortando OAuth")
+            # Best-effort cleanup del HTTP server local si quedó colgado.
+            try:
+                if (
+                    self._client is not None
+                    and hasattr(self._client, "_auth_server")
+                    and self._client._auth_server is not None
+                ):
+                    self._client._auth_server.server_close()
+                    self._client._auth_server = None
+            except Exception:
+                pass
+            return {
+                "ok": False,
+                "message": (
+                    "Timeout: el OAuth tardó más de 2 minutos. "
+                    "Verificá que aprobaste el acceso en el navegador "
+                    "y que el puerto 8888 esté libre."
+                ),
+            }
         except Exception as exc:
             log.exception("spotify.connect fallo")
             return {"ok": False, "message": str(exc)}
+        finally:
+            self._oauth_in_progress = False
 
     def _persist_credentials(self, client_id: str, client_secret: str) -> None:
         """Guarda client_id/client_secret en `data/spotify.json` para que
@@ -1114,19 +1595,35 @@ class SpotifyService:
         membresía y dejaba `playfan_uses` vacío → cuota inválida y
         `!playfan` rechazado con "no tienes usos configurados". Ahora
         ambas estructuras se mantienen sincronizadas siempre.
+
+        v1.0.69: el try-except externo absorbía CUALQUIER excepción de
+        cualquiera de las 3 escrituras → si `set_priority_users` fallaba,
+        las 2 asignaciones directas (`priority_users` set, `playfan_uses`
+        dict) NO se ejecutaban → estado fuera de sync. Ahora cada
+        escritura tiene su propio try-except, garantizando best-effort
+        independiente en las 3.
         """
         c = self._client
         if c is None:
             return
         pu = dict(self._config["priority_users"])
-        try:
-            if hasattr(c, "set_priority_users"):
+        # 1) set_priority_users (si existe — algunos forks no lo tienen).
+        if hasattr(c, "set_priority_users"):
+            try:
                 c.set_priority_users(pu)
+            except Exception:
+                log.warning("apply_priority_users: set_priority_users falló — usando fallback directo")
+        # 2) Asignación directa de priority_users (set de keys).
+        try:
             c.priority_users = set(pu.keys())
-            if hasattr(c, "playfan_uses"):
-                c.playfan_uses = dict(pu)
         except Exception:
-            log.exception("apply_priority_users fallo")
+            log.exception("apply_priority_users: assign priority_users fallo")
+        # 3) Asignación directa de playfan_uses (dict username → quota).
+        if hasattr(c, "playfan_uses"):
+            try:
+                c.playfan_uses = dict(pu)
+            except Exception:
+                log.exception("apply_priority_users: assign playfan_uses fallo")
 
     # ── Polling para push event `spotify:now-playing` ───────────────────
 
@@ -1142,7 +1639,17 @@ class SpotifyService:
         Warm-start: si `_client` aún no fue inicializado, llamamos a
         `_ensure_client()` para que `try_auto_connect()` corra en background
         y el header global empiece a mostrar la canción sin que el usuario
-        tenga que abrir el diálogo."""
+        tenga que abrir el diálogo.
+
+        v1.0.61 RAÍZ: si el OAuth manual está en progreso, NO hacemos
+        polls — el HTTP del scheduler corría síncrono en el loop asyncio
+        y bloqueaba la UI. El cliente puede quedar a medio configurar
+        durante el OAuth (`set_credentials` ya aplicó pero `_sp` aún no
+        existe), entonces `is_connected` retorna False y `_ensure_client`
+        intenta `try_auto_connect()` HTTP que falla feo.
+        """
+        if self.is_oauth_in_progress:
+            return None
         if self._client is None:
             try:
                 self._ensure_client()
@@ -1185,6 +1692,7 @@ class SpotifyService:
         return {
             "isPlaying": True,
             "track": {
+                "id": np.get("id") or np.get("track_id") or "",
                 "name": np.get("name", ""),
                 "artist": np.get("artist", ""),
                 "album": np.get("album"),
@@ -1192,4 +1700,5 @@ class SpotifyService:
                 "positionMs": int(np.get("progress_ms") or 0),
             },
             "requestedBy": np.get("requested_by"),
+            "imageUrl": np.get("image_url") or np.get("album_image") or "",
         }

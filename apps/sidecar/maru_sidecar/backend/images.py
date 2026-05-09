@@ -32,10 +32,12 @@ from typing import Final
 
 from maru_sidecar.runtime import (
     BUNDLE_DONACIONES_DIR,
+    BUNDLE_GAME_COVERS_DIR,
     BUNDLE_GAME_IMAGES_DIR,
     BUNDLE_TEMPLATES_DIR,
     BUNDLE_TRIGGERS_DIR,
     USERDATA_DONACIONES_DIR,
+    USERDATA_GAME_COVERS_DIR,
     USERDATA_GAME_IMAGES_DIR,
 )
 from maru_sidecar.logger import get_logger
@@ -628,6 +630,172 @@ class ImagesService:
         if removed:
             self._index.rebuild()
         return {"ok": True, "removed": removed}
+
+    # v1.0.74: portadas custom de juegos para la galería visual.
+    def set_game_cover(self, params: dict[str, object]) -> dict[str, object]:
+        """Copia un archivo de imagen del filesystem del usuario a
+        `USERDATA_GAME_COVERS_DIR/<gameId>.<ext>` para usarlo como portada
+        en la galería visual del ManageGamesDialog y el GamePicker.
+
+        Sobreescribe la del bundle (gracias al user-first lookup en
+        `image-protocol.ts`). Borra variantes con extensión distinta del
+        mismo gid antes de copiar (idempotente).
+
+        Params:
+          - gameId: id del juego (alfanumérico).
+          - sourcePath: path absoluto al archivo origen (PNG/JPG/WEBP).
+
+        Devuelve `{ok, filename}` con el filename relativo a usar como
+        `coverImage` del GameProfile (ej "valheim.jpg"). El caller hace
+        `games.update` con ese valor para persistir el cambio.
+        """
+        import shutil
+        gid = str(params.get("gameId") or "").strip()
+        src = str(params.get("sourcePath") or "").strip()
+        if not gid:
+            return {"ok": False, "message": "gameId requerido"}
+        if ".." in gid or "/" in gid or "\\" in gid:
+            return {"ok": False, "message": "gameId con caracteres inválidos"}
+        if not src or not Path(src).is_file():
+            return {"ok": False, "message": f"archivo origen no existe: {src}"}
+        ext = Path(src).suffix.lower()
+        if ext not in _IMG_EXTS:
+            return {
+                "ok": False,
+                "message": f"extensión {ext} no soportada (use {', '.join(_IMG_EXTS)})",
+            }
+
+        USERDATA_GAME_COVERS_DIR.mkdir(parents=True, exist_ok=True)
+        # Borrar variantes anteriores con MISMO gid pero distinta extensión.
+        for old in USERDATA_GAME_COVERS_DIR.glob(f"{gid}.*"):
+            try:
+                old.unlink()
+            except Exception:
+                pass
+        target = USERDATA_GAME_COVERS_DIR / f"{gid}{ext}"
+        try:
+            shutil.copyfile(src, target)
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+        return {"ok": True, "filename": target.name}
+
+    def delete_game_cover(self, params: dict[str, object]) -> dict[str, object]:
+        """Elimina la portada custom del user (la galería vuelve a la del
+        bundle si existe, o al fallback gradient + emoji)."""
+        gid = str(params.get("gameId") or "").strip()
+        if not gid:
+            return {"ok": False, "message": "gameId requerido"}
+        if ".." in gid or "/" in gid or "\\" in gid:
+            return {"ok": False, "message": "gameId con caracteres inválidos"}
+        removed = 0
+        for f in USERDATA_GAME_COVERS_DIR.glob(f"{gid}.*"):
+            try:
+                f.unlink()
+                removed += 1
+            except Exception:
+                pass
+        return {"ok": True, "removed": removed}
+
+    # v1.0.82: imagen default por categoría — el user puede elegir
+    # uno de los templates predefinidos o subir su propia imagen.
+    def set_category_default(self, params: dict[str, object]) -> dict[str, object]:
+        """Copia un template/file a `USERDATA_GAME_IMAGES_DIR/<gid>/<cat>/_default_<cat>.png`.
+
+        Acepta DOS modos (mutuamente excluyentes):
+          1. `templateName`: nombre de un PNG de `BUNDLE_TEMPLATES_DIR`
+             (ej "zombie", "sword", "lightning", "gem"). Sin extensión.
+          2. `sourcePath`: path absoluto a un archivo del filesystem
+             (PNG/JPG/WEBP) — para custom upload.
+
+        Esta imagen se usará como fallback cuando un item de la categoría
+        no tenga PNG propio. Sobrescribe cualquier `_default_<cat>.png`
+        previo en userdata. El image-protocol prioriza userdata sobre
+        bundle automáticamente.
+
+        Params:
+          - gameId: id del juego (alfanumérico)
+          - category: id de la categoría (entities/items/events/valuables/etc)
+          - templateName: nombre del template SIN extensión (modo 1)
+          - sourcePath: path absoluto al archivo (modo 2)
+        """
+        import shutil
+        gid = str(params.get("gameId") or "").strip()
+        cat = str(params.get("category") or "").strip()
+        template_name = str(params.get("templateName") or "").strip()
+        src_path = str(params.get("sourcePath") or "").strip()
+
+        if not gid or not cat:
+            return {"ok": False, "message": "gameId y category requeridos"}
+        for v in (gid, cat):
+            if ".." in v or "/" in v or "\\" in v:
+                return {"ok": False, "message": "ids con caracteres inválidos"}
+        if not template_name and not src_path:
+            return {"ok": False, "message": "templateName o sourcePath requerido"}
+
+        # Resolver source: template del bundle o archivo del user.
+        source: Path | None = None
+        if template_name:
+            # Sanitizar templateName — solo alfanuméricos + _ -
+            if not all(c.isalnum() or c in "_-" for c in template_name):
+                return {"ok": False, "message": "templateName con caracteres inválidos"}
+            candidate = BUNDLE_TEMPLATES_DIR / f"{template_name}.png"
+            if candidate.is_file():
+                source = candidate
+            else:
+                return {
+                    "ok": False,
+                    "message": f"template '{template_name}.png' no encontrado en bundle",
+                }
+        else:
+            p = Path(src_path)
+            if not p.is_file():
+                return {"ok": False, "message": f"archivo no existe: {src_path}"}
+            ext = p.suffix.lower()
+            if ext not in _IMG_EXTS:
+                return {
+                    "ok": False,
+                    "message": f"extensión {ext} no soportada (use {', '.join(_IMG_EXTS)})",
+                }
+            source = p
+
+        # Target path siempre `_default_<cat>.png` para que el image-protocol
+        # lo encuentre vía fallback estándar.
+        target_dir = USERDATA_GAME_IMAGES_DIR / gid / cat
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / f"_default_{cat}.png"
+        try:
+            # Convertir si la source es JPG/WEBP — siempre escribimos como PNG.
+            if source.suffix.lower() == ".png":
+                shutil.copyfile(source, target)
+            else:
+                # Copia cruda con extensión cambiada (Pillow opcional).
+                # Si el browser no decodifica, agregar Pillow conversion.
+                shutil.copyfile(source, target)
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+        # Invalidate index para que rebuild detecte el nuevo file.
+        self._index.rebuild()
+        return {"ok": True, "filename": target.name}
+
+    def delete_category_default(self, params: dict[str, object]) -> dict[str, object]:
+        """Elimina el `_default_<cat>.png` custom del user. La categoría
+        vuelve a usar el del bundle si existe, sino fallback de UI."""
+        gid = str(params.get("gameId") or "").strip()
+        cat = str(params.get("category") or "").strip()
+        if not gid or not cat:
+            return {"ok": False, "message": "gameId y category requeridos"}
+        for v in (gid, cat):
+            if ".." in v or "/" in v or "\\" in v:
+                return {"ok": False, "message": "ids con caracteres inválidos"}
+        target = USERDATA_GAME_IMAGES_DIR / gid / cat / f"_default_{cat}.png"
+        if not target.is_file():
+            return {"ok": True, "removed": 0}
+        try:
+            target.unlink()
+        except Exception as exc:
+            return {"ok": False, "message": str(exc)}
+        self._index.rebuild()
+        return {"ok": True, "removed": 1}
 
 
 __all__ = [

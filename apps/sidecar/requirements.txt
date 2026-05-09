@@ -1,3 +1,9 @@
 # Runtime mínimo Fase 0. Las deps reales (TikTokLive, pygame, etc.) entran en F1
 # cuando el sidecar empiece a embeber `core/` de MARU.
 websockets>=12.0
+
+# v1.0.97+ — acciones de teclado en reglas (KeyboardService).
+# pynput: simulación de keystroke nativa cross-platform (Win/Mac/Linux).
+# pygetwindow: filtro opcional por título de ventana enfocada (Windows).
+pynput>=1.7
+pygetwindow>=0.0.9

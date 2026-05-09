@@ -8,6 +8,7 @@ import { CommandsTab } from './CommandsTab.js';
 import { GeneralTab } from './GeneralTab.js';
 import { StatsTab } from './StatsTab.js';
 import { TapsTab } from './TapsTab.js';
+import { TopLivesTab } from './TopLivesTab.js';
 import { UsersTab } from './UsersTab.js';
 
 /**
@@ -24,19 +25,24 @@ import { UsersTab } from './UsersTab.js';
  *     consistencia.
  *   - Status indicator si hubo error al guardar (en vez de QMessageBox).
  */
-type Tab = 'general' | 'commands' | 'users' | 'taps' | 'stats';
+type Tab = 'general' | 'commands' | 'users' | 'taps' | 'top_lives' | 'stats';
 
 const TAB_META: { id: Tab; label: string; emoji: string }[] = [
   { id: 'general', label: 'General', emoji: '⚙️' },
   { id: 'commands', label: 'Comandos', emoji: '📜' },
   { id: 'users', label: 'Usuarios', emoji: '👥' },
   { id: 'taps', label: 'Taps', emoji: '❤️' },
+  { id: 'top_lives', label: 'Top Lives', emoji: '🏆' },
   { id: 'stats', label: 'Estadísticas', emoji: '📊' },
 ];
 
 export function SocialConfigDialog() {
   const open = useAppStore((s) => s.modalStack.some((f) => f.id === 'social-config'));
   const closeModal = useAppStore((s) => s.closeModal);
+  // v1.0.69: cleanup de la lista de usuarios sociales al cerrar el
+  // dialog para liberar 5-15 MB de RAM tatuada cuando hay miles de
+  // usuarios registrados. Re-abrir el dialog re-pide la lista (~100-300ms).
+  const clearSocialUsers = useAppStore((s) => s.clearSocialUsers);
 
   const social = useSocial({ autoLoad: open });
 
@@ -56,8 +62,10 @@ export function SocialConfigDialog() {
       setTab('general');
       setSaveError(null);
       setBusy(false);
+      // v1.0.69: liberar la lista de usuarios sociales del store.
+      clearSocialUsers();
     }
-  }, [open]);
+  }, [open, clearSocialUsers]);
 
   if (!open) return null;
 
@@ -171,6 +179,7 @@ export function SocialConfigDialog() {
             busy={busy}
           />
         )}
+        {tab === 'top_lives' && <TopLivesTab open={tab === 'top_lives'} />}
         {tab === 'stats' && (
           <StatsTab
             stats={social.stats}

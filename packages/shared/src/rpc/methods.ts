@@ -20,6 +20,8 @@ import type {
   LogEntry,
   LogStats,
   OverlayInfo,
+  OverlaysIdentity,
+  OverlaysListResult,
   PingResult,
   RelationshipType,
   SoundEvent,
@@ -103,6 +105,7 @@ export interface TikTokMethods {
     result: { ok: true };
   };
   'simulator.like': { params: { user: string; count?: number }; result: { ok: true } };
+  'simulator.like-milestone': { params: { user?: string; total: number }; result: { ok: true } };
   'simulator.follow': { params: { user: string }; result: { ok: true } };
   'simulator.share': { params: { user: string }; result: { ok: true } };
   'simulator.comment': { params: { user: string; text: string }; result: { ok: true } };
@@ -325,6 +328,17 @@ export interface RulesMethods {
   };
 }
 
+/** Métodos del KeyboardService — acciones de teclado en reglas (v1.0.97+). */
+export interface KeyboardMethods {
+  /** Ejecuta la combinación AHORA — usado por el botón "Probar" del editor.
+   * Saltea el toggle global (`keyboardActionsEnabled`) porque el user
+   * presionó el botón explícitamente. */
+  'keyboard.test': {
+    params: { keys: string; amount?: number; commands?: string };
+    result: { ok: boolean; message: string };
+  };
+}
+
 export interface DataMethods {
   'data.list': {
     params: { gameId: GameId; kind: DataKind; query?: string };
@@ -343,6 +357,11 @@ export interface DataMethods {
   'data.delete': {
     params: { gameId: GameId; kind: DataKind; name: string };
     result: { ok: true };
+  };
+  /** v1.0.91+ — borrado masivo atómico (1 backup + 1 write para N nombres). */
+  'data.bulk-delete': {
+    params: { gameId: GameId; kind: DataKind; names: string[] };
+    result: { removed: number; remaining: number; missing: string[] };
   };
   /** Acepta tanto `DataEntry[]` como `string[]` legacy `"Display:Cmd"`. */
   'data.import': {
@@ -398,6 +417,22 @@ export interface ProfilesMethods {
   'profiles.export': { params: { id: string }; result: { json: string } };
   'profiles.import': {
     params: { json: string; name?: string };
+    result: { profile: ProfileSnapshot };
+  };
+  /** v1.0.94+: portada custom del perfil. */
+  'profiles.set-cover': {
+    params: { id: string; sourcePath: string };
+    result: { ok: boolean; filename?: string; message?: string };
+  };
+  'profiles.delete-cover': {
+    params: { id: string };
+    result: { ok: boolean; removed: number };
+  };
+  /** v1.0.95+: actualizar perfil existente sin crear duplicado. Solo
+   *  per-game. Mantiene id/createdAt/coverImage/descripción; actualiza
+   *  el snapshot (rules + data + sounds + boosts) + sha256 + updatedAt. */
+  'profiles.update': {
+    params: { id: string };
     result: { profile: ProfileSnapshot };
   };
 }
@@ -529,6 +564,8 @@ export interface CreateCustomGameInput {
   shareSounds: boolean;
   shareVoices: boolean;
   basedOn?: string;
+  /** v1.0.74: portada custom (filename relativo a `game_covers/`). */
+  coverImage?: string | null;
 }
 
 /**
@@ -543,6 +580,9 @@ export interface UpdateGameInput {
   categories?: GameCategory[];
   shareSounds?: boolean;
   shareVoices?: boolean;
+  /** v1.0.74: portada custom (filename relativo a `game_covers/`). Si null,
+   *  borra la portada custom y vuelve a usar el bundle. */
+  coverImage?: string | null;
 }
 
 export interface GamesMethods {
@@ -606,6 +646,54 @@ export interface GamesMethods {
     params: { gameId: GameId; event: string; user?: string };
     result: { ok: boolean; message: string };
   };
+  /**
+   * v1.0.71: genera la documentación maestra de cómo conectar juegos a
+   * MARU como Markdown. Se rellena dinámicamente con los juegos
+   * actualmente cargados. El renderer lo descarga vía save dialog.
+   */
+  'games-doc.get': {
+    params: Record<string, never>;
+    result: { markdown: string; filename: string; bytes: number };
+  };
+  /**
+   * v1.0.74: subir portada custom para un juego (galería visual).
+   * El backend copia `sourcePath` a `USERDATA/game_covers/<gameId>.<ext>`
+   * y devuelve el filename. El caller debe llamar `games.update` con
+   * `coverImage` igual al filename para persistir.
+   */
+  'images.set-game-cover': {
+    params: { gameId: string; sourcePath: string };
+    result: { ok: boolean; filename?: string; message?: string };
+  };
+  'images.delete-game-cover': {
+    params: { gameId: string };
+    result: { ok: boolean; removed?: number; message?: string };
+  };
+  /**
+   * v1.0.72: snapshot del último resultado de healthcheck por juego.
+   * El sidecar publica `game:health` periódicamente al EventBus; este RPC
+   * sirve para que la UI tenga estado inicial al abrir el dialog sin
+   * esperar 30s al próximo tick.
+   */
+  'games.health.snapshot': {
+    params: Record<string, never>;
+    result: { games: Record<string, GameHealthState> };
+  };
+}
+
+/**
+ * Estado de salud de un juego. Emitido por el sidecar al EventBus
+ * (`game:health`) y disponible vía RPC `games.health.snapshot`.
+ */
+export interface GameHealthState {
+  gameId: string;
+  alive: boolean;
+  latencyMs: number;
+  message: string;
+  /** ok: <1500ms · slow: 1500-5000ms · down: timeout/error */
+  status: 'ok' | 'slow' | 'down';
+  /** epoch ms del último tick */
+  ts: number;
 }
 
 export interface SocialMethods {
@@ -877,12 +965,58 @@ export interface TtsMethods {
   };
 }
 
+/**
+ * RPCs del relay v2 (`backend/overlays_relay.py`).
+ *
+ * Pass-through al Cloudflare Worker. MARU NO almacena configuraciones
+ * de overlays; sólo el `userId` (namespace del DO) y un master switch
+ * `enabled` viven localmente, en `data/overlays_identity.json`.
+ */
 export interface OverlaysMethods {
-  'overlays.list': { params: Record<string, never>; result: { overlays: OverlayInfo[] } };
-  'overlays.update': { params: { overlayId: string; patch: Record<string, unknown> }; result: { ok: true } };
+  'overlays.list': {
+    params: Record<string, never>;
+    result: OverlaysListResult;
+  };
+  'overlays.get-config': {
+    params: { overlayId: string };
+    result: { overlayId: string; config: Record<string, unknown> };
+  };
+  'overlays.set-config': {
+    params: { overlayId: string; patch: Record<string, unknown> };
+    result: { ok: true; config: Record<string, unknown> };
+  };
   'overlays.test-event': {
-    params: { overlayId: string; eventType: string; data: Record<string, unknown> };
+    params: {
+      overlayId: string;
+      eventType?: string;
+      data?: Record<string, unknown>;
+    };
     result: { ok: boolean };
+  };
+  'overlays.reload': {
+    params: { overlayId?: string };
+    result: { ok: true };
+  };
+  'overlays.identity-get': {
+    params: Record<string, never>;
+    result: OverlaysIdentity;
+  };
+  'overlays.identity-set': {
+    params: {
+      userId?: string;
+      enabled?: boolean;
+      regenerate?: boolean;
+    };
+    result: OverlaysIdentity;
+  };
+  /**
+   * v1.0.69: master switch para apagar todos los overlays loops + WS
+   * uplink. Ahorra ~25-40MB de RAM. Las URLs siguen siendo válidas — al
+   * reactivar, los Browser Sources se reconectan automáticamente.
+   */
+  'overlays.set-enabled': {
+    params: { enabled: boolean };
+    result: { ok: true; enabled: boolean; userId: string };
   };
 }
 
@@ -950,6 +1084,130 @@ export interface FortunesMethods {
   };
 }
 
+/** Boost externo de multiplicación de reglas — v1.0.54.
+ *
+ *  El user crea estos en el BoostsDialog (panel externo). Cada boost
+ *  apunta a un grupo de reglas y un target (rol o usuario). Múltiples
+ *  boosts pueden caer sobre la misma regla y el factor se ACUMULA
+ *  multiplicativamente. */
+export type RuleBoostKind =
+  | 'super_fan'
+  | 'mod'
+  | 'follower'
+  | 'member'
+  | 'donor'
+  | 'user';
+
+export interface RuleBoostTarget {
+  kind: RuleBoostKind;
+  /** Solo aplica cuando kind in ['member', 'donor']. Rango 1..50 (member
+   *  level y gifter level de TikTok). */
+  level_min?: number;
+  level_max?: number;
+  /** Solo aplica cuando kind == 'user'. Username sin `@`, lowercase. */
+  username?: string;
+}
+
+export interface RuleBoost {
+  id: string;
+  name: string;
+  enabled: boolean;
+  /** Multiplicador 1..100. Total acumulado de TODOS los boosts
+   *  aplicables se topa también en 100 para evitar abusos. */
+  factor: number;
+  target: RuleBoostTarget;
+  /** Lista de rule_ids a los que aplica. Si contiene "all" → aplica
+   *  a TODAS las reglas. Si no, solo a las listadas. */
+  rule_ids: string[];
+}
+
+/** Top Lives — histórico top 3 likes por sesión de live (v1.0.56). */
+export interface TopLiveTopEntry {
+  place: 1 | 2 | 3;
+  user: string;
+  taps: number;
+  avatar?: string;
+}
+
+export interface TopLiveRecord {
+  id: string;
+  started_at: number;
+  ended_at: number;
+  duration_min: number;
+  username: string;
+  top: TopLiveTopEntry[];
+}
+
+export interface TopLiveCurrent {
+  started_at: number;
+  username: string;
+  top: TopLiveTopEntry[];
+  live: true;
+}
+
+export interface UserTopCounts {
+  top1: number;
+  top2: number;
+  top3: number;
+  total: number;
+}
+
+export interface TopLivesMethods {
+  'top-lives.list': {
+    params: Record<string, never>;
+    result: {
+      lives: TopLiveRecord[];
+      current: TopLiveCurrent | null;
+      userCounts: Record<string, UserTopCounts>;
+      maxLives: number;
+    };
+  };
+  'top-lives.user-counts': {
+    params: { username: string };
+    result: UserTopCounts;
+  };
+  'top-lives.force-snapshot': {
+    params: Record<string, never>;
+    result: { ok: boolean };
+  };
+  'top-lives.delete': {
+    params: { id: string };
+    result: { ok: boolean; removed: boolean };
+  };
+  'top-lives.set-max': {
+    params: { max: number };
+    result: { ok: boolean; max: number };
+  };
+  'top-lives.clear': {
+    params: Record<string, never>;
+    result: { ok: boolean };
+  };
+}
+
+export interface BoostsMethods {
+  /**
+   * v1.0.70: los boosts ahora son POR JUEGO. Si el caller no pasa
+   * `gameId`, el sidecar usa el juego activo de `config.json`. Para UI
+   * con cambio de juego en vivo, SIEMPRE pasar el gameId explícito.
+   */
+  'boosts.list': {
+    params: { gameId?: string };
+    result: { boosts: RuleBoost[]; gameId: string };
+  };
+  'boosts.upsert': {
+    params: { gameId?: string; boost: Partial<RuleBoost> };
+    result: { ok: boolean; boost: RuleBoost; created: boolean; gameId: string };
+  };
+  'boosts.delete': {
+    params: { gameId?: string; id: string };
+    result: { ok: boolean; gameId: string };
+  };
+  'boosts.replace-all': {
+    params: { gameId?: string; boosts: Partial<RuleBoost>[] };
+    result: { ok: boolean; boosts: RuleBoost[]; gameId: string };
+  };
+}
+
 export interface FortunesConfig {
   enabled: boolean;
   gift_id: string;
@@ -975,4 +1233,7 @@ export type RpcMethodMap = SystemMethods &
   DonationsMethods &
   SoundsMethods &
   FortunesMethods &
-  EmotesMethods;
+  BoostsMethods &
+  TopLivesMethods &
+  EmotesMethods &
+  KeyboardMethods;

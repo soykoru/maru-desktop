@@ -1,7 +1,9 @@
 import { useEffect, useId, useState } from 'react';
 import {
   Edit3,
+  Gamepad2,
   ImageIcon,
+  Keyboard as KeyboardIcon,
   Loader2,
   Play,
   Plus,
@@ -22,6 +24,16 @@ import type {
   RuleAction,
 } from '@maru/shared';
 import { rpcCall } from '../../../lib/rpc.js';
+import {
+  KeyboardActionEditor,
+  emptyKeyboardDraft,
+  parseKeyboardCommands,
+  serializeKeyboardDraft,
+  type KeyboardActionDraft,
+} from './KeyboardActionEditor.js';
+
+const KEYBOARD_ACTION_TYPE = 'keyboard';
+const KEYBOARD_ACTION_TYPE_NAME = '⌨️ Tecla del teclado';
 
 /**
  * `ActionsSection` — sección "⚡ Acciones" del RuleDialog.
@@ -96,6 +108,9 @@ export function ActionsSection({
 
   // Form state — para "añadir acción".
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  // Modo del editor: 'game' usa el form clásico (entity/item/event),
+  // 'keyboard' usa KeyboardActionEditor (action_type='keyboard').
+  const [formMode, setFormMode] = useState<'game' | 'keyboard'>('game');
   const [actionType, setActionType] = useState<string>(
     categoryOptions[0]?.id ?? '',
   );
@@ -109,6 +124,32 @@ export function ActionsSection({
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] =
     useState<{ ok: boolean; message: string } | null>(null);
+  const [keyboardDraft, setKeyboardDraft] =
+    useState<KeyboardActionDraft>(emptyKeyboardDraft());
+
+  // Toggle global keyboardActionsEnabled — leído al montar y refresh
+  // cuando se activa desde el banner del editor.
+  const [keyboardEnabled, setKeyboardEnabled] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void rpcCall('settings.get', {})
+      .then((r) => {
+        if (!alive) return;
+        const cfg = (r as { config?: { keyboardActionsEnabled?: boolean } }).config;
+        setKeyboardEnabled(Boolean(cfg?.keyboardActionsEnabled));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  function activateKeyboardGlobally() {
+    setKeyboardEnabled(true);
+    void rpcCall('settings.set', {
+      patch: { keyboardActionsEnabled: true },
+    }).catch(() => undefined);
+  }
 
   // Sync default actionType cuando cambia profile.
   useEffect(() => {
@@ -156,19 +197,34 @@ export function ActionsSection({
     setAmount(1);
     setCommands('');
     setTestResult(null);
+    setKeyboardDraft(emptyKeyboardDraft());
     if (categoryOptions[0]) setActionType(categoryOptions[0].id);
+    // No reseteamos formMode — el user mantiene su selección.
   }
 
   function addOrUpdate() {
-    if (!actionType || !actionValue.trim()) return;
-    const cat = categoryOptions.find((c) => c.id === actionType);
-    const action: RuleAction = {
-      action_type: actionType,
-      action_type_name: cat?.name ?? actionType,
-      action_value: actionValue.trim(),
-      amount: Math.max(1, Math.min(999_999, amount)),
-      commands: commands.trim(),
-    };
+    let action: RuleAction;
+    if (formMode === 'keyboard') {
+      if (!keyboardDraft.keys.trim()) return;
+      const ser = serializeKeyboardDraft(keyboardDraft);
+      action = {
+        action_type: KEYBOARD_ACTION_TYPE,
+        action_type_name: KEYBOARD_ACTION_TYPE_NAME,
+        action_value: ser.action_value,
+        amount: ser.amount,
+        commands: ser.commands,
+      };
+    } else {
+      if (!actionType || !actionValue.trim()) return;
+      const cat = categoryOptions.find((c) => c.id === actionType);
+      action = {
+        action_type: actionType,
+        action_type_name: cat?.name ?? actionType,
+        action_value: actionValue.trim(),
+        amount: Math.max(1, Math.min(999_999, amount)),
+        commands: commands.trim(),
+      };
+    }
     if (editingIdx !== null) {
       const next = actions.slice();
       next[editingIdx] = action;
@@ -188,11 +244,24 @@ export function ActionsSection({
     const a = actions[idx];
     if (!a) return;
     setEditingIdx(idx);
-    setActionType(a.action_type);
-    setActionValue(a.action_value);
-    setAmount(a.amount);
-    setCommands(a.commands);
     setTestResult(null);
+    if (a.action_type === KEYBOARD_ACTION_TYPE) {
+      const parsed = parseKeyboardCommands(a.commands);
+      setFormMode('keyboard');
+      setKeyboardDraft({
+        keys: a.action_value,
+        mode: parsed.mode,
+        holdMs: parsed.holdMs,
+        repeat: Math.max(1, Math.min(50, a.amount || 1)),
+        windowFilter: parsed.windowFilter,
+      });
+    } else {
+      setFormMode('game');
+      setActionType(a.action_type);
+      setActionValue(a.action_value);
+      setAmount(a.amount);
+      setCommands(a.commands);
+    }
   }
 
   async function runTest() {
@@ -202,12 +271,22 @@ export function ActionsSection({
     try {
       let res: { ok: boolean; message: string };
       if (commands.trim()) {
-        // Si hay commands explícitos (Minecraft), usamos trigger_event
-        // como atajo — el sidecar G14 va a respetar `commands` cuando
-        // dispatchee.
+        // Si hay commands explícitos (Minecraft RCON o juegos custom),
+        // mandamos el bloque ENTERO al backend. El backend ya hace split
+        // por '\n' y ejecuta cada línea (ver `MinecraftGame.execute_commands`
+        // en core/games.py:580 — cl = cmds.strip().split('\n')).
+        //
+        // BUG raíz histórico: hasta v1.0.94 esta línea hacía
+        //   `commands.split('\n')[0]?.trim()` truncando a la 1ra línea
+        // → si el user metía un comando multi-línea (ej.
+        //   "execute as soykoru run identity equip @s minecraft:wolf
+        //    title @a actionbar [...] ha cambiado de entidad")
+        // solo se ejecutaba el primero. Doble-click del DataDialog y
+        // `rules.test` (RulesTab) sí mandaban el bloque entero — la
+        // asimetría era confusa: en uno funcionaba, en otro no.
         res = await rpcCall('games.trigger-event', {
           gameId,
-          event: commands.split('\n')[0]?.trim() || actionValue,
+          event: commands.trim() || actionValue,
           user: 'TestUser',
         });
       } else if (actionType === 'items' || actionType === 'item') {
@@ -320,11 +399,71 @@ export function ActionsSection({
 
       {/* Form add/edit */}
       <div className="rounded-lg border border-border bg-bg-elev p-3 space-y-2">
-        <p className="text-[11px] uppercase tracking-wider text-fg-subtle">
-          {editingIdx !== null ? `Editando acción #${editingIdx + 1}` : 'Nueva acción'}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] uppercase tracking-wider text-fg-subtle">
+            {editingIdx !== null ? `Editando acción #${editingIdx + 1}` : 'Nueva acción'}
+          </p>
+          {/* Selector de modo: juego vs teclado. Permanece visible siempre
+              para que el user pueda alternar al crear nuevas acciones. */}
+          <div
+            role="tablist"
+            aria-label="Tipo de acción"
+            className="inline-flex rounded-md border border-border bg-bg-base p-0.5 text-[11px]"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={formMode === 'game'}
+              onClick={() => {
+                setFormMode('game');
+                setTestResult(null);
+              }}
+              disabled={disabled}
+              className={[
+                'inline-flex items-center gap-1 rounded px-2 py-1 transition',
+                formMode === 'game'
+                  ? 'bg-accent text-on-accent shadow-sm'
+                  : 'text-fg-muted hover:text-fg-base',
+              ].join(' ')}
+            >
+              <Gamepad2 className="h-3 w-3" />
+              Juego
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={formMode === 'keyboard'}
+              onClick={() => {
+                setFormMode('keyboard');
+                setTestResult(null);
+              }}
+              disabled={disabled}
+              className={[
+                'inline-flex items-center gap-1 rounded px-2 py-1 transition',
+                formMode === 'keyboard'
+                  ? 'bg-accent text-on-accent shadow-sm'
+                  : 'text-fg-muted hover:text-fg-base',
+              ].join(' ')}
+              title="Simular pulsación de teclado en el SO"
+            >
+              <KeyboardIcon className="h-3 w-3" />
+              Teclado
+            </button>
+          </div>
+        </div>
 
-        {categoryOptions.length === 0 ? (
+        {formMode === 'keyboard' ? (
+          <KeyboardActionEditor
+            draft={keyboardDraft}
+            onChange={setKeyboardDraft}
+            onSubmit={addOrUpdate}
+            onCancel={editingIdx !== null ? resetForm : undefined}
+            editingIdx={editingIdx}
+            disabled={disabled}
+            globallyEnabled={keyboardEnabled}
+            onRequestEnable={activateKeyboardGlobally}
+          />
+        ) : categoryOptions.length === 0 ? (
           <p className="text-xs text-warning">
             El perfil no tiene categorías configuradas — agregalas en
             ManageGames → Custom Game.

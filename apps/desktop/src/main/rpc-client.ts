@@ -101,6 +101,21 @@ export class RpcClient extends EventEmitter {
     });
   }
 
+  /** Timeouts especiales por método: OAuth y otras operaciones de larga
+   *  duración necesitan más tiempo que el default 10s. Mantener en sync
+   *  con los timeouts del backend (`asyncio.wait_for`). */
+  private static readonly LONG_RUNNING_TIMEOUTS: Record<string, number> = {
+    'spotify.connect': 150_000,           // 120s backend + 30s overhead UX
+    'spotify.accounts.load': 45_000,      // 30s backend + buffer
+    'tiktok.connect': 60_000,             // conexión WS + retries
+    'fortunes.test': 30_000,              // genera audio TTS
+    'tts.test': 30_000,
+    'tts.speak': 30_000,
+    'sounds.import-folder': 60_000,
+    'donations.import-from-folder': 60_000,
+    'donations.scan-folder': 60_000,
+  };
+
   async call<M extends RpcMethodName>(
     method: M, params: RpcParams<M>,
   ): Promise<RpcResult<M>> {
@@ -120,11 +135,18 @@ export class RpcClient extends EventEmitter {
     }
     const id = this.nextId++;
     const request = { jsonrpc: '2.0' as const, id, method, params };
+    // Bug raíz v1.0.58: el timeout default 10s rechazaba `spotify.connect`
+    // mientras el OAuth tardaba 30-90s, dejando el sidecar todavía
+    // esperando el callback HTTP — el frontend mostraba error pero
+    // luego el OAuth completaba en background sin que el user pudiera
+    // saberlo. La tabla `LONG_RUNNING_TIMEOUTS` cubre métodos donde el
+    // tiempo esperado es >>10s.
+    const timeoutMs = RpcClient.LONG_RUNNING_TIMEOUTS[method as string] ?? CALL_TIMEOUT_MS;
     return new Promise<RpcResult<M>>((res, rej) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        rej(new Error(`rpc call timeout: ${method}`));
-      }, CALL_TIMEOUT_MS);
+        rej(new Error(`rpc call timeout: ${method} (${timeoutMs}ms)`));
+      }, timeoutMs);
       this.pending.set(id, {
         resolve: (v) => res(v as RpcResult<M>),
         reject: rej,

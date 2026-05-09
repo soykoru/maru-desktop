@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Database,
   RefreshCw,
   Save,
+  Search,
   ShieldCheck,
   Trash2,
+  ArrowUpDown,
 } from 'lucide-react';
 import {
   Badge,
   Button,
   Dialog,
   Empty,
+  Input,
   Select,
   Spinner,
 } from '@maru/ui';
@@ -111,6 +114,49 @@ export function BackupDialog() {
   const [pendingDelete, setPendingDelete] = useState<BackupEntry | null>(null);
   const [pendingRestore, setPendingRestore] = useState<BackupEntry | null>(null);
   const [createScope, setCreateScope] = useState<BackupScope>('full');
+  // v1.0.85: search + sort UI mejoras
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<'newest' | 'oldest' | 'largest' | 'smallest'>('newest');
+
+  // Stats agregados sobre TODOS los backups (no filtrados — info global).
+  const stats = useMemo(() => {
+    const total = bk.backups.length;
+    const totalSize = bk.backups.reduce((sum, b) => sum + (b.sizeBytes || 0), 0);
+    const byScope: Record<string, number> = {};
+    for (const b of bk.backups) {
+      byScope[b.scope] = (byScope[b.scope] || 0) + 1;
+    }
+    return { total, totalSize, byScope };
+  }, [bk.backups]);
+
+  // Aplicar search + sort sobre la visible (que ya viene filtrada por scope).
+  const filteredAndSorted = useMemo(() => {
+    let out = bk.visible;
+    // Search por texto (id, label, reason, scope)
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      out = out.filter((b) => {
+        const haystack = [
+          b.id,
+          b.label || '',
+          b.reason || '',
+          b.scope,
+          new Date(b.createdAt).toLocaleString().toLowerCase(),
+        ].join(' ').toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+    // Sort
+    out = out.slice().sort((a, b) => {
+      switch (sortMode) {
+        case 'newest': return b.createdAt - a.createdAt;
+        case 'oldest': return a.createdAt - b.createdAt;
+        case 'largest': return (b.sizeBytes || 0) - (a.sizeBytes || 0);
+        case 'smallest': return (a.sizeBytes || 0) - (b.sizeBytes || 0);
+      }
+    });
+    return out;
+  }, [bk.visible, searchQuery, sortMode]);
 
   if (!open) return null;
 
@@ -227,12 +273,70 @@ export function BackupDialog() {
         </Button>
       </div>
 
-      {/* Banner explicativo */}
-      <div className="px-5 py-2 text-[11px] text-fg-muted border-b border-border bg-success/5">
-        <strong>¿Cómo funcionan?</strong> Los respaldos guardan una copia
-        de tus archivos (rules/data/config/social). Se crean
-        automáticamente antes de restaurar (<code>prerestore</code>) y
-        pueden crearse manualmente acá. Rotación FIFO max 7 por scope.
+      {/* v1.0.85 — Stats summary panel: muestra el total + breakdown por scope.
+          Reemplaza el banner explicativo viejo, da info útil de un vistazo. */}
+      <div className="px-5 py-2.5 border-b border-border bg-bg-elev/20 flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <Database className="h-3.5 w-3.5 text-accent" />
+          <span className="text-xs font-semibold text-fg">{stats.total}</span>
+          <span className="text-[11px] text-fg-muted">respaldos</span>
+        </div>
+        <span className="text-fg-subtle">·</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-fg">{fmtSize(stats.totalSize)}</span>
+          <span className="text-[11px] text-fg-muted">total</span>
+        </div>
+        {Object.entries(stats.byScope).length > 0 && (
+          <>
+            <span className="text-fg-subtle">·</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {(Object.entries(stats.byScope) as Array<[BackupScope, number]>)
+                .sort(([, a], [, b]) => b - a)
+                .map(([scope, count]) => {
+                  const m = scopeMeta(scope);
+                  return (
+                    <span
+                      key={scope}
+                      title={`${count} backup${count !== 1 ? 's' : ''} de ${m.label}`}
+                      className="inline-flex items-center gap-1 text-[10.5px] text-fg-muted px-1.5 py-0.5 rounded-md bg-fg/[0.04] border border-border"
+                    >
+                      <span className="font-emoji">{m.emoji}</span>
+                      <span className="font-mono font-semibold">{count}</span>
+                    </span>
+                  );
+                })}
+            </div>
+          </>
+        )}
+        <span className="ml-auto text-[10px] text-fg-subtle">
+          rotación FIFO max 7 por scope · auto-pre-backup en restore
+        </span>
+      </div>
+
+      {/* v1.0.85 — Search + sort row (mejora UX cuando hay muchos backups) */}
+      <div className="flex items-center gap-2 border-b border-border px-5 py-2 bg-bg-elev/10">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-fg-subtle pointer-events-none" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar por id, label, fecha…"
+            className="pl-7 h-7 text-[11.5px]"
+            disabled={busy}
+          />
+        </div>
+        <ArrowUpDown className="h-3 w-3 text-fg-subtle shrink-0" />
+        <Select
+          value={sortMode}
+          onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
+          className="w-[140px] h-7 text-[11.5px]"
+          disabled={busy}
+        >
+          <option value="newest">Más recientes primero</option>
+          <option value="oldest">Más antiguos primero</option>
+          <option value="largest">Más grandes primero</option>
+          <option value="smallest">Más chicos primero</option>
+        </Select>
       </div>
 
       {opMessage && (
@@ -265,15 +369,26 @@ export function BackupDialog() {
               </Button>
             }
           />
-        ) : bk.visible.length === 0 ? (
+        ) : filteredAndSorted.length === 0 ? (
           <Empty
             icon={Database}
-            title="No hay respaldos todavía"
-            description='Pulsá "Crear" arriba para hacer el primero.'
+            title={searchQuery ? 'Sin resultados de búsqueda' : 'No hay respaldos todavía'}
+            description={
+              searchQuery
+                ? 'Probá con otro término o limpiá el filtro de scope.'
+                : 'Pulsá "Crear" arriba para hacer el primero.'
+            }
+            action={
+              searchQuery ? (
+                <Button size="sm" variant="ghost" onClick={() => setSearchQuery('')}>
+                  Limpiar búsqueda
+                </Button>
+              ) : null
+            }
           />
         ) : (
           <ul className="space-y-2">
-            {bk.visible.map((b) => {
+            {filteredAndSorted.map((b) => {
               const isSelected = b.id === bk.selectedId;
               const reason = reasonMeta(b.reason);
               const scope = scopeMeta(b.scope);

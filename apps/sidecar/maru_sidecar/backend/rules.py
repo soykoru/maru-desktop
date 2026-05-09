@@ -79,6 +79,8 @@ VALID_TRIGGERS: tuple[str, ...] = (
     # v1.0.48: nuevos triggers
     "emote",  # cuando llega un emote/sticker; trigger_value = emote_id
     "join",   # cuando un user entra al live; trigger_value = "" (cualquiera) o username
+    # v1.0.90+:
+    "first_action",  # primera interacción del user en la sesión (comment/gift/like/share/follow)
 )
 
 # Mapeo cat_id (G4 / MARU) → action_type legacy del RuleEngine.
@@ -257,11 +259,15 @@ def _validate_rule(rule: Any) -> dict[str, Any]:
 
     # Filtrado por rol (paridad con el patch de Rule en core_bridge):
     # listas de flags como `is_super_fan`, `is_moderator`, etc. Vacío = sin filtro.
+    #
+    # v1.0.90+: removidos `is_friends_badge`, `is_first_recharge`,
+    # `is_live_pro`, `is_activity` — badges raros que casi nunca se
+    # detectan en TikTokLive 6.6.5. Si una regla legacy los tenía, se
+    # filtran silenciosamente acá (no rompe — solo deja de aplicar).
     _RANK_KEYS_ALLOWED = {
         "is_anchor", "is_moderator", "is_super_fan", "is_member",
         "is_top_gifter", "is_follower", "is_friend", "is_mutual_follow",
-        "is_verified", "is_new_subscriber", "is_friends_badge",
-        "is_first_recharge", "is_live_pro", "is_activity", "is_gift_giver",
+        "is_verified", "is_new_subscriber", "is_gift_giver",
     }
     for key in ("required_ranks", "excluded_ranks"):
         ranks = rule.get(key) or []
@@ -271,6 +277,25 @@ def _validate_rule(rule: Any) -> dict[str, Any]:
             r for r in ranks
             if isinstance(r, str) and r in _RANK_KEYS_ALLOWED
         ]
+
+    # Filtros adicionales por nivel — solo aplican si el rol relacionado
+    # está en `required_ranks`. min/max inclusive, opcionales.
+    # `is_member` → fans club level (1..N).
+    # `is_gift_giver` → gifter ranking del live (1..50).
+    for key in ("member_level_min", "member_level_max",
+                "gifter_level_min", "gifter_level_max"):
+        v = rule.get(key)
+        if v is None:
+            rule.pop(key, None)
+            continue
+        try:
+            n = int(v)
+            if n < 1:
+                rule.pop(key, None)
+            else:
+                rule[key] = n
+        except (TypeError, ValueError):
+            rule.pop(key, None)
 
     # Compat fields espejo de actions[0] — el RuleEngine viejo los lee.
     first = actions[0]

@@ -71,11 +71,15 @@ interface Roots {
   triggers: string;
   gameImages: string;
   templates: string;
+  /** v1.0.72: portadas de juegos (galería visual). */
+  gameCovers: string;
   userBase: string;
   userDonaciones: string;
   userGameImages: string;
   userTriggers: string;
   userEmotes: string;
+  /** v1.0.72: portadas custom subidas por el user. */
+  userGameCovers: string;
 }
 
 /** Resuelve los roots de cada scope según dev / packaged. */
@@ -120,11 +124,15 @@ function resolveRoots(): Roots {
     triggers: join(base, 'icons_triggers'),
     gameImages: join(base, 'game_images'),
     templates: join(base, 'game_images', '_templates'),
+    gameCovers: join(base, 'game_covers'),
     userBase,
     userDonaciones: join(userBase, 'donaciones'),
     userGameImages: join(userBase, 'game_images'),
     userTriggers: join(userBase, 'icons_triggers'),
     userEmotes: join(userBase, 'emotes'),
+    userGameCovers: join(userBase, 'game_covers'),
+    // v1.0.94+: portadas custom de perfiles de stream
+    userProfileCovers: join(userBase, 'profile_covers'),
   };
 }
 
@@ -301,6 +309,27 @@ function resolveScopedPath(
       if (safeTail.length !== 2) return null;
       const [streamer, file] = safeTail;
       return { filePath: join(roots.userEmotes, streamer!, file!) };
+    }
+
+    case 'game_covers': {
+      // game_covers/<file>.jpg — portadas de juegos para la galería visual
+      // (v1.0.72). Userdata primero (covers que el user uploadeó), bundle
+      // como fallback (covers que vienen empacados con el .exe).
+      if (safeTail.length !== 1) return null;
+      const filename = safeTail[0]!;
+      const userPath = join(roots.userGameCovers, filename);
+      if (existsSync(userPath)) return { filePath: userPath };
+      return { filePath: join(roots.gameCovers, filename) };
+    }
+
+    case 'profile_covers': {
+      // profile_covers/<file>.jpg — portadas custom de perfiles de stream
+      // (v1.0.94+). Solo userdata — no hay fallback bundle (cada perfil es
+      // único del usuario). Si no existe la imagen el frontend usa el
+      // gradient + emoji como fallback visual.
+      if (safeTail.length !== 1) return null;
+      const filename = safeTail[0]!;
+      return { filePath: join(roots.userProfileCovers, filename) };
     }
 
     case 'userdata': {

@@ -1,0 +1,27 @@
+{
+  "events": [
+    "Saludo Trainer:¡Hola Pal Trainers!",
+    "Gift de {user}:¡{user} acaba de enviar un regalo! 🎁",
+    "Bienvenida:¡{user} se unió al stream!",
+    "Raid Inminente:⚠️ Raid en 30 segundos. ¡Preparen sus Pals!",
+    "Boss Pal:Un Pal jefe acecha cerca…",
+    "Modo PvP:PvP activado por 5 minutos",
+    "Modo Pacífico:Modo pacífico activado",
+    "Hora de Comer:¡Recoman pals con baja stamina!",
+    "Easter Egg:Hay un huevo legendario escondido en el mapa",
+    "Top Player:¡{user} es el top del stream! 🏆",
+    "Save Mundo:Guardando mundo… ✨",
+    "Cooldown:Esperá 1 min antes del próximo gift",
+    "Recompensa:¡{user} obtuvo un reward!",
+    "Tormenta:Tormenta entrando en 1 minuto",
+    "Reinicio Server:Servidor reiniciará en 5 min"
+  ],
+  "save": [
+    "Guardar Ahora:save"
+  ],
+  "shutdown": [
+    "Reinicio en 30s:30",
+    "Reinicio en 1min:60",
+    "Reinicio en 5min:300"
+  ]
+}

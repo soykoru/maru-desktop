@@ -48,6 +48,14 @@ _executor = ThreadPoolExecutor(max_workers=16, thread_name_prefix="chat-dispatch
 # (combat, relations, admin, utilities), pero música, IA y fortuna no
 # pasan por ahí — los routea este dispatcher.
 _MUSIC_PLAY = {"play", "p", "pf", "playfan", "request", "música", "musica"}
+# Comandos que ESTRICTAMENTE requieren rol super_fan / priority.
+# El SocialSystem core a veces no chequea bien el rol al venir del
+# simulador (no inyecta `is_super_fan` real), entonces validamos acá
+# ANTES de enrutar al social.command.
+_PLAYFAN_CMDS = {"playfan", "pf"}
+# Aliases que podrían ser playfan pero también podrían ser play. Solo
+# bloqueamos cuando el SocialSystem los enruta como playfan — para
+# detectar eso confiamos en el cmd literal del user.
 _MUSIC_SKIP = {"skip", "s", "siguiente", "next"}
 _MUSIC_PAUSE = {"pause", "pausar", "stop"}
 _MUSIC_RESUME = {"resume", "reanudar", "continuar"}
@@ -262,6 +270,29 @@ class ChatDispatcher:
             return
 
         # 2) Social — duelos, relaciones, admin, utilidades, MÚSICA, etc.
+        # ── GUARD ROL: !playfan SOLO para super_fans/priority_users ──
+        # SocialSystem core puede no validar bien el rol cuando el evento
+        # viene del simulador (que no setea is_super_fan en cache). Acá
+        # bloqueamos el comando ANTES de enrutarlo al social/spotify.
+        if cmd in _PLAYFAN_CMDS:
+            allowed = self._user_can_playfan(user, data)
+            log.info(
+                "playfan-guard cmd=%s user=%s allowed=%s flag_super_fan=%s",
+                cmd, user, allowed, bool(data.get("is_super_fan") or data.get("isSuperFan")),
+            )
+            if not allowed:
+                if self._logs is not None:
+                    try:
+                        self._logs.publish(
+                            f"🚫 @{user} intentó !{cmd} sin rol super_fan — bloqueado",
+                            level="WARNING",
+                            source="social",
+                            category="command",
+                            meta={"raw": full_text, "user": user, "blocked": "playfan_no_role"},
+                        )
+                    except Exception:
+                        pass
+                return
         # Música corre en executor para no bloquear (HTTP a Spotify ~1-3s).
         if cmd in _MUSIC_PLAY or cmd in _MUSIC_SKIP or cmd in _MUSIC_PAUSE or cmd in _MUSIC_RESUME:
             _executor.submit(self._social_command_async, user, cmd, full_text)
@@ -273,8 +304,113 @@ class ChatDispatcher:
                 # Log feedback visible en el panel — paridad MARU
                 # `main_window.py:1905` que loguea cada cmd resuelto.
                 self._log_command_result(user, cmd, full_text, handled)
+                # Cmd `racha` → emitir al bus para que el overlay racha lo
+                # muestre con los días reales del social DB. Sin esto, el
+                # overlay nunca aparece en producción.
+                if handled and cmd in ("racha", "miracha", "streak"):
+                    self._emit_streak_to_overlay(user)
+                if handled and cmd in ("likes", "mislikes", "mistaps", "taps"):
+                    self._emit_likes_to_overlay(user)
         except Exception:
             log.exception("social.command falló (cmd=%s)", cmd)
+
+    def _user_can_playfan(self, user: str, data: dict[str, Any]) -> bool:
+        """Valida si un user puede usar !playfan.
+
+        Fuentes de verdad (CUALQUIERA permite):
+          1. `is_super_fan: true` en el payload del evento (TikTok real lo
+             marca con el badge del fans club; simulator lo marca con el
+             toggle de la UI).
+          2. `priority_users` del SpotifyClient — lista persistida en
+             `spotify.json`. Cuando se marca un user como super_fan UNA
+             vez (vía notify_super_fan o agregándolo manual al panel),
+             queda en esta lista hasta que se detecte un comment con
+             is_super_fan=False.
+          3. `_is_super_fan_now()` del SocialService — racha automática
+             de super_fan vigente.
+
+        Si NINGUNA dice True → bloqueo (`🚫` log warning).
+
+        v1.0.69 — fix RAÍZ del "super_fan fantasma":
+        Si el comment ACTUAL trae `is_super_fan=False` explícito (el user
+        perdió el rol entre sesiones y vuelve a comentar), NO confiamos en
+        priority_users (lista posiblemente sucia de la sesión anterior) ni
+        en la racha social — bloqueamos directamente y, además, disparamos
+        un cleanup async para que la próxima vez la lista esté limpia.
+        """
+        user_lower = (user or "").strip().lower()
+        if not user_lower:
+            return False
+        # v1.0.69: detectar el flag explícito en el data actual.
+        has_flag = ("is_super_fan" in data) or ("isSuperFan" in data)
+        flag_value = bool(data.get("is_super_fan") or data.get("isSuperFan"))
+        # 1) Flag explícito del payload — autoriza directo.
+        if has_flag and flag_value:
+            return True
+        # v1.0.69 fix RAÍZ: si el flag está y es False, el user comentó
+        # AHORA sin ser super_fan → bloqueamos sin consultar priority_users
+        # (que puede tener entradas viejas de la sesión anterior). Además,
+        # limpiamos la entrada vieja para que la lista no se contamine.
+        if has_flag and not flag_value:
+            self._cleanup_stale_priority_user(user, user_lower)
+            return False
+        # Si NO hay flag explícito (eventos sin enriquecer, simulador
+        # sin marcar el toggle, etc.), caemos a las fuentes persistidas.
+        # 2) priority_users persistido del SpotifyClient (lista oficial).
+        if self._spotify is not None:
+            try:
+                c = self._spotify._ensure_client() if hasattr(self._spotify, "_ensure_client") else None
+                if c is not None:
+                    pu = getattr(c, "priority_users", None)
+                    if isinstance(pu, (set, list, tuple)):
+                        if user_lower in {str(x).strip().lower() for x in pu}:
+                            return True
+            except Exception:
+                pass
+        # 3) Fallback: SocialService racha auto.
+        if self._social is not None:
+            try:
+                if hasattr(self._social, "_is_super_fan_now") and self._social._is_super_fan_now(user):
+                    return True
+            except Exception:
+                pass
+        return False
+
+    def _cleanup_stale_priority_user(self, user: str, user_lower: str) -> None:
+        """v1.0.69: best-effort, limpia un user de priority_users cuando
+        confirmamos que YA NO es super_fan. Llama a notify_super_fan(false)
+        que dispara el cleanup correcto en spotify.py + social.py."""
+        try:
+            if self._spotify is not None and hasattr(self._spotify, "notify_super_fan"):
+                self._spotify.notify_super_fan(user, False, user)
+                log.info("playfan-guard: cleanup priority_users fantasma user=%s", user)
+        except Exception:
+            log.exception("cleanup_stale_priority_user fallo (user=%s)", user)
+
+    def _emit_likes_to_overlay(self, user: str) -> None:
+        if self._social is None:
+            return
+        try:
+            res = self._social.users_get({"username": user})
+            udto = (res or {}).get("user") or {}
+            taps = int(udto.get("taps") or 0)
+            avatar = str(udto.get("avatar") or "")
+            bus = get_event_bus()
+            bus.publish("overlay:likes", {"user": user, "taps": taps, "avatar": avatar})
+        except Exception:
+            log.exception("emit overlay:likes fallo (user=%s)", user)
+
+    def _emit_streak_to_overlay(self, user: str) -> None:
+        if self._social is None:
+            return
+        try:
+            res = self._social.users_get({"username": user})
+            udto = (res or {}).get("user") or {}
+            days = int(udto.get("racha") or 0)
+            bus = get_event_bus()
+            bus.publish("overlay:streak", {"user": user, "days": days})
+        except Exception:
+            log.exception("emit overlay:streak fallo (user=%s)", user)
 
     def _social_command_async(self, user: str, cmd: str, full_text: str) -> None:
         """Igual que el branch sync pero en executor — para !play/!skip etc."""

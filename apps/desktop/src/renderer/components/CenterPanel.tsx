@@ -30,10 +30,17 @@ export function CenterPanel(): ReactNode {
 
   const { games, status: gamesStatus, byId } = useGames({ autoLoad: true });
 
-  // Auto-seleccionar el primer juego cuando games carga.
+  // Auto-seleccionar el último juego usado (persistido en localStorage
+  // por el store) o, en su defecto, el primer estándar.
+  // Si el id persistido ya no existe en games[] (juego borrado), limpiar.
   useEffect(() => {
-    if (selectedGameId) return;
     if (gamesStatus !== 'ready') return;
+    if (selectedGameId) {
+      const stillExists = games.some((g) => g.id === selectedGameId);
+      if (stillExists) return;
+      // ID persistido obsoleto — caer al fallback abajo.
+      setSelectedGameId(null);
+    }
     const firstStandard = games.find((g) => g.isStandard);
     const first = firstStandard ?? games[0];
     if (first) setSelectedGameId(first.id);

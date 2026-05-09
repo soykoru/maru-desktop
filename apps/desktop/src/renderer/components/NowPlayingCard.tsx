@@ -30,8 +30,21 @@ import { rpcCall } from '../lib/rpc.js';
  *   - Tamaño chico (~130px) — no roba espacio a las cards principales.
  */
 export function NowPlayingCard(): ReactNode {
+  // BUG RAÍZ FIX v1.0.62 — PANTALLA NEGRA AL CONECTAR SPOTIFY:
+  // Antes este componente tenía `if (!status.connected) return null;` ANTES
+  // de llamar a `useAppStore((s) => s.openModal)` en la línea 50.
+  // Cuando `status.connected` cambiaba de false → true (al conectar
+  // Spotify), React detectaba un useCallback NUEVO en posición #10 que
+  // antes no se llamaba → Rules of Hooks violado → throw "Rendered more
+  // hooks than during the previous render" → componente crasheaba → como
+  // no había ErrorBoundary, TODO el árbol React debajo fallaba al hacer
+  // commit → renderer quedaba en blanco/negro.
+  // Todo el bug raíz lo capturó el dev mode + DevTools console:
+  //   "React has detected a change in the order of Hooks called by NowPlayingCard"
+  // Fix: TODOS los hooks van ANTES de cualquier return condicional.
   const status = useAppStore((s) => s.spotifyStatus);
   const now = useAppStore((s) => s.spotifyNow);
+  const openModal = useAppStore((s) => s.openModal);
 
   // Gradient estable derivado del nombre del track. Al cambiar el track,
   // cambia el background — sin necesidad de fetch del cover real.
@@ -47,7 +60,6 @@ export function NowPlayingCard(): ReactNode {
       ? Math.min(100, Math.max(0, (now.track.positionMs / now.track.durationMs) * 100))
       : 0;
 
-  const openModal = useAppStore((s) => s.openModal);
   const handleSkip = () => void rpcCall('spotify.skip', {}).catch(() => undefined);
   const handleToggle = () =>
     void rpcCall('spotify.toggle-playback', {}).catch(() => undefined);

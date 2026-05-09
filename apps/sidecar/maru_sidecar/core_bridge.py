@@ -212,11 +212,15 @@ def reset_current_event_info(token: contextvars.Token) -> None:
 # Lista de "scopes" de rol soportados en `Rule.required_ranks` /
 # `excluded_ranks`. El frontend usa esta misma lista para popular el
 # selector. Cualquier valor fuera de esta lista se ignora.
+#
+# v1.0.90+: removidos `is_friends_badge`, `is_first_recharge`,
+# `is_live_pro`, `is_activity` — badges raros que casi nunca se detectan
+# en TikTokLive 6.6.5. Reglas legacy que los referencian siguen siendo
+# válidas (el validator los filtra silenciosamente).
 RANK_KEYS: tuple[str, ...] = (
     "is_anchor", "is_moderator", "is_super_fan", "is_member",
     "is_top_gifter", "is_follower", "is_friend", "is_mutual_follow",
-    "is_verified", "is_new_subscriber", "is_friends_badge",
-    "is_first_recharge", "is_live_pro", "is_activity", "is_gift_giver",
+    "is_verified", "is_new_subscriber", "is_gift_giver",
 )
 
 # Etiquetas humano-legibles para describir rangos en el log del user.
@@ -231,11 +235,7 @@ RANK_LABELS: dict[str, str] = {
     "is_mutual_follow": "🤝 mutual",
     "is_verified": "✓ verificado",
     "is_new_subscriber": "🆕 nuevo sub",
-    "is_friends_badge": "🫂 friends",
-    "is_first_recharge": "💰 first recharge",
-    "is_live_pro": "🎬 Live Pro",
-    "is_activity": "🎯 activity",
-    "is_gift_giver": "🎁 gifter",
+    "is_gift_giver": "🎁 donador",
 }
 
 
@@ -329,6 +329,12 @@ def _patch_rule_role_conditions() -> None:
         d = orig_to_dict(self)
         d["required_ranks"] = list(getattr(self, "required_ranks", []) or [])
         d["excluded_ranks"] = list(getattr(self, "excluded_ranks", []) or [])
+        # Filtros de nivel — solo se persisten si están seteados.
+        for k in ("member_level_min", "member_level_max",
+                  "gifter_level_min", "gifter_level_max"):
+            v = getattr(self, k, None)
+            if isinstance(v, int) and v >= 1:
+                d[k] = v
         return d
 
     @classmethod
@@ -336,6 +342,13 @@ def _patch_rule_role_conditions() -> None:
         rule = orig_from_dict(cls, d)
         rule.required_ranks = list(d.get("required_ranks") or [])
         rule.excluded_ranks = list(d.get("excluded_ranks") or [])
+        for k in ("member_level_min", "member_level_max",
+                  "gifter_level_min", "gifter_level_max"):
+            v = d.get(k)
+            try:
+                setattr(rule, k, int(v) if v is not None else None)
+            except (TypeError, ValueError):
+                setattr(rule, k, None)
         return rule
 
     def patched_can_trigger(self, user: str = "") -> bool:  # noqa: ANN001
@@ -364,6 +377,30 @@ def _patch_rule_role_conditions() -> None:
                     "excluded", blocking, info,
                 )
                 return False
+        # 3) Filtros adicionales por nivel — solo cuando el rol asociado
+        # está en required (sino no tiene sentido aplicarlos).
+        if "is_member" in required:
+            mn = getattr(self, "member_level_min", None)
+            mx = getattr(self, "member_level_max", None)
+            if isinstance(mn, int) or isinstance(mx, int):
+                lvl = info.get("member_level")
+                if not isinstance(lvl, int) or lvl < 1:
+                    return False  # sin nivel detectado pero pidieron rango
+                if isinstance(mn, int) and lvl < mn:
+                    return False
+                if isinstance(mx, int) and lvl > mx:
+                    return False
+        if "is_gift_giver" in required:
+            mn = getattr(self, "gifter_level_min", None)
+            mx = getattr(self, "gifter_level_max", None)
+            if isinstance(mn, int) or isinstance(mx, int):
+                lvl = info.get("gifter_level")
+                if not isinstance(lvl, int) or lvl < 1:
+                    return False
+                if isinstance(mn, int) and lvl < mn:
+                    return False
+                if isinstance(mx, int) and lvl > mx:
+                    return False
         return True
 
     Rule.to_dict = patched_to_dict
@@ -594,19 +631,73 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
                 streamer = getattr(worker_self, "username", "") or "default"
                 streamer_avatar = _streamer_avatar_url(worker_self)
                 emit_sig = getattr(worker_self, "emote_image_detected", None)
+                user_obj = getattr(e, "user", None)
+                user = _resolve_username(user_obj) if user_obj else "anon"
+                ranks = _extract_ranks(e, user_obj) if user_obj else {}
                 stickers = list(getattr(e, "biz_sticker", []) or [])
                 for sk in stickers:
-                    name = str(getattr(sk, "name", "") or "biz_sticker")
                     img = getattr(sk, "image", None) or getattr(sk, "nine_patch_image", None)
-                    if img is None:
-                        continue
-                    urls = list(getattr(img, "m_urls", []) or [])
-                    url = urls[0] if urls else (getattr(img, "m_uri", "") or "")
+                    url = ""
+                    if img is not None:
+                        urls = list(getattr(img, "m_urls", []) or [])
+                        url = urls[0] if urls else (getattr(img, "m_uri", "") or "")
+
+                    # v1.0.88 FIX: id estable del sticker.
+                    # RoomSticker proto NO tiene `sticker_id`. Solo:
+                    #   - name (str, puede ser vacío)
+                    #   - starling_key (i18n key, ej "tt_sticker_heart_red")
+                    #   - image.m_uri (URL única)
+                    # Estrategia: starling_key > name > hash(url) > "biz_sticker"
+                    # User reportó: "las imágenes que se descargan son solo
+                    # una no tiene sus id numéricos no?" — porque cuando
+                    # `name` es vacío todo colapsa al fallback "biz_sticker".
+                    raw_name = str(getattr(sk, "name", "") or "").strip()
+                    starling = str(getattr(sk, "starling_key", "") or "").strip()
+                    if starling:
+                        sticker_id = starling
+                    elif raw_name:
+                        sticker_id = raw_name
+                    elif url:
+                        # Hash MD5 corto de la URL — estable mientras TikTok
+                        # no rote URLs del CDN para el mismo sticker.
+                        import hashlib as _h
+                        sticker_id = "sk_" + _h.md5(url.encode("utf-8")).hexdigest()[:10]
+                    else:
+                        sticker_id = "biz_sticker"
+
+                    # Display name más amigable para el log (sin underscores).
+                    display_name = raw_name or starling or sticker_id
+
+                    # Descarga de imagen al filesystem con el sticker_id
+                    # estable como filename — para que distintos stickers
+                    # NO se sobrescriban entre sí.
                     if url and emit_sig is not None:
-                        emit_sig.emit(streamer, streamer_avatar, name, url)
+                        emit_sig.emit(streamer, streamer_avatar, sticker_id, url)
+
+                    # Emit como evento "emote" para que el rule_engine
+                    # pueda matchearlo (v1.0.87). El emote_id es el
+                    # sticker_id estable (v1.0.88).
+                    ev_sig = getattr(worker_self, "event_received", None)
+                    if ev_sig is not None:
+                        ev_sig.emit("emote", {
+                            "user": user,
+                            "emote_id": sticker_id,
+                            "image_url": url,
+                            "_source": "biz_sticker",
+                            "_display_name": display_name,
+                            **ranks,
+                        })
                     log_sig = getattr(worker_self, "log_message", None)
                     if log_sig is not None:
-                        log_sig.emit(f"🏷️ Sticker {name}")
+                        rank_prefix = _rank_prefix(ranks) if ranks else ""
+                        # Log: "🏷️ @maria: sticker corazon (id: tt_sticker_heart_red)"
+                        # Si display=id no duplicamos el id en el log.
+                        if display_name != sticker_id:
+                            log_sig.emit(
+                                f"🏷️ {rank_prefix}@{user}: sticker {display_name} (id: {sticker_id})"
+                            )
+                        else:
+                            log_sig.emit(f"🏷️ {rank_prefix}@{user}: sticker {sticker_id}")
             except Exception:
                 log.exception("biz sticker handler fallo")
 
@@ -770,6 +861,9 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
                 streamer = getattr(worker_self, "username", "") or "default"
                 streamer_avatar = _streamer_avatar_url(worker_self)
                 emit_sig = getattr(worker_self, "emote_image_detected", None)
+                # v1.0.89 FIX: también necesitamos el event_received para
+                # que el rule_engine pueda matchear estos emotes inline.
+                ev_sig = getattr(worker_self, "event_received", None)
                 for it in inline_emotes:
                     em = getattr(it, "emote_model", None)
                     if em is None:
@@ -785,6 +879,29 @@ def _maybe_subscribe_emote_handlers(worker_self: Any, client: Any = None) -> Non
                     if url and emit_sig is not None:
                         emit_sig.emit(streamer, streamer_avatar, eid, url)
                     inline_ids.append(eid)
+
+                    # v1.0.89 BUG FIX: emit como evento "emote" SEPARADO
+                    # para que rule_engine pueda matchear reglas con
+                    # trigger emote+valor=<emote_id>.
+                    # User reportó (v1.0.88): "el sticker siempre al
+                    # parecer tiene la misma id... cuando lo pongo por
+                    # regla que activa accion no sirve... cree que en
+                    # simulador si sirve pero en live no".
+                    # Causa raíz: estos emotes inline (f315_emotes)
+                    # llegan EMBEBIDOS dentro de un CommentEvent normal,
+                    # NO como EmoteChatEvent ni BizStickerEvent.
+                    # El handler los detectaba para LOG y descarga, pero
+                    # nunca los promovía a evento `emote` independiente
+                    # → reglas no matcheaban en live (pero sí en simulador
+                    # que pasa el evento directo).
+                    if ev_sig is not None:
+                        ev_sig.emit("emote", {
+                            "user": user,
+                            "emote_id": eid,
+                            "image_url": url,
+                            "_source": "comment_inline",  # debug
+                            **ranks,
+                        })
 
             payload = {
                 "user": user,
@@ -920,7 +1037,13 @@ def _fans_club_prefer_data_level(user_obj: Any) -> int | None:
 
 
 # Cache de users ya diagnosticados — evita inundar log con repeats.
-_DIAG_SEEN: set[str] = set()
+# v1.0.69: cap FIFO 5000 para evitar crecimiento monotónico en lives
+# masivos (50K chatters únicos = 2-5MB sostenidos sin liberar hasta
+# disconnect). Implementado como OrderedDict-as-set: las keys son los
+# users vistos, value=True (placeholder); FIFO-evict al hit del cap.
+from collections import OrderedDict as _OD
+_DIAG_SEEN: "_OD[str, bool]" = _OD()
+_DIAG_SEEN_MAX = 5000
 
 
 def _diagnose_member_detection(
@@ -933,7 +1056,9 @@ def _diagnose_member_detection(
         return
     if user_obj is None:
         return
-    _DIAG_SEEN.add(user)
+    _DIAG_SEEN[user] = True
+    while len(_DIAG_SEEN) > _DIAG_SEEN_MAX:
+        _DIAG_SEEN.popitem(last=False)
     # Recolectar pistas
     badges = getattr(user_obj, "badge_list", None) or []
     fc = getattr(user_obj, "fans_club", None)

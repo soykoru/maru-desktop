@@ -84,17 +84,29 @@ def build_default_registry() -> MethodRegistry:
     from ..backend.donations import DonationsService
     from ..backend.fortunes import FortunesService
     from ..backend.games import GamesService
+    from ..backend.games_doc import GamesDocService
+    # MARU-HEALTH-INTEGRATION (1/3): import del healthcheck.
+    # Reversibilidad: borrar este import + las 2 secciones marcadas en
+    # este archivo + el archivo `backend/health_service.py` la app vuelve
+    # al estado pre-healthcheck.
+    from ..backend.health_service import HealthCheckService
     from ..backend.ia import IaService
     from ..backend.images import ImagesService
     from ..backend.logs import LogsService, install_logs_bridge
     from ..backend.metrics import MetricsService
     from ..backend.migrations import MigrationService
-    from ..backend.overlays import OverlaysService
+    # MARU-OVERLAYS-INTEGRATION (1/3): import del relay v2 aislado.
+    # Reversibilidad: borrando este import + las 2 secciones marcadas en
+    # este archivo + el archivo `backend/overlays_relay.py` la app vuelve
+    # al estado pre-overlays.
+    from ..backend.overlays_relay import OverlaysRelayService
     from ..backend.chat_dispatcher import ChatDispatcher
     from ..backend.emotes import EmotesService
     from ..backend.profiles import ProfilesService
+    from ..backend.rule_boosts import RuleBoostsService
     from ..backend.rule_dispatcher import RuleDispatcher
     from ..backend.rules import RulesService
+    from ..backend.top_lives import TopLivesService
     from ..backend.settings import SettingsService
     from ..backend.simulator import SimulatorService
     from ..backend.social import SocialService
@@ -103,6 +115,30 @@ def build_default_registry() -> MethodRegistry:
     from ..backend.system import SystemService
     from ..backend.tiktok import TikTokService
     from ..backend.tts import TtsService
+
+    # CRÍTICO v1.0.60: instalar `core_bridge` AQUÍ (main thread del proceso),
+    # antes de que cualquier RPC handler pueda dispararse. El bridge importa
+    # `from PyQt6.QtCore import pyqtSignal` y SUBCLASEA `QObject` con
+    # metaclass de Qt, lo cual SOLO se permite desde el main thread del
+    # proceso. Cuando `spotify.connect` se hizo `async + asyncio.to_thread`,
+    # el primer `_ensure_client()` empezó a correr en un thread del executor
+    # → si era el primer caller del bridge, llamaba a Qt desde un thread no-main
+    # → PyQt6 corrompía estado interno (Qt metaclass + signals) → el sidecar
+    # quedaba inconsistente → el renderer perdía RPC → pantalla negra.
+    # Fix raíz: instalar el bridge AQUÍ una sola vez en main thread; los
+    # `core_bridge.install()` lazy de cada servicio quedan como no-op
+    # idempotentes (gated por `_INSTALLED`).
+    try:
+        from .. import core_bridge
+        core_bridge.install()
+    except Exception:
+        # Tolerante: si por algún motivo el bridge falla acá, los servicios
+        # pueden caer al `core no disponible` con sus mensajes esperables.
+        # Pero NO permitimos que Qt se inicialice en un thread.
+        import logging as _log
+        _log.getLogger(__name__).exception(
+            "core_bridge.install eager falló — Qt patches pueden quedar sin instalar"
+        )
 
     reg = MethodRegistry()
 
@@ -115,11 +151,19 @@ def build_default_registry() -> MethodRegistry:
     rules_svc = RulesService()
     data_svc = DataService()
     games_svc = GamesService()
+    # v1.0.71: documentación maestra de juegos (sección 13 del MD se
+    # inyecta dinámicamente con los juegos cargados).
+    games_doc_svc = GamesDocService()
+    games_doc_svc.attach_games(games_svc)
+    # Cableo overlays↔games al final (después de instanciar overlays_svc).
     social_svc = SocialService()
     spotify_svc = SpotifyService()
     ia_svc = IaService()
     tts_svc = TtsService()
-    overlays_svc = OverlaysService()
+    # MARU-OVERLAYS-INTEGRATION (2/3): instanciación del relay.
+    overlays_svc = OverlaysRelayService()
+    # Inyectar games_svc para que el tracker del taps pueda disparar
+    # acciones al cumplir meta (spawn/give_item/trigger_event).
     profiles_svc = ProfilesService()
     settings_svc = SettingsService()
     logs_svc = LogsService()
@@ -139,6 +183,11 @@ def build_default_registry() -> MethodRegistry:
     tiktok_svc.attach_emotes(emotes_svc)
     simulator_svc.attach_logs(logs_svc)
 
+    # RuleBoostsService: panel externo de multiplicadores acumulables.
+    # El RuleDispatcher consulta `boosts.compute_factor(rule_id, evt_data)`
+    # antes de ejecutar acciones del juego para multiplicar `trigger_times`.
+    rule_boosts_svc = RuleBoostsService()
+
     # RuleDispatcher: cablea tiktok:event → RuleEngine real → game.{spawn,
     # give_item, trigger_event}. Sin esto, las reglas nunca llegan al juego.
     rule_dispatcher = RuleDispatcher(games_svc)
@@ -147,7 +196,37 @@ def build_default_registry() -> MethodRegistry:
     # directo a bus.publish, sin dedupe → 30 lineas idénticas cuando
     # múltiples reglas matcheaban el mismo trigger).
     rule_dispatcher.attach_logs(logs_svc)
+    rule_dispatcher.attach_boosts(rule_boosts_svc)
     rules_svc.attach_dispatcher(rule_dispatcher)
+    # v1.1.3: data → dispatcher para que mutar entries del catálogo
+    # refresque el GameProfile del engine en memoria. Sin esto, juegos
+    # HTTP que usan find_command(action_value→command) podían usar el
+    # catálogo viejo cacheado tras un upsert/delete/import.
+    data_svc.attach_dispatcher(rule_dispatcher)
+
+    # MARU-HEALTH-INTEGRATION (2/3): instanciación del healthcheck.
+    # Reusamos el `_read_active_game()` del dispatcher (cache TTL 1.5s)
+    # para no duplicar I/O contra config.json.
+    health_svc = HealthCheckService(games_svc)
+    health_svc.attach_active_game_reader(rule_dispatcher._read_active_game)
+    reg.health_svc = health_svc  # type: ignore[attr-defined]
+
+    # v1.0.69: profiles → boosts. Cuando el user carga un profile, los
+    # archivos en disco cambian (incluido `rule_boosts.json`); el doc en
+    # memoria del RuleBoostsService debe recargarse para que los boosts
+    # del profile recién cargado se apliquen al instante.
+    profiles_svc.attach_boosts(rule_boosts_svc)
+    # v1.1.2 — FIX RAÍZ: profiles → dispatcher para que el RuleEngine
+    # recargue las reglas del juego cuando se carga un profile per-game.
+    # Sin esto, el engine ve el profile anterior cacheado y "Probar"
+    # devuelve 'regla no existe' aunque la UI las muestre.
+    profiles_svc.attach_dispatcher(rule_dispatcher)
+
+    # TopLivesService: tracking automático de likes por sesión + snapshot
+    # del top 3 cuando el live termina. Listener en bus tiktok:status.
+    top_lives_svc = TopLivesService()
+    top_lives_svc.attach_social(social_svc)
+    top_lives_svc.install()
     reg.rule_dispatcher = rule_dispatcher  # type: ignore[attr-defined]
     # Exponemos social_svc para que __main__.py pueda agendar los timers
     # de auto-rachas y cleanup-taps directamente sobre el servicio.
@@ -242,6 +321,7 @@ def build_default_registry() -> MethodRegistry:
     # simulator.*
     reg.register("simulator.gift", simulator_svc.gift)
     reg.register("simulator.like", simulator_svc.like)
+    reg.register("simulator.like-milestone", simulator_svc.like_milestone)
     reg.register("simulator.follow", simulator_svc.follow)
     reg.register("simulator.share", simulator_svc.share)
     reg.register("simulator.comment", simulator_svc.comment)
@@ -268,11 +348,54 @@ def build_default_registry() -> MethodRegistry:
     reg.register("rules.test", rules_svc.test)
     reg.register("rules.validate-all", rules_svc.validate_all)
 
+    # keyboard.* — acciones de teclado (v1.0.97+).
+    # `keyboard.test` ejecuta la combinación AHORA mismo (saltándose el
+    # toggle global, ya que el user explícitamente apretó "Probar").
+    # v1.0.98+: el resultado SIEMPRE se publica al panel de logs para
+    # que el user vea qué pasó sin necesidad de toast (mismo patrón
+    # que rules.test). El user pidió: "que el log capture estas
+    # acciones y muestre en el log cuando se envían".
+    def _keyboard_test(params: dict) -> dict:
+        keys = str(params.get("keys") or "")
+        amount = int(params.get("amount") or 1)
+        commands = str(params.get("commands") or "")
+        # Bypass del toggle: el user explícitamente apretó probar.
+        # Forzamos enabled=true en el cache temporal del service.
+        import time as _t
+        kb = rule_dispatcher._keyboard
+        kb._enabled_cache = (_t.time(), True)
+        ok, msg = kb.execute(keys, amount, commands, user="tester")
+        # Publicar al panel de logs (visible en la UI) — INFO si OK,
+        # ERROR si falló. `[PROBAR]` distingue del flow de eventos reales.
+        try:
+            log_msg = f"{'⌨️' if ok else '❌'} {msg} [PROBAR]"
+            logs_svc.publish(
+                log_msg,
+                level="INFO" if ok else "ERROR",
+                source="keyboard",
+                category="rule",
+                meta={
+                    "keys": keys,
+                    "amount": amount,
+                    "commands": commands,
+                    "trigger": "manual_test",
+                    "success": bool(ok),
+                },
+                skip_dedupe=True,
+            )
+        except Exception:
+            log.exception("keyboard.test: no pude publicar log:entry")
+        return {"ok": bool(ok), "message": msg}
+
+    reg.register("keyboard.test", _keyboard_test)
+
     # data.*
     reg.register("data.list", data_svc.list)
     reg.register("data.upsert", data_svc.upsert)
     reg.register("data.delete", data_svc.delete)
+    reg.register("data.bulk-delete", data_svc.bulk_delete)
     reg.register("data.import", data_svc.import_)
+    # profile cover RPCs (v1.0.94+)
     reg.register("data.export", data_svc.export)
     reg.register("data.all-categories", data_svc.all_categories)
     reg.register("data.tutorial", data_svc.tutorial)
@@ -288,6 +411,11 @@ def build_default_registry() -> MethodRegistry:
     reg.register("games.spawn", games_svc.spawn)
     reg.register("games.give-item", games_svc.give_item)
     reg.register("games.trigger-event", games_svc.trigger_event)
+    # v1.0.71: documentación maestra de juegos (descarga MD).
+    reg.register("games-doc.get", games_doc_svc.get)
+    # MARU-HEALTH-INTEGRATION (3/3): RPC para snapshot inicial al abrir UI.
+    # El push periódico va por EventBus → `game:health`.
+    reg.register("games.health.snapshot", health_svc.snapshot)
 
     # social.*
     reg.register("social.command", social_svc.command)
@@ -361,10 +489,34 @@ def build_default_registry() -> MethodRegistry:
     reg.register("tts.test", tts_svc.test)
     reg.register("tts.clear-cache", tts_svc.clear_cache)
 
-    # overlays.*
+    # MARU-OVERLAYS-INTEGRATION (3/3): registro de RPCs del relay v2.
+    # Pass-through al Cloudflare Worker; cero storage local de configs.
     reg.register("overlays.list", overlays_svc.list)
-    reg.register("overlays.update", overlays_svc.update)
+    reg.register("overlays.get-config", overlays_svc.get_config)
+    reg.register("overlays.set-config", overlays_svc.set_config)
     reg.register("overlays.test-event", overlays_svc.test_event)
+    reg.register("overlays.reload", overlays_svc.reload)
+    reg.register("overlays.identity-get", overlays_svc.identity_get)
+    reg.register("overlays.identity-set", overlays_svc.identity_set)
+    reg.register("overlays.timer-control", overlays_svc.timer_control)
+    reg.register("overlays.timer-state", overlays_svc.timer_state)
+    reg.register("overlays.music-state", overlays_svc.music_state)
+    # v1.0.69: master switch para apagar todos los loops + uplink WS
+    # cuando el user no usa overlays. Ahorra ~25-40MB de RAM.
+    reg.register("overlays.set-enabled", overlays_svc.set_enabled)
+    # Inyectar games_svc al overlays para acciones al cumplir meta.
+    overlays_svc.attach_games(games_svc)
+    # Inyectar donations_svc para resolver coins de gifts en el extensible.
+    overlays_svc.attach_donations(donations_svc)
+    # Inyectar spotify_svc para overlay music.
+    overlays_svc.attach_spotify(spotify_svc)
+    # Exponer social_svc global para que overlay relay haga toplikes.
+    import maru_sidecar.rpc.registry as _self_mod  # type: ignore
+    _self_mod._GLOBAL_SOCIAL_SVC = social_svc
+    _self_mod._GLOBAL_TOPLIVES_SVC = top_lives_svc
+    # El relay también expone su propio servicio para que `__main__.py`
+    # pueda llamar `install(loop)` cuando arranque el event loop.
+    reg.overlays_svc = overlays_svc  # type: ignore[attr-defined]
 
     # profiles.*
     reg.register("profiles.list", profiles_svc.list)
@@ -375,6 +527,11 @@ def build_default_registry() -> MethodRegistry:
     reg.register("profiles.delete", profiles_svc.delete)
     reg.register("profiles.export", profiles_svc.export)
     reg.register("profiles.import", profiles_svc.import_)
+    # v1.0.94+: portadas custom de perfiles (drag-drop + file picker).
+    reg.register("profiles.set-cover", profiles_svc.set_cover)
+    reg.register("profiles.delete-cover", profiles_svc.delete_cover)
+    # v1.0.95+: actualizar perfil existente sin crear duplicado.
+    reg.register("profiles.update", profiles_svc.update)
 
     # settings.* + backups.*
     reg.register("settings.get", settings_svc.get)
@@ -424,6 +581,12 @@ def build_default_registry() -> MethodRegistry:
     reg.register("images.rebuild", lambda _p: images_svc.rebuild())
     reg.register("images.set-entry-image", images_svc.set_entry_image)
     reg.register("images.delete-entry-image", images_svc.delete_entry_image)
+    # v1.0.74: portadas custom de juegos (galería visual).
+    reg.register("images.set-game-cover", images_svc.set_game_cover)
+    reg.register("images.delete-game-cover", images_svc.delete_game_cover)
+    # v1.0.82: imagen default por categoría de juego custom.
+    reg.register("images.set-category-default", images_svc.set_category_default)
+    reg.register("images.delete-category-default", images_svc.delete_category_default)
 
     # sounds.* (G10)
     reg.register("sounds.list", sounds_svc.list)
@@ -445,6 +608,20 @@ def build_default_registry() -> MethodRegistry:
     reg.register("fortunes.list-categories", fortunes_svc.list_categories)
     reg.register("fortunes.read", fortunes_svc.read)
     reg.register("fortunes.test", fortunes_svc.test)
+
+    # boosts.* — multiplicadores externos acumulables (v1.0.54).
+    reg.register("boosts.list", rule_boosts_svc.list)
+    reg.register("boosts.upsert", rule_boosts_svc.upsert)
+    reg.register("boosts.delete", rule_boosts_svc.delete)
+    reg.register("boosts.replace-all", rule_boosts_svc.replace_all)
+
+    # top-lives.* — histórico top 3 likes por sesión (v1.0.56).
+    reg.register("top-lives.list", top_lives_svc.list)
+    reg.register("top-lives.user-counts", top_lives_svc.user_counts)
+    reg.register("top-lives.force-snapshot", top_lives_svc.force_snapshot)
+    reg.register("top-lives.delete", top_lives_svc.delete)
+    reg.register("top-lives.set-max", top_lives_svc.set_max_lives)
+    reg.register("top-lives.clear", top_lives_svc.clear)
 
     # emotes.* — galería de emotes/stickers por streamer (multi-account).
     reg.register("emotes.list-streamers", emotes_svc.list_streamers)

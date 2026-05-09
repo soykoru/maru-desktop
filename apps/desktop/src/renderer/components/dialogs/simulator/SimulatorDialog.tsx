@@ -34,17 +34,19 @@ type EventType =
   | 'share'
   | 'subscribe'
   | 'like'
+  | 'like_milestone'
   | 'emote'
   | 'join';
 
 const EVENT_TYPES: { id: EventType; label: string; emoji: string }[] = [
   { id: 'gift', label: 'Regalo', emoji: '🎁' },
-  { id: 'comment', label: 'Comentario', emoji: '💬' },
+  { id: 'comment', label: 'Comentario / Comando', emoji: '💬' },
   { id: 'emote', label: 'Sticker', emoji: '🎨' },
   { id: 'follow', label: 'Follow', emoji: '➕' },
   { id: 'share', label: 'Compartir', emoji: '📤' },
-  { id: 'subscribe', label: 'Super Fan', emoji: '⭐' },
+  { id: 'subscribe', label: 'Super Fan (subscribe)', emoji: '⭐' },
   { id: 'like', label: 'Like', emoji: '❤️' },
+  { id: 'like_milestone', label: 'Milestone de likes', emoji: '🏆' },
   { id: 'join', label: 'Join (entrar al live)', emoji: '👋' },
 ];
 
@@ -80,6 +82,7 @@ const PRESETS: Preset[] = [
   { emoji: '💬', label: '!spawn', type: 'comment', value: '!spawn' },
   { emoji: '💬', label: '!ia hola', type: 'comment', value: '!ia hola' },
   { emoji: '👋', label: 'Join', type: 'join', value: '' },
+  { emoji: '🏆', label: '10K likes', type: 'like_milestone', value: '10000' },
 ];
 
 interface UserRanks {
@@ -176,6 +179,14 @@ async function dispatchEvent(
         count: parseInt(value || '1', 10) || 1,
       });
       break;
+    case 'like_milestone':
+      await rpcCall('simulator.like-milestone', {
+        ...target,
+        ...ranks,
+        user: u,
+        total: parseInt(value || '0', 10) || 0,
+      });
+      break;
     case 'join':
       await rpcCall('simulator.join', {
         ...target,
@@ -222,6 +233,7 @@ export function SimulatorDialog() {
   const [selectedGift, setSelectedGift] = useState<DonationGift | null>(null);
   const [commentText, setCommentText] = useState('');
   const [likeCount, setLikeCount] = useState(10);
+  const [milestoneTotal, setMilestoneTotal] = useState(10000);
   const [repeat, setRepeat] = useState(1);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string>('Listo para simular');
@@ -302,6 +314,7 @@ export function SimulatorDialog() {
     if (eventType === 'gift') return selectedGift?.id ?? '';
     if (eventType === 'comment') return commentText;
     if (eventType === 'like') return String(likeCount);
+    if (eventType === 'like_milestone') return String(milestoneTotal);
     if (eventType === 'emote') {
       if (!selectedEmote) return '';
       return JSON.stringify({
@@ -359,6 +372,8 @@ export function SimulatorDialog() {
       setCommentText(p.value);
     } else if (p.type === 'like') {
       setLikeCount(parseInt(p.value, 10) || 1);
+    } else if (p.type === 'like_milestone') {
+      setMilestoneTotal(parseInt(p.value, 10) || 0);
     }
     setBusy(true);
     try {
@@ -626,6 +641,31 @@ export function SimulatorDialog() {
           </fieldset>
         )}
 
+        {/* Sección condicional: like_milestone */}
+        {eventType === 'like_milestone' && (
+          <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
+            <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+              🏆 Total acumulado de likes del live
+            </legend>
+            <Input
+              type="number"
+              min={1}
+              max={1_000_000}
+              value={String(milestoneTotal)}
+              onChange={(e) =>
+                setMilestoneTotal(Math.max(0, parseInt(e.target.value, 10) || 0))
+              }
+              disabled={busy}
+              suffix="likes"
+            />
+            <p className="text-[11px] text-fg-subtle">
+              Las reglas tipo <code>like_milestone</code> con{' '}
+              <code>trigger_value=N</code> disparan cuando el total
+              acumulado supera N por primera vez en el live.
+            </p>
+          </fieldset>
+        )}
+
         {/* Sección condicional: emote/sticker */}
         {eventType === 'emote' && (
           <fieldset className="rounded-xl border border-border bg-bg-elev/30 p-3 space-y-2">
@@ -734,8 +774,9 @@ export function SimulatorDialog() {
             if (eventType === 'gift') return !!selectedGift;
             if (eventType === 'comment') return commentText.trim().length > 0;
             if (eventType === 'like') return likeCount > 0;
+            if (eventType === 'like_milestone') return milestoneTotal > 0;
             if (eventType === 'emote') return !!selectedEmote;
-            return true; // follow/share/subscribe no necesitan value
+            return true; // follow/share/subscribe/join no necesitan value
           })();
           const reason = !valid
             ? eventType === 'gift'

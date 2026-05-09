@@ -74,8 +74,11 @@ def test_reorder(svc: RulesService) -> None:
 
 
 def test_invalid_game_raises(svc: RulesService) -> None:
+    """La validación de gameId es SINTÁCTICA (regex), no whitelist —
+    el user puede agregar juegos custom con cualquier id alfa válido.
+    Solo falla con strings que rompan el shape de identificador."""
     with pytest.raises(ValueError):
-        svc.list({"gameId": "skyrim"})
+        svc.list({"gameId": "sky rim!"})  # espacio + bang inválidos
 
 
 def test_invalid_rule_raises(svc: RulesService) -> None:

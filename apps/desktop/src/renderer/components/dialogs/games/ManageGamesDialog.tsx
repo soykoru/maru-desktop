@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Edit3, FilePlus2, Package, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, FilePlus2, Plus } from 'lucide-react';
 import { Button, Dialog, Empty, Spinner } from '@maru/ui';
 import { Gamepad2 } from 'lucide-react';
 import type { DataKind, GameId, GameProfile } from '@maru/shared';
 import { useAppStore } from '../../../lib/store/index.js';
 import { useGames } from '../../../lib/use-games.js';
+import { rpcCall } from '../../../lib/rpc.js';
+import { GameCard } from './GameCard.js';
 
 /**
  * `ManageGamesDialog` — hub de gestión de perfiles de juego.
@@ -31,17 +33,57 @@ export function ManageGamesDialog() {
     error,
     refresh,
     deleteCustom,
+    setCover,
+    removeCover,
   } = useGames({ autoLoad: open });
 
   const [pendingDelete, setPendingDelete] = useState<GameProfile | null>(null);
   const [busy, setBusy] = useState(false);
+  // v1.0.71: estado del botón "Descargar documentación".
+  const [docFlash, setDocFlash] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
       setPendingDelete(null);
       setBusy(false);
+      setDocFlash(null);
     }
   }, [open]);
+
+  /**
+   * v1.0.71: descarga la documentación maestra de cómo conectar juegos
+   * a MARU como archivo Markdown. Útil para:
+   *   - Pegarle a una IA y que genere el mod del juego que quiere integrar.
+   *   - Compartir con devs que vayan a hacer mods compatibles.
+   *   - Tener referencia offline del contrato HTTP/RCON.
+   */
+  async function downloadDoc() {
+    setBusy(true);
+    setDocFlash(null);
+    try {
+      const res = await rpcCall('games-doc.get', {});
+      const out = await window.maruApi.dialog.saveText({
+        content: res.markdown,
+        defaultPath: res.filename,
+        filters: [
+          { name: 'Markdown', extensions: ['md'] },
+          { name: 'Texto', extensions: ['txt'] },
+        ],
+      });
+      if (out.ok && out.path) {
+        setDocFlash(`✅ Guardado en: ${out.path}`);
+      } else if (out.error) {
+        setDocFlash(`❌ Error: ${out.error}`);
+      }
+      // Si user canceló (ok=false sin error), no mostramos nada.
+    } catch (exc) {
+      setDocFlash(`❌ ${exc instanceof Error ? exc.message : String(exc)}`);
+    } finally {
+      setBusy(false);
+      // Limpiar feedback automáticamente tras 6s.
+      window.setTimeout(() => setDocFlash(null), 6000);
+    }
+  }
 
   if (!open) return null;
 
@@ -90,7 +132,7 @@ export function ManageGamesDialog() {
       <Dialog
         open
         onClose={closeModal}
-        size="lg"
+        size="xl"
         title="🎮 Perfiles de Juegos"
         description="Cada perfil tiene sus propias reglas, entidades e items."
       >
@@ -110,44 +152,29 @@ export function ManageGamesDialog() {
             }
           />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* v1.0.72: Galería visual estilo Steam Library.
+                Predefinidos + Customs en grids separados con cards grandes. */}
+
             {/* 📦 Predefinidos */}
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-success mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-success mb-2.5">
                 📦 Perfiles Predefinidos
               </h3>
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {predefined.map((g) => (
-                  <div
+                  <GameCard
                     key={g.id}
-                    className="flex items-center gap-2 rounded-md border border-border/50 bg-bg-elev/40 px-2 py-1.5"
-                  >
-                    <span className="font-emoji text-lg">{g.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{g.name}</p>
-                      <p className="text-[10px] text-fg-subtle font-mono truncate">
-                        {g.connectionType.toUpperCase()} ·{' '}
-                        {g.connection.host}:{g.connection.port}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openData(g)}
-                      title="Editar entidades / items / eventos"
-                    >
-                      <Package className="h-3.5 w-3.5" />
-                      Datos
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => editPredefined(g.id)}
-                      title={`Editar conexión de ${g.name}`}
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                    profile={g}
+                    onEdit={() => editPredefined(g.id)}
+                    onOpenData={() => openData(g)}
+                    onChangeCover={async (id, path) => {
+                      await setCover(id, path);
+                    }}
+                    onRemoveCover={async (id) => {
+                      await removeCover(id);
+                    }}
+                  />
                 ))}
               </div>
               <p className="mt-2 text-[11px] text-fg-subtle">
@@ -157,61 +184,37 @@ export function ManageGamesDialog() {
 
             {/* 🎯 Custom */}
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-accent mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-accent mb-2.5">
                 🎯 Perfiles Personalizados
               </h3>
 
-              <div className="rounded-xl border border-border bg-bg-elev min-h-[150px] max-h-[260px] overflow-y-auto p-1">
-                {custom.length === 0 ? (
-                  <p className="text-xs text-fg-subtle italic px-3 py-6 text-center">
-                    Sin perfiles custom todavía.
+              {custom.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border bg-bg-elev/30 px-4 py-8 text-center">
+                  <p className="text-sm text-fg-subtle italic mb-3">
+                    Sin perfiles custom todavía. Empezá agregando un juego desde cero o duplicando uno existente.
                   </p>
-                ) : (
-                  custom.map((g) => (
-                    <div
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {custom.map((g) => (
+                    <GameCard
                       key={g.id}
-                      className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-fg/5 transition-colors"
-                    >
-                      <span className="font-emoji text-lg">{g.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {g.name}
-                        </p>
-                        <p className="text-[10px] text-fg-subtle font-mono truncate">
-                          {g.connectionType.toUpperCase()} ·{' '}
-                          {g.connection.host}:{g.connection.port} · id={g.id}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openData(g)}
-                        title="Editar entidades / items / eventos"
-                      >
-                        <Package className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => editCustom(g.id)}
-                        title="Editar"
-                      >
-                        <Edit3 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPendingDelete(g)}
-                        title="Eliminar"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
+                      profile={g}
+                      onEdit={() => editCustom(g.id)}
+                      onOpenData={() => openData(g)}
+                      onDelete={() => setPendingDelete(g)}
+                      onChangeCover={async (id, path) => {
+                        await setCover(id, path);
+                      }}
+                      onRemoveCover={async (id) => {
+                        await removeCover(id);
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
 
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <Button
                   variant="secondary"
                   size="sm"
@@ -253,6 +256,40 @@ export function ManageGamesDialog() {
                   específicas por perfil.
                 </li>
               </ul>
+            </section>
+
+            {/* v1.0.71: Documentación maestra de juegos */}
+            <section className="rounded-xl border border-accent/30 bg-accent/5 p-3">
+              <div className="flex items-start gap-3">
+                <BookOpen className="h-5 w-5 shrink-0 text-accent mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-bold text-accent mb-1">
+                    📖 Documentación de Juegos
+                  </h4>
+                  <p className="text-[11px] text-fg-muted leading-relaxed mb-2">
+                    Descargá un archivo Markdown completo con:
+                    cómo MARU se conecta a juegos, contrato HTTP/RCON,
+                    plantillas de mods (BepInEx C#, Spigot Java),
+                    cómo agregar juegos nuevos, y todo lo necesario para
+                    pegarle a una IA y que te genere el mod específico
+                    de tu juego.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void downloadDoc()}
+                    disabled={busy}
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    {busy ? 'Generando…' : 'Descargar documentación'}
+                  </Button>
+                  {docFlash && (
+                    <p className="mt-2 text-[10px] font-mono text-fg-subtle">
+                      {docFlash}
+                    </p>
+                  )}
+                </div>
+              </div>
             </section>
           </div>
         )}

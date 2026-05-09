@@ -30,6 +30,12 @@ export interface UseDataResult {
   refresh: () => Promise<void>;
   upsert: (entry: DataEntry, previousName?: string) => Promise<DataEntry>;
   remove: (name: string) => Promise<void>;
+  /** v1.0.91+ — borrado masivo atómico (1 backup + 1 write para N nombres). */
+  bulkRemove: (names: string[]) => Promise<{
+    removed: number;
+    remaining: number;
+    missing: string[];
+  }>;
   importEntries: (
     entries: (DataEntry | string)[],
     replace?: boolean,
@@ -106,6 +112,40 @@ export function useData(
       removeLocal(key, name);
       try {
         await rpcCall('data.delete', { gameId, kind, name });
+      } catch (ex) {
+        await refresh();
+        throw ex;
+      }
+    },
+    [gameId, kind, key, refresh, removeLocal],
+  );
+
+  const bulkRemove = useCallback(
+    /**
+     * v1.0.91+ — borrado masivo atómico de N entries seleccionadas.
+     * Hace UN solo backup + UN write en disco (vs N si llamamos `remove`
+     * en loop). Optimista: actualiza el store local antes de la respuesta;
+     * si falla, refrescamos el bucket entero.
+     */
+    async (names: string[]) => {
+      if (!gameId || !key) {
+        return { removed: 0, remaining: 0, missing: names };
+      }
+      const targets = Array.from(
+        new Set(names.map((n) => n.trim()).filter(Boolean)),
+      );
+      if (targets.length === 0) {
+        return { removed: 0, remaining: 0, missing: [] };
+      }
+      // Optimista: quitamos las entries del bucket local.
+      for (const n of targets) removeLocal(key, n);
+      try {
+        const res = await rpcCall('data.bulk-delete', {
+          gameId,
+          kind,
+          names: targets,
+        });
+        return res;
       } catch (ex) {
         await refresh();
         throw ex;
@@ -213,6 +253,7 @@ export function useData(
     refresh,
     upsert,
     remove,
+    bulkRemove,
     importEntries,
     exportEntries,
     testEntry,

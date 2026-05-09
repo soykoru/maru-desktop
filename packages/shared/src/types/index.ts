@@ -28,10 +28,30 @@ export type StandardGameId = (typeof STANDARD_GAME_IDS)[number];
 
 export type GameConnectionType = 'http' | 'rcon';
 
+/**
+ * v1.0.72: configuración de autenticación HTTP opcional.
+ * Permite integrar juegos con auth nativa (Palworld REST con Basic auth,
+ * APIs comerciales con Bearer tokens, mods con API keys custom).
+ *
+ * - `none`: sin auth (default — comportamiento actual de Valheim/REPO/etc).
+ * - `basic`: HTTP Basic Auth `Authorization: Basic base64(user:pass)`.
+ * - `bearer`: `Authorization: Bearer <token>`.
+ * - `apiKey`: header arbitrario (ej `X-API-Key: abc123`).
+ */
+export type HttpAuthConfig =
+  | { type: 'none' }
+  | { type: 'basic'; user: string; password: string }
+  | { type: 'bearer'; token: string }
+  | { type: 'apiKey'; headerName: string; headerValue: string };
+
 export interface GameConnection {
   host: string;
   port: number;
   password?: string;
+  /** v1.0.72: auth HTTP opcional. Solo aplica a connectionType=http. */
+  httpAuth?: HttpAuthConfig;
+  /** v1.0.72: headers HTTP adicionales (key-value). Solo aplica a http. */
+  httpHeaders?: Record<string, string>;
 }
 
 /**
@@ -104,6 +124,24 @@ export interface GameProfile {
   shareVoices: boolean;
   /** Id del perfil del que se duplicó al crearlo. */
   basedOn?: string;
+  /**
+   * v1.0.72: ruta de la portada del juego (relativa a resources/games/covers/).
+   * Si está presente, la galería de juegos pinta esta imagen en lugar del
+   * emoji. Vacío/null = usar emoji + gradient fallback.
+   */
+  coverImage?: string | null;
+  /**
+   * v1.0.72: método HTTP override (`POST` default, pero APIs como
+   * Palworld usan combinación POST/GET según endpoint).
+   */
+  httpMethod?: string | null;
+  /**
+   * v1.0.72: marca el perfil como "necesita un mod del juego para funcionar".
+   * La galería pinta un badge "⚠️ Requiere mod" cuando es true. Útil para
+   * juegos cuyo lugar reservamos en MARU pero todavía no tienen mod listo
+   * (ej Green Hell, Core Keeper).
+   */
+  requiresMod?: boolean;
 }
 
 /**
@@ -123,6 +161,7 @@ export const STANDARD_TRIGGER_TYPES = [
   'like_milestone',
   'emote',
   'join',
+  'first_action',
 ] as const;
 export type StandardTriggerType = (typeof STANDARD_TRIGGER_TYPES)[number];
 export type RuleTriggerType = StandardTriggerType | string;
@@ -179,14 +218,22 @@ export interface Rule {
   /** Lista de flags. Si el user tiene ALGUNO, la regla NO dispara. */
   excluded_ranks?: RankFlag[];
 
-  /** v1.0.49: multiplicador opcional de ejecuciones cuando el user del
-   *  evento cumple un rol/nivel. Si no está o `enabled=false`, la regla
-   *  ejecuta normalmente (×1). */
+  /** Filtro adicional por rango de nivel del fans club. Solo aplica si
+   *  `is_member` está en `required_ranks`. min/max inclusive. Vacío = no
+   *  filtra por nivel (cualquier miembro pasa). */
+  member_level_min?: number;
+  member_level_max?: number;
+
+  /** Filtro adicional por rango de nivel del gifter (1..50). Solo aplica
+   *  si `is_gift_giver` está en `required_ranks`. min/max inclusive. */
+  gifter_level_min?: number;
+  gifter_level_max?: number;
+
+  /** Multiplicador opcional de ejecuciones N veces. El selector de
+   *  "rango/rol" fue removido (v1.0.90+) — para boosts por rol usar el
+   *  sistema de Boosts externos (más flexible y acumulable). */
   repeat_for?: {
     enabled: boolean;
-    rank: 'mod' | 'superfan' | 'donor' | 'follower' | 'member';
-    level_min?: number;
-    level_max?: number;
     times: number;
   };
 
@@ -198,7 +245,15 @@ export interface Rule {
 }
 
 /** Flags de rango (boolean) detectables en `tiktok:event.data` para filtrar
- * reglas. Espejo de `core_bridge.RANK_KEYS` (Python). */
+ * reglas. Espejo de `core_bridge.RANK_KEYS` (Python).
+ *
+ * Nota: en versiones previas existían también `is_friends_badge`,
+ * `is_first_recharge`, `is_live_pro`, `is_activity`. Se removieron de la
+ * UI porque dependen de badges TikTok específicos que casi nunca se
+ * detectan en la práctica — confundían al usuario. Si en el futuro se
+ * popularizan, agregarlos de vuelta acá + en `RANK_FLAGS_META` y en
+ * `core_bridge.RANK_KEYS`.
+ */
 export type RankFlag =
   | 'is_anchor'
   | 'is_moderator'
@@ -210,29 +265,27 @@ export type RankFlag =
   | 'is_mutual_follow'
   | 'is_verified'
   | 'is_new_subscriber'
-  | 'is_friends_badge'
-  | 'is_first_recharge'
-  | 'is_live_pro'
-  | 'is_activity'
   | 'is_gift_giver';
 
 /** Metadata humano-legible de cada flag — usada por el RuleDialog. */
-export const RANK_FLAGS_META: { value: RankFlag; label: string; emoji: string }[] = [
+export const RANK_FLAGS_META: {
+  value: RankFlag;
+  label: string;
+  emoji: string;
+  /** Si true, soporta filtro adicional por rango de nivel (min..max). */
+  hasLevel?: boolean;
+}[] = [
   { value: 'is_anchor', label: 'Streamer (host del live)', emoji: '🎙️' },
   { value: 'is_moderator', label: 'Moderador', emoji: '🛡️' },
   { value: 'is_super_fan', label: 'Super fan / Suscriptor', emoji: '⭐' },
-  { value: 'is_member', label: 'Miembro del fans club (cualquier nivel)', emoji: '🌸' },
+  { value: 'is_member', label: 'Miembro del fans club', emoji: '🌸', hasLevel: true },
+  { value: 'is_gift_giver', label: 'Donador (ya regaló)', emoji: '🎁', hasLevel: true },
   { value: 'is_top_gifter', label: 'Top gifter (ranking)', emoji: '🏆' },
   { value: 'is_follower', label: 'Te sigue', emoji: '➕' },
   { value: 'is_mutual_follow', label: 'Se siguen mutuamente', emoji: '🤝' },
   { value: 'is_friend', label: 'Amigo (you follow them)', emoji: '👥' },
   { value: 'is_verified', label: 'Verificado', emoji: '✓' },
   { value: 'is_new_subscriber', label: 'Nuevo suscriptor', emoji: '🆕' },
-  { value: 'is_friends_badge', label: 'Badge "Friends"', emoji: '🫂' },
-  { value: 'is_first_recharge', label: 'Primera recarga', emoji: '💰' },
-  { value: 'is_live_pro', label: 'Live Pro', emoji: '🎬' },
-  { value: 'is_activity', label: 'Badge de actividad', emoji: '🎯' },
-  { value: 'is_gift_giver', label: 'Ya regaló antes', emoji: '🎁' },
 ];
 
 /** Mapeo cat_id (GameProfile) → action_type legacy del RuleEngine. */
@@ -592,18 +645,39 @@ export interface BackupEntry {
   sha256?: string;
 }
 
+/**
+ * Metadata de un overlay disponible en el sistema.
+ *
+ * Coincide con el shape devuelto por `overlays.list` (relay v2 — el
+ * sidecar consulta el registry estático en `backend/overlays_relay.py`).
+ * El `default` permite a la UI poblar el editor antes de que llegue la
+ * config persistida del Worker (sin flash de campos vacíos).
+ */
 export interface OverlayInfo {
   id: string;
-  /** @deprecated usar `name` */
-  title?: string;
   name: string;
   icon: string;
   description: string;
+  /** URL pública para pegar como Browser Source en TikTok Studio. */
   url: string;
+  /** Valores default del editor (color, goal, mensaje, etc.). */
+  default: Record<string, unknown>;
+  /** [ancho, alto] del widget — define el aspect ratio del preview. */
+  previewAspect?: [number, number];
+}
+
+/** Resultado de `overlays.list` — incluye identidad + dominio público. */
+export interface OverlaysListResult {
+  overlays: OverlayInfo[];
+  userId: string;
   enabled: boolean;
-  config: Record<string, unknown>;
-  /** Placeholder visual "próximamente" — sin URL ni RPC funcional. */
-  placeholder?: boolean;
+  publicDomain: string;
+}
+
+/** Identity del usuario en el sistema overlays — lo único persistido local. */
+export interface OverlaysIdentity {
+  userId: string;
+  enabled: boolean;
 }
 
 /**
@@ -662,6 +736,18 @@ export interface ProfileSnapshot {
   customGamesCount?: number;
   /** Tamaño total del snapshot en bytes. */
   sizeBytes?: number;
+  /**
+   * v1.0.86: indica si es perfil PER-GAME (nuevo, solo rules+sounds+boosts
+   * del gameId) o LEGACY (snapshot completo de toda la app).
+   * Nuevos perfiles creados con `gameId` tienen este flag en true.
+   */
+  isPerGame?: boolean;
+  /**
+   * v1.0.94+: filename relativo de la portada custom del perfil. La UI lo
+   * carga via `maru://images/profile_covers/<coverImage>`. Si null/'' el
+   * frontend pinta gradient + emoji del juego como fallback.
+   */
+  coverImage?: string | null;
 }
 
 // ── Sounds (G10) ────────────────────────────────────────────────────────
@@ -753,6 +839,11 @@ export interface LogEntry {
   category: LogCategory;
   message: string;
   meta?: Record<string, unknown>;
+  /** Contador de ocurrencias agrupadas. v1.1.3+: cuando varios eventos
+   * idénticos llegan en la ventana de dedupe (5s), en vez de descartar
+   * los duplicados se incrementa este count y la entry se mueve al
+   * final del buffer (siempre visible al user). Default 1. */
+  count?: number;
 }
 
 export interface LogStats {
